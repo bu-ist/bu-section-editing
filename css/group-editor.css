@@ -1,0 +1,30 @@
+.edit_group_panel { position:absolute;top:-9999px;left:-9999px; }
+.edit_group_panel.active { position:static; }
+
+#panel_container { float:left; width: 600px;}
+
+#group_stats_widget { float: right; width:400px;padding:15px;  }
+
+#group_stats_widget dl { width:100%;}
+#group_stats_widget dl dt { width:30%; float:left; clear:left; margin-bottom:10px;}
+#group_stats_widget dl dd { width:55%; float:right; }
+
+#group_stats_widget .actions { clear:both; }
+
+#group_stats_widget a.submitdelete {
+	cursor: pointer;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	margin: 6px 0 0 4px;
+	padding: 1px 2px;
+	text-decoration: none;
+	color: #F00;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline
+}
+#group_stats_widget a.submitdelete:hover {
+	background-color: #F00;
+	color: #FFF
+}
