@@ -7,7 +7,7 @@
 			<button id="find_user" class="button-secondary">Find User</button>
 		</div>
 		<div class="form-row">
-			<button id="add_user" class="button-secondary">Add</button>
+			<button id="add_member" class="button-secondary">Add</button>
 		</div>
 	</fieldset>
 </div>
@@ -18,9 +18,10 @@
 		<ul id="group-member-list">
 			<?php $users = get_users(); ?>
 			<?php foreach( $users as $user ): ?>
+			<?php $checked = in_array( $user->ID, $group->users ) ? 'checked="checked"' : ''; ?>
 			<li class="member">
-				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[members]" value="<?php echo $user->ID; ?>" />
-				<label for="member_<?php echo $user->ID; ?>"><?php echo $user->user_nicename; ?></label>
+				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[members]" value="<?php echo $user->ID; ?>" <?php echo $checked; ?> />
+				<label for="member_<?php echo $user->ID; ?>"><?php echo $user->display_name; ?></label>
 				<a id="remove_member_<?php echo $user->ID; ?>" class="remove_member" href="#">Remove</a>
 			</li>
 			<?php endforeach; ?>

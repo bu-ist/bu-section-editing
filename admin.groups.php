@@ -92,18 +92,44 @@ class BU_Groups_Admin {
 
 class BU_Groups_Admin_Ajax {
 
+	static function register_hooks() {
+
+		add_action('wp_ajax_buse_add_member', array( 'BU_Groups_Admin_Ajax', 'add_member' ) );
+		add_action('wp_ajax_buse_find_user', array( 'BU_Groups_Admin_Ajax', 'find_user' ) );
+
+	}
 
 	static function add_member() {
 
 		$groups = BU_Edit_Groups::get_instance();
 
 		$group_id = $_POST['group_id'];
-		$member_id = $_POST['user_login'];
+		$user_input = $_POST['user'];
+
+		$wp_user_search = new WP_User_Query( array( 'search' => $user_input ) );
+		$users = $wp_user_search->get_results();
+
+		if( count($users) > 0 ) {
+			echo $users[0];
+		} else {
+			echo '<p>No user was found for: ' . $user_input . '</p>';
+		}
+
+		die();
 
 	}
 
-	static function find_member() {
+	static function find_user() {
 
+		$groups = BU_Edit_Groups::get_instance();
+		$user_input = $_POST['user'];
+
+		$wp_user_search = new WP_User_Query( array( 'search' => '*' . $user_input .'*' ) );
+		$users = $wp_user_search->get_results();
+
+		echo json_encode( $users );
+
+		die();
 	}
 
 }

@@ -33,6 +33,11 @@ class BU_Section_Editing_Plugin {
 
 		// Create default roles
 		BU_Section_Editing_Roles::maybe_create();
+
+		if( is_admin() ) {
+			BU_Groups_Admin_Ajax::register_hooks();
+		}
+
 	}
 
 	// Add administrative menu items

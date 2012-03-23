@@ -1,6 +1,6 @@
 /* Group editor containers */
 #section-group-editor {
-
+	position:relative;
 }
 
 #panel-container { 
@@ -35,6 +35,7 @@
 /* Name panel */
 #section-group-editor #group-name-panel fieldset {
 	border:none;
+	background-color:none;
 	margin-top:25px;
 }
 
@@ -181,5 +182,9 @@ body.js input[type="checkbox"] {
 }
 
 .no-js #add-group-members {
+	display:none;
+}
+
+.no-js .remove_member {
 	display:none;
 }
