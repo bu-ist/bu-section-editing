@@ -1,4 +1,4 @@
-<div class="form-row">
-	<label for="bu_group_name">Group name:</label>
-	<input name="name" id="bu_group_name" type="text" class="" value="<?php echo esc_attr($group->get_name()); ?>"/>
-</div>
+<fieldset>
+	<label for="edit-group-name">Group name:</label>
+	<input name="group[name]" id="edit-group-name" type="text" class="regular-text" value="<?php echo esc_attr($group->get_name()); ?>"/>
+</fieldset>

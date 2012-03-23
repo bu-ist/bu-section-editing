@@ -1,6 +1,5 @@
 <?php
 
-
 class BU_Groups_Admin {
 
 	static function load_manage_groups() {
@@ -69,12 +68,14 @@ class BU_Groups_Admin {
 		return $url;
 	}
 
-	static function group_member_list( $id, $current = array()) {
+	static function group_member_list( $id, $member_ids ) {
+		if( empty( $member_ids ) )
+			return;
 
 		$html = '';
-
 		$html .= "<ul>\n";
-		$users = get_users( array( 'include' => $current ) );
+
+		$users = get_users( array( 'include' => $member_ids ) );
 
 		foreach( $users as $user ) {
 			$remove_url = self::group_edit_url( 'delete', $id, 'members' );
@@ -87,6 +88,24 @@ class BU_Groups_Admin {
 		$html .= "</ul>\n";
 		echo $html;
 	}
+}
+
+class BU_Groups_Admin_Ajax {
+
+
+	static function add_member() {
+
+		$groups = BU_Edit_Groups::get_instance();
+
+		$group_id = $_POST['group_id'];
+		$member_id = $_POST['user_login'];
+
+	}
+
+	static function find_member() {
+
+	}
+
 }
 
 ?>

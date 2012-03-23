@@ -2,18 +2,15 @@
 /* Group Stats widget */
 ?>
 
-<div id="group_stats_widget">
-	<h4>Global Stats and Actions</h4>
-	<dl>
-		<dt>Group Name:</dt>
-		<dd></dd>
-		<dt>Group Members:</dt>
-		<dd>20</dd>
-		<dt>Permissions:</dt>
-		<dd><a href="">Add Permissions</a></dd>
-	</dl>
+<h4>Global Stats and Actions</h4>
+<div id="group-stats-widget">
+	<ul>
+		<li><span class="title">Group Name:</span> <span id="group-stats-name"><?php echo ''; ?></span></li>
+		<li><span class="title">Group Members:</span> <span id="group-stats-count"><?php echo '20'; ?></span></li>
+		<li><span class="title">Permissions:</span> <span id="group-stats-permissions"><a href="#">Add Permissions</a></span></li>
+	</ul>
 	<div class="actions">
-		<a href="#" class="submitdelete deletion" title="Delete group">[ Delete Group ]</a>
+		<a href="#" class="submitdelete deletion" title="Delete group">[ Delete ]</a>
 		<p class="alignright">
 			<input type="submit" class="button-primary" name="update" value="Update Group" />
 		</p>

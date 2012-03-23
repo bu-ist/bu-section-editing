@@ -2,7 +2,7 @@ jQuery(document).ready(function($){
 
 	// Active tab switching
 	var $tabs = $('a.nav-tab');
-	var $panels = $('div.edit_group_panel')
+	var $panels = $('.edit-group-panel');
 
 	$tabs.click(function(e){
 		e.preventDefault();

@@ -1,12 +1,6 @@
-<fieldset>
-	<legend>Assign Permissions To</legend>
-	<div id="group_permission_editor">
-		<?php 
-		/* 
-		 * This should eventually look something like this:
-		 *		BU_Groups_Admin::render_permission_editor_form();
-		 */
-		?>
+<div id="group_permission_editor">
+	<h4>Assign Permissions to:</h4>
+	<fieldset>
 		<ul id="content_types">
 			<?php /* @todo Dynamically populate based on content types that support section editing */ ?>
 			<li id="perm-tab-page" class="perm-tab"><a href="#perm-panel-page">Pages</a></li>
@@ -23,5 +17,5 @@
 			<div id="perm-editor-post" class="perm-editor flat">
 			</div>
 		</div>
-	</div>
-</fieldset>
+	</fieldset>
+</div>

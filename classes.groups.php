@@ -77,27 +77,26 @@ class BU_Edit_Groups {
 
 //___________________HELPERS________________________
 
-	public function load() {
+	private function load() {
 		$groups = get_option($this->option_name);
 		if(is_array($groups)) $this->groups = $groups;
 	}
 
-	public function add(BU_Edit_Group $group) {
+	private function add(BU_Edit_Group $group) {
 		array_push($this->groups, $group);
 	}
 
-	public function get($id) {
+	private function get($id) {
 		if(isset($this->groups[$id])) {
 			return $this->groups[$id];
 		}
 	}
 
-	public function update() {
+	private function update() {
 		update_option($this->option_name, $this->groups);
 	}
 
-
-	public function delete() {
+	private function delete() {
 		delete_option($this->option_name);
 	}
 

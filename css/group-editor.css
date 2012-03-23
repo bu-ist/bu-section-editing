@@ -1,17 +1,106 @@
-.edit_group_panel { position:absolute;top:-9999px;left:-9999px; }
-.edit_group_panel.active { position:static; }
+/* Group editor containers */
+#section-group-editor {
 
-#panel_container { float:left; width: 600px;}
+}
 
-#group_stats_widget { float: right; width:400px;padding:15px;  }
+#panel-container { 
+	position:absolute;
+	width: 450px;
+	height: 100%;
+	padding-right:35px;
+	border-right: 1px solid #CCC;
+}
 
-#group_stats_widget dl { width:100%;}
-#group_stats_widget dl dt { width:30%; float:left; clear:left; margin-bottom:10px;}
-#group_stats_widget dl dd { width:55%; float:right; }
+#stats-container {
+	position:absolute;
+	left:500px;
+	width: 350px;
+	margin-left:20px;
+}
 
-#group_stats_widget .actions { clear:both; }
+/* Panel containers */
 
-#group_stats_widget a.submitdelete {
+#section-group-editor {
+
+}
+
+#section-group-members {
+
+}
+
+#section-group-permissions {
+
+}
+
+/* Name panel */
+#section-group-editor #group-name-panel fieldset {
+	border:none;
+	margin-top:25px;
+}
+
+#group-name-panel label {
+	display: inline;
+	font-weight: bold;
+}
+
+/* Members panel */
+#group-member-list {
+	margin-top:0;
+	width:100%;
+	margin-left:-7px;
+}
+
+#group-member-list li {
+	background-color: white;
+	padding: 7px;
+	border-top:1px solid #eee;
+	width:100%;
+}
+
+#group-member-list li:first-child {
+	border-top: none;
+}
+
+#group-member-list label {
+	display:inline;    
+}
+
+#group-member-list li a {
+	float:right;    
+}
+
+/* Stats widget */
+
+#group-stats-widget {
+	background-color: white;
+	border: 1px solid lightgray;
+	border-top: none;
+}
+
+#group-stats-widget ul {
+	margin: 0;
+}
+
+#group-stats-widget li {
+	padding: 7px 10px;
+	border-top: 1px solid lightgray;
+}
+
+#group-stats-widget li:first-child {
+	border-top:none;
+}
+
+#group-stats-widget span.title {
+	font-weight: bold;
+}
+
+#group-stats-widget .actions {
+	background-color: #ebf2fb;
+	clear: both;
+	padding: 10px;
+}
+
+#group-stats-widget a.submitdelete {
 	cursor: pointer;
 	border-bottom-style: solid;
 	border-bottom-width: 1px;
@@ -22,9 +111,75 @@
 	display: -moz-inline-stack;
 	display: inline-block;
 	zoom: 1;
-	*display: inline
+	*display: inline;
 }
-#group_stats_widget a.submitdelete:hover {
+
+#group-stats-widget a.submitdelete:hover {
 	background-color: #F00;
-	color: #FFF
+	color: #FFF;
+}
+
+/* Headings */
+
+#section-group-editor h4 {
+	padding: 7px;
+	margin-bottom:0;
+	color: #464646;
+	font-weight:bold;
+	border: 1px solid lightgray;
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	background-color: #F1F1F1;
+	background-image: -ms-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -moz-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -o-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#F9F9F9),to(#ECECEC));
+	background-image: -webkit-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: linear-gradient(top,#F9F9F9,#ECECEC);
+}
+
+#section-group-editor h4 .member-count {
+	float:right;
+}
+
+/* States */
+
+.js .edit-group-panel { 
+	position: absolute;
+	top: -9999px;
+	left:-9999px;
+}
+
+.edit-group-panel.active { 
+	position: static; 
+}
+
+/* Form elements */
+
+#section-group-editor fieldset {
+	background-color: white;
+	margin-bottom: 25px;
+	padding: 10px;
+	border: 1px solid lightgray;
+	border-top:none;
+}
+
+#section-group-editor .form-row {
+	margin-bottom: 10px;
+}
+
+body.js input[type="checkbox"] {
+	display: none;
+}
+
+/* Sans javascript */
+
+.no-js h2.nav-tab-wrapper {
+	display: none;
+}
+
+.no-js #add-group-members {
+	display:none;
 }
