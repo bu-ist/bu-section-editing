@@ -1,12 +1,31 @@
 <div class="wrap">
 	<?php screen_icon(); ?>
 	<h2>Edit Group</h2>
-	<p><a href="<?php echo BU_Groups_Admin::group_edit_url('edit'); ?>" class="button-secondary">Add a Editor Group</a></p>
+	<p><a href="<?php echo BU_Groups_Admin::group_edit_url(); ?>" class="button-secondary">Add a Editor Group</a></p>
+	<table class="widefat">
+		<thead>
+			<tr>
+				<th>Group Name</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tfoot>
+			<tr>
+				<th>Group Name</th>
+				<th>Actions</th>
+			</tr>
+		</tfoot>
+		<tbody>
 	<?php if($group_list->have_groups()): ?>
-	<ul>
 		<?php while($group_list->have_groups()): $group = $group_list->the_group(); ?>
-		<li><a href="<?php echo BU_Groups_Admin::group_edit_url( 'edit', $group_list->current_group); ?>"><?php echo $group->get_name(); ?></a></li>
+		<tr>
+			<td><?php echo $group->get_name(); ?></td>
+			<td><a href="<?php echo BU_Groups_Admin::group_edit_url( $group_list->current_group ); ?>">Edit</a> |
+				<a class="submitdelete" href="<?php echo BU_Groups_Admin::group_delete_url( $group_list->current_group ); ?>">Delete</a>
+			</td>
+		</tr>
 		<?php endwhile; ?>
-	</ul>
 	<?php endif; ?>
+		</tbody>
+	</table>
 </div>

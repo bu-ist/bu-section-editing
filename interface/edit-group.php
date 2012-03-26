@@ -1,6 +1,8 @@
 <div id="section-group-editor" class="wrap">
 	<?php screen_icon(); ?>
 	<h2>Edit Group</h2>
+	<?php /* @todo Better error handling */ ?>
+	<?php if( isset($_GET['errors'])): ?><div class="error"><p>Error saving group!</p></div><? endif; ?>
 	<div class="form-wrap">
 		<!-- Tab Interface -->
 		<h2 class="nav-tab-wrapper">
@@ -10,7 +12,8 @@
 		</h2>
 		<form method="POST">
 			<input type="hidden" name="action" value="update"/>
-			<?php echo $nonce; ?>
+			<input id="group_id" type="hidden" name="id" value="<?php echo $group_id; ?>" />
+			<?php wp_nonce_field( 'update_section_editing_group' ); ?>
 			<div id="panel-container">
 				<div id="group-name-panel" class="edit-group-panel<?php if($tab == 'name') echo ' active'; ?>">
 					<?php include 'group-name.php'; ?>	

@@ -17,7 +17,12 @@ jQuery(document).ready(function($){
 	// Remove a member from the editor group list
 	$('.remove_member').live('click', function(e) {
 
-		$(this).parent('.member').slideUp( 'fast', function() { $(this).remove(); });
+		$(this).parent('.member').slideUp( 'fast', function() {
+
+			// Hide and uncheck
+			$(this).removeClass('active').find('input[type="checkbox"]').removeAttr('checked');
+
+		});
 
 		e.preventDefault();
 
@@ -46,7 +51,7 @@ jQuery(document).ready(function($){
 
 		var userData = {
 			action: 'buse_add_member',
-			group_id: '1',
+			group_id: $('#group_id').val(),
 			user: $('#user_login').val()
 		}
 
@@ -55,6 +60,12 @@ jQuery(document).ready(function($){
 			data: userData,
 			type: 'POST',
 			success: function(response) {
+				if( response.status ) { 
+					$('#member_' + response.user_id ).attr('checked','checked').parent('.member').addClass('active').slideDown();
+
+				} else {
+					// Display error message
+				}
 				console.log(response);
 			}
 		});

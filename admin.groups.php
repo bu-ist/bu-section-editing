@@ -4,36 +4,69 @@ class BU_Groups_Admin {
 
 	static function load_manage_groups() {
 		
-		if( isset($_POST['action']) && $_POST['action'] == 'update') {
+		if( isset($_REQUEST['action']) ) {
 
 			$groups = BU_Edit_Groups::get_instance();
+			$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
+			$redirect_url = '';
 
-			// A lot more to update
+			switch( $_REQUEST['action'] ) {
 
-			$args = array(
-				'name' => strip_tags(trim($_POST['name'])),
-				'description' => strip_tags(trim($_POST['description'])),
-				'users' => $_POST['users']
-			);
+				case 'update':
+					if( ! check_admin_referer( 'update_section_editing_group' ) )
+						wp_die('Cheatin, uh?');
 
-			if(empty($args['name']) || empty($args['users'])) {
-				// redirect back to previous view with errors
-				return;
+					$input = $_POST['group'];
+
+					// Sanitization
+					$group = array(
+						'name' => strip_tags(trim($input['name'])),
+						'users' => isset($input['users']) ? array_map('absint', $input['users']) : array()
+					);
+
+					// @todo Improve error handling
+					if(empty($group['name'])) {
+						$redirect_url = add_query_arg( array('errors' => 1 ));
+						wp_redirect($redirect_url);
+						return;
+					}
+
+					if( $group_id == -1 ) {
+						$groups->add_group($group);
+					} else {
+						$groups->update_group($group_id, $group);
+					}
+
+					$groups->update();
+
+					$redirect_url = remove_query_arg( array('action','id','tab'));
+					break;
+
+				case 'delete':
+					if( ! check_admin_referer( 'delete_section_editing_group' ) )
+						wp_die('Cheatin, uh?');
+
+					$groups->delete_group( $group_id );
+
+					$groups->update();
+
+					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
+					break;
+
 			}
 
-			// maybe use exceptions?
-			$groups->update_group((int) $_GET['id'], $args);
-			$groups->update();
+			if( $redirect_url )
+				wp_redirect($redirect_url);
 
-			// redirect to previous view
 		}
+
 	}
 
 	static function manage_groups_screen() {
 
 		$groups = BU_Edit_Groups::get_instance();
 
-		$id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : 0;
+		$group_id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : -1;
 		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
 		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'name';
 		
@@ -43,8 +76,11 @@ class BU_Groups_Admin {
 
 			case 'edit':
 				$template_path = 'interface/edit-group.php';
-				if( $id ) $group = $groups->get_group( $id );
-				else $group = new BU_Edit_Group();
+				$group = $groups->get( $group_id );
+
+				if( $group === false) 
+					$group = new BU_Edit_Group();
+				
 				break;
 
 			default:
@@ -58,35 +94,23 @@ class BU_Groups_Admin {
 		include $template_path;
 	}
 
-	static function group_edit_url( $action, $id = 0, $tab = 'name' ) {
+	static function group_edit_url( $id = -1, $tab = 'name' ) {
+		$page = admin_url('users.php?page=manage_groups');
 
-		$args = array( 'action' => $action, 'tab' => $tab );
-		if( $id ) $args['id'] = $id;
-
-		$url = add_query_arg($args);
+		$args = array( 'action' => 'edit', 'id' => $id, 'tab' => $tab );
+		$url = add_query_arg($args, $page);
 
 		return $url;
 	}
 
-	static function group_member_list( $id, $member_ids ) {
-		if( empty( $member_ids ) )
-			return;
+	static function group_delete_url( $id ) {
+		$page = admin_url('users.php?page=manage_groups');
 
-		$html = '';
-		$html .= "<ul>\n";
+		$url = remove_query_arg( array('tab','errors'), $page );
+		$url = add_query_arg( array('id' => $id, 'action' => 'delete' ), $url );
+		$url = wp_nonce_url( $url, 'delete_section_editing_group' );
 
-		$users = get_users( array( 'include' => $member_ids ) );
-
-		foreach( $users as $user ) {
-			$remove_url = self::group_edit_url( 'delete', $id, 'members' );
-			$remove_url = add_query_arg( array('action' => 'delete', 'member_id' => $user->ID ), $remove_url );
-			$remove_url = wp_nonce_url(  $remove_url, 'delete_group_member');
-
-			$html .= sprintf('<li>%s <a href="%s" class="alignright">Remove</a></li>', $user->display_name, $remove_url );
-		}
-
-		$html .= "</ul>\n";
-		echo $html;
+		return $url;
 	}
 }
 
@@ -105,16 +129,35 @@ class BU_Groups_Admin_Ajax {
 
 		$group_id = $_POST['group_id'];
 		$user_input = $_POST['user'];
+		$output = array();
 
-		$wp_user_search = new WP_User_Query( array( 'search' => $user_input ) );
-		$users = $wp_user_search->get_results();
+		$user = get_user_by( 'login', $user_input );
 
-		if( count($users) > 0 ) {
-			echo $users[0];
-		} else {
-			echo '<p>No user was found for: ' . $user_input . '</p>';
+		if( $user && is_user_member_of_blog( $user->ID ) ) {
+
+			// Check that we're not adding someone who already exists
+			if( $groups->has_user( $group_id, $user->ID ) ) {
+
+				$output['status'] = false;
+				$output['message'] = '<p>' . $user->user_login . ' is already a member of this group.</p>';
+
+			} else { // Otherwise pass on the user ID and status of success
+
+				$output['status'] = true;
+				$output['message'] = '<p>' . $user->user_login . ' added to this group.</p>';
+				$output['user_id'] = $user->ID;
+			
+			}
+
+		} else { // User was not found
+
+			$output['status'] = false;
+			$output['message'] = '<p>No user found for: ' . $user_input . '</p>';
+
 		}
 
+		header("Content-type: application/json");
+		echo json_encode( $output );
 		die();
 
 	}
@@ -124,11 +167,11 @@ class BU_Groups_Admin_Ajax {
 		$groups = BU_Edit_Groups::get_instance();
 		$user_input = $_POST['user'];
 
-		$wp_user_search = new WP_User_Query( array( 'search' => '*' . $user_input .'*' ) );
+		$wp_user_search = new WP_User_Query( array( 'blog_id' => 0, 'search' => '*' . $user_input .'*' ) );
 		$users = $wp_user_search->get_results();
 
+		header("Content-type: application/json");
 		echo json_encode( $users );
-
 		die();
 	}
 

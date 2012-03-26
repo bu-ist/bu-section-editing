@@ -164,27 +164,46 @@
 	margin-bottom: 25px;
 	padding: 10px;
 	border: 1px solid lightgray;
-	border-top:none;
+	border-top: none;
 }
 
 #section-group-editor .form-row {
 	margin-bottom: 10px;
 }
 
+/* Clearing */
+#group-stats-widget .actions:after {
+	display: block;
+	clear: both;
+	content: " ";
+	height: 0;
+	overflow: hidden;
+}
+
+/* Con javascript */
+
 body.js input[type="checkbox"] {
 	display: none;
 }
 
-/* Sans javascript */
-
-.no-js h2.nav-tab-wrapper {
-	display: none;
-}
-
-.no-js #add-group-members {
+body.js #group-member-list li {
 	display:none;
 }
 
-.no-js .remove_member {
+body.js #group-member-list li.active {
+	display:block;
+}
+
+/* Sans javascript */
+
+body.no-js h2.nav-tab-wrapper {
+	display: none;
+}
+
+body.no-js #add-group-members {
+	display:none;
+}
+
+body.no-js .remove_member {
 	display:none;
 }

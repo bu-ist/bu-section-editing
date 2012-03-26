@@ -13,19 +13,18 @@
 </div>
 
 <div id="group-members">
-	<h4>Editor Group List <span class="member-count"><?php echo '20 members'; ?></span></h4>
+	<h4>Editor Group List <span class="member-count"><?php echo count( $group->get_users() ); ?> members</span></h4>
 	<fieldset>
 		<ul id="group-member-list">
 			<?php $users = get_users(); ?>
 			<?php foreach( $users as $user ): ?>
-			<?php $checked = in_array( $user->ID, $group->users ) ? 'checked="checked"' : ''; ?>
-			<li class="member">
-				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[members]" value="<?php echo $user->ID; ?>" <?php echo $checked; ?> />
+			<?php $checked = $group->has_user( $user->ID ) ? 'checked="checked"' : ''; ?>
+			<li class="member<?php if( $group->has_user( $user->ID ) ): ?> active<?php endif; ?>" >
+				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[users][]" value="<?php echo $user->ID; ?>" <?php echo $checked; ?> />
 				<label for="member_<?php echo $user->ID; ?>"><?php echo $user->display_name; ?></label>
 				<a id="remove_member_<?php echo $user->ID; ?>" class="remove_member" href="#">Remove</a>
 			</li>
 			<?php endforeach; ?>
 		</ul>
-		<?php //BU_Groups_Admin::group_member_list($group->users); ?>
 	</fieldset>
 </div>

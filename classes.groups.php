@@ -22,20 +22,32 @@ class BU_Edit_Groups {
 		return BU_Edit_Groups::$instance;
 	}
 
-//___________________PUBLIC_INTERFACE_________________________
+	// ___________________PUBLIC_INTERFACE_____________________
 
+	public function get($id) {
+		if(isset($this->groups[$id])) {
+			return $this->groups[$id];
+		}
+
+		return false;
+	}
 
 	public function add_group($args) {
 		$args['name'] = strip_tags(trim($args['name']));
-		$args['description'] = strip_tags(trim($args['description']));
+		$args['users'] = array_map( 'absint', $args['users'] );
 
 		$group = new BU_Edit_Group($args);
+
+		error_log('Adding group:' );
+		error_log(print_r($group,true));
 		$this->add($group);
 	}
 
 	public function update_group($id, $args = array()) {
 		$group = $this->get($id);
 		if($group) {
+			error_log('Updating group:' );
+			error_log(print_r($group,true));
 			$group->update($args);
 		}
 	}
@@ -65,9 +77,12 @@ class BU_Edit_Groups {
 
 	public function has_user($groups, $user_id) {
 
+			if( ! is_array( $groups ) )
+				$groups = array( $groups );
+
 			foreach($groups as $group_id) {
 				$group = $this->get($group_id);
-				if($group->has_user($user_id)) {
+				if( $group && $group->has_user($user_id)) {
 					return true;
 				}
 			}
@@ -75,7 +90,15 @@ class BU_Edit_Groups {
 			return false;
 	}
 
-//___________________HELPERS________________________
+	public function update() {
+		return update_option($this->option_name, $this->groups);
+	}
+
+	public function delete() {
+		return delete_option($this->option_name);
+	}
+
+	// ____________________HELPERS________________________
 
 	private function load() {
 		$groups = get_option($this->option_name);
@@ -86,24 +109,13 @@ class BU_Edit_Groups {
 		array_push($this->groups, $group);
 	}
 
-	private function get($id) {
-		if(isset($this->groups[$id])) {
-			return $this->groups[$id];
-		}
-	}
-
-	private function update() {
-		update_option($this->option_name, $this->groups);
-	}
-
-	private function delete() {
-		delete_option($this->option_name);
-	}
-
 }
 
 /**
  * Class for listing groups (designed to be extended)
+ *
+ * @todo Fix reliance on array index as group ID (breaks when group ID's are not sequential)
+ * 
  */
 class BU_Groups_List {
 
@@ -164,6 +176,7 @@ class BU_Edit_Group {
 			'description' => 'My group description',
 			'users' => array()
 			);
+
 		return apply_filters( 'bu_section_edit_group_fields', $fields );
 	}
 
@@ -193,9 +206,15 @@ class BU_Edit_Group {
 
 		$updated = array_merge($current, $args);
 
+		error_log('Current group: ' );
+		error_log( print_r($current,true ) );
+
 		$this->name = $updated['name'];
 		$this->description = $updated['description'];
 		$this->users = $updated['users'];
+
+		error_log('Updated group: ' );
+		error_log( print_r($updated,true ) );
 	}
 
 	public function get_name() {
