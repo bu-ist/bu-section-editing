@@ -2,6 +2,8 @@
 
 class BU_Groups_Admin {
 
+	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
+
 	static function load_manage_groups() {
 		
 		if( isset($_REQUEST['action']) ) {
@@ -11,6 +13,13 @@ class BU_Groups_Admin {
 			$redirect_url = '';
 
 			switch( $_REQUEST['action'] ) {
+
+				case 'edit':
+					$group = $groups->get( $group_id );
+
+					if( $group === false )
+						wp_die("The requested section editing group ($group_id) does not exists");					
+					break;
 
 				case 'update':
 					if( ! check_admin_referer( 'update_section_editing_group' ) )
@@ -71,13 +80,14 @@ class BU_Groups_Admin {
 
 		switch( $action ) {
 
+			case 'add':
+				$template_path = 'interface/edit-group.php';
+				$group = new BU_Edit_Group();
+				break;
+
 			case 'edit':
 				$template_path = 'interface/edit-group.php';
 				$group = $groups->get( $group_id );
-
-				if( $group === false) 
-					$group = new BU_Edit_Group();
-				
 				break;
 
 			default:
@@ -91,8 +101,17 @@ class BU_Groups_Admin {
 		include $template_path;
 	}
 
+	static function group_add_url( $tab = 'name' ) {
+		$page = admin_url(self::MANAGE_GROUPS_PAGE);
+
+		$args = array( 'action' => 'add', 'tab' => $tab );
+		$url = add_query_arg($args, $page);
+
+		return $url;
+	}
+
 	static function group_edit_url( $id = -1, $tab = 'name' ) {
-		$page = admin_url('users.php?page=manage_groups');
+		$page = admin_url(self::MANAGE_GROUPS_PAGE);
 
 		$args = array( 'action' => 'edit', 'id' => $id, 'tab' => $tab );
 		$url = add_query_arg($args, $page);
@@ -101,7 +120,7 @@ class BU_Groups_Admin {
 	}
 
 	static function group_delete_url( $id ) {
-		$page = admin_url('users.php?page=manage_groups');
+		$page = admin_url(self::MANAGE_GROUPS_PAGE);
 
 		$url = remove_query_arg( array('tab','errors'), $page );
 		$url = add_query_arg( array('id' => $id, 'action' => 'delete' ), $url );

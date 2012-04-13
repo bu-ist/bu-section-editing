@@ -1,7 +1,7 @@
 <div class="wrap">
 	<?php screen_icon(); ?>
 	<h2>Edit Group</h2>
-	<p><a href="<?php echo BU_Groups_Admin::group_edit_url(); ?>" class="button-secondary">Add a Editor Group</a></p>
+	<p><a href="<?php echo BU_Groups_Admin::group_add_url(); ?>" class="button-secondary">Add a Editor Group</a></p>
 	<table class="widefat">
 		<thead>
 			<tr>
