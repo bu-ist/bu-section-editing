@@ -31,7 +31,7 @@ class BU_Groups_Admin {
 					if( $group_id > 0 ) {
 						$groups->update_group($group_id, $group_data);
 					} else {
-						$test = $groups->add_group($group_data);
+						$groups->add_group($group_data);
 					}
 
 					$groups->save();
