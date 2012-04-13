@@ -15,10 +15,20 @@ class BU_Edit_Groups {
 
 	static protected $instance;
 
+	/**
+	 * Load groups and index from db on instantiation
+	 * 
+	 * Usage of global singleton pattern assures this method is only called once
+	 */ 
 	protected function __construct() {
+
 		$this->load();
+		
 	}
 
+	/**
+	 * Generates/fetches global singleton instance
+	 */ 
 	static public function get_instance() {
 
 		if(!isset(BU_Edit_Groups::$instance)) {
@@ -30,6 +40,13 @@ class BU_Edit_Groups {
 
 	// ___________________PUBLIC_INTERFACE_____________________
 
+
+	/**
+	 * Returns a group by id from internal groups array
+	 * 
+	 * @param int $id edit group ID to return
+	 * @return BU_Edit_Group|bool a BU_Edit_Group object if one exists, otherwise false
+	 */ 
 	public function get($id) {
 
 		foreach( $this->groups as $group ) {
