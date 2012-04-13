@@ -35,7 +35,7 @@
 /* Name panel */
 #section-group-editor #group-name-panel fieldset {
 	border:none;
-	background-color:none;
+	background:none;
 	margin-top:25px;
 }
 
