@@ -4,6 +4,55 @@ class BU_Groups_Admin {
 
 	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
 
+	public static $manage_groups_hook;
+
+	/**
+	 * Register for admin hooks
+	 * 
+	 * Called from main plugin class during init
+	 */ 
+	public static function register_hooks() {
+
+		add_action('admin_menu', array( 'BU_Groups_Admin','admin_menus'));
+		add_action('admin_enqueue_scripts', array( 'BU_Groups_Admin', 'admin_scripts' ) );
+
+	}
+
+	/**
+	 * Add manage groups page
+	 * 
+	 * @hook admin_menus
+	 */ 
+	public static function admin_menus() {
+
+		$hook = add_users_page('Section Editor Permissions', 'Section Editor Permissions', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
+		self::$manage_groups_hook = $hook;
+
+		add_action('load-' . $hook, array( 'BU_Groups_Admin', 'load_manage_groups'), 1);
+
+	}
+
+	/**
+	 * Register manage group css/js
+	 * 
+	 * @hook admin_enqueue_scripts
+	 */ 
+	public static function admin_scripts( $hook ) {
+
+		if( $hook == self::$manage_groups_hook ) {
+			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery') );
+			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ) );
+		}
+
+	}
+
+	/**
+	 * Handle page load for manage groups, pre-headers send
+	 * 
+	 * @hook load-users_page_manage_groups
+	 * 
+	 * This method handles $_REQUEST data and redirection before page is loaded
+	 */ 
 	static function load_manage_groups() {
 		
 		if( isset($_REQUEST['action']) ) {
@@ -30,7 +79,7 @@ class BU_Groups_Admin {
 					// if no users are set, array key for users won't exist
 					if( ! isset($group_data['users']) ) $group_data['users'] = array();
 
-					// @todo Improve error handling
+					// @todo Move validation to controller/model layer?
 					if(empty($group_data['name'])) {
 						$redirect_url = add_query_arg( array('errors' => 1 ));
 						wp_redirect($redirect_url);
@@ -68,6 +117,11 @@ class BU_Groups_Admin {
 
 	}
 
+	/**
+	 * Display the manage groups admin screen
+	 * 
+	 * Attached on add_users_page, called during admin_menus
+	 */  
 	static function manage_groups_screen() {
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -100,6 +154,7 @@ class BU_Groups_Admin {
 		// Render screen
 		include $template_path;
 	}
+
 
 	static function group_add_url( $tab = 'name' ) {
 		$page = admin_url(self::MANAGE_GROUPS_PAGE);
