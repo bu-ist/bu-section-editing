@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Section editor group controller
  * 
@@ -6,8 +7,11 @@
  */
 class BU_Edit_Groups {
 
-	public $option_name = '_bu_section_groups';
+	const OPTION_NAME = '_bu_section_groups';
+	const INDEX_NAME = '_bu_section_groups_index';
+
 	public $groups = array();
+	public $index = null;
 
 	static protected $instance;
 
@@ -16,106 +20,242 @@ class BU_Edit_Groups {
 	}
 
 	static public function get_instance() {
+
 		if(!isset(BU_Edit_Groups::$instance)) {
 			BU_Edit_Groups::$instance = new BU_Edit_Groups();
 		}
+
 		return BU_Edit_Groups::$instance;
 	}
 
 	// ___________________PUBLIC_INTERFACE_____________________
 
 	public function get($id) {
-		if(isset($this->groups[$id])) {
-			return $this->groups[$id];
+
+		foreach( $this->groups as $group ) {
+			if( $group->id == $id )
+				return $group;
 		}
 
 		return false;
 	}
 
+	/**
+	 * Add a new section editing group
+	 * 
+	 * @param array $args an array of parameters for group initialization
+	 * @return BU_Edit_Group the group that was just added
+	 */ 
 	public function add_group($args) {
+
+		// sanitize
 		$args['name'] = strip_tags(trim($args['name']));
-		$args['users'] = array_map( 'absint', $args['users'] );
+		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
+		// create group
 		$group = new BU_Edit_Group($args);
+		
+		// update attributes
+		$group->id = $this->index;
+		$group->created = time();
+		$group->modified = time();
 
-		error_log('Adding group:' );
-		error_log(print_r($group,true));
+		// add to internal array & increment group index counter
 		$this->add($group);
+		$this->increment_index();
+
+		add_action( 'bu_add_section_editing_group', $group );
+
+		return $group;
+
 	}
 
+	/**
+	 * Update an existing section editing group
+	 * 
+	 * @param int $id the id of the group to update
+	 * @param array $args an array of parameters with group fields to update
+	 * @return BU_Edit_Group|bool the group that was just updated or false if none existed
+	 */
 	public function update_group($id, $args = array()) {
+
 		$group = $this->get($id);
+
 		if($group) {
-			error_log('Updating group:' );
-			error_log(print_r($group,true));
+
 			$group->update($args);
+			$group->modified = time();
+
+			return $group;
+
 		}
+
+		return false;
+
 	}
 
+	/**
+	 * Delete an existing section editing group
+	 * 
+	 * @param int $id the id of the group to delete
+	 * @return bool true on success, false on failure
+	 */
 	public function delete_group($id) {
-		if($this->get($id)) {
-			unset($this->groups[$id]);
+
+		foreach( $this->groups as $index => $group ) {
+
+			if( $group->id == $id) {
+
+				unset($this->groups[$index]);
+				$this->groups = array_values($this->groups);	// reindex
+				return true;
+			
+			}
 		}
+
+		return false;
+
 	}
 
-	public function find_user($user_id) {
+	/**
+	 * Returns an array of group ID's for which the specified user is a member
+	 * 
+	 * @param int $user_id WordPress user id
+	 * @return array array of group ids for which the specified user belongs
+	 */ 
+	public function find_groups_for_user($user_id) {
+		
 		$groups = array();
+		
 		foreach ($this->groups as $group) {
 			if($group->has_user($user_id)) {
 				array_push($groups, $group);
 			}
 		}
+
 		return $groups;
 	}
 
-	public function delete_user($user_id) {
-		$groups = $this->find_user($user_id);
-		foreach($groups as $group) {
-			$group->remove_user($user_id);
-		}
-	}
-
+	/**
+	 * Returns whether or not a user exists in an array of edit groups
+	 * 
+	 * @param array $groups an array of BU_Edit_Group objects to check
+	 * @param int $user_id WordPress user id to check
+	 */ 
 	public function has_user($groups, $user_id) {
 
 			if( ! is_array( $groups ) )
 				$groups = array( $groups );
 
 			foreach($groups as $group_id) {
+
 				$group = $this->get($group_id);
+				
 				if( $group && $group->has_user($user_id)) {
 					return true;
 				}
+
 			}
 
 			return false;
 	}
 
-	public function update() {
-		return update_option($this->option_name, $this->groups);
+	// not currently used, possibly delete
+	public function delete_user($user_id) {
+
+		$groups = $this->find_groups_for_user($user_id);
+		
+		foreach($groups as $group) {
+			$group->remove_user($user_id);
+		}
+
 	}
 
-	public function delete() {
-		return delete_option($this->option_name);
+	/**
+	 * Convert internal BU_Edit_Group array to data array and commit to db
+	 * 
+	 * @return bool true on succesfully save, false on failure
+	 */ 
+	public function save() {
+
+		$group_data = array();
+
+		foreach( $this->groups as $group ) {
+			$group_data[] = $group->get_attributes();
+		}
+
+		return $this->update( $group_data );
+
 	}
 
 	// ____________________HELPERS________________________
-
+	
+	/**
+	 * Load group data models and group index counter from database
+	 */ 
 	private function load() {
-		$groups = get_option($this->option_name);
-		if(is_array($groups)) $this->groups = $groups;
+
+		$groups = get_option(self::OPTION_NAME);
+
+		// create groups from db data
+		if(is_array($groups)) {
+
+			foreach( $groups as $group_data ) {
+
+				$group = new BU_Edit_Group( $group_data );
+				$this->add($group);
+
+			}
+
+		}
+
+		// Auto-increment index (starts at 1)
+		$index = get_option(self::INDEX_NAME);
+		if( $index === false ) $index = 1;
+
+		$this->index = $index;
+
 	}
 
-	private function add(BU_Edit_Group $group) {
+	/**
+	 * Add a BU_Edit_Group object to internal groups array
+	 */ 
+	private function add( BU_Edit_Group $group ) {
+
 		array_push($this->groups, $group);
+
+	}
+
+	/**
+	 * Commit section editing group data to database
+	 */ 
+	private function update( $group_data ) {
+
+		return update_option(self::OPTION_NAME, $group_data );
+	
+	}
+
+	/**
+	 * Remove section editing group data from database
+	 */ 
+	private function delete() {
+
+		return delete_option(self::OPTION_NAME);
+	
+	}
+
+	/**
+	 * Simulates MySQL autoincrement for group ID field
+	 */ 
+	private function increment_index() {
+		$this->index++;
+		return update_option( self::INDEX_NAME, $this->index );
 	}
 
 }
 
 /**
- * Class for listing groups (designed to be extended)
- *
- * @todo Fix reliance on array index as group ID (breaks when group ID's are not sequential)
- * 
+ * Class for listing groups (designed to be extended) 
  */
 class BU_Groups_List {
 
@@ -137,7 +277,7 @@ class BU_Groups_List {
 
 	function the_group() {
 		$this->current_group++;
-		return $this->edit_groups->get($this->current_group);
+		return $this->edit_groups->groups[$this->current_group];
 	}
 
 	function rewind() {
@@ -151,89 +291,131 @@ class BU_Groups_List {
  */ 
 class BU_Edit_Group {
 
-	public $name = null;
-	public $description = null;
-	public $users = array();
+	private $id = null;
+	private $name = null;
+	private $description = null;
+	private $users = array();
+	private $created = null;
+	private $modified = null;
 
-	function __construct($args = array()) {
+	const META_KEY = '_bu_section_group';
+
+	/**
+	 * Instantiate new edit group
+	 * 
+	 * @param array $args optional parameter list to merge with defaults
+	 */ 
+	function __construct( $args = array() ) {
+
+		// Merge defaults
 		$defaults = $this->defaults();
-
 		$args = wp_parse_args( $args, $defaults );
 
-		$this->name = $args['name'];
-		$this->description = $args['description'];
-
-		if(isset($args['users']) && is_array($args['users'])) {
-			foreach($args['users'] as $user) {
-				$this->add_user($user);
-			}
+		// Update fields based on incoming parameter list
+		$fields = array_keys($this->get_attributes());
+		foreach( $fields as $key ) {
+			$this->$key = $args[$key];
 		}
+
 	}
 
+	/**
+	 * Returns an array with default parameter values for edit group
+	 * 
+	 * @return array default values for edit group model
+	 */ 
 	private function defaults() {
+		
 		$fields = array(
-			'name' => 'New group',
-			'description' => 'My group description',
-			'users' => array()
+			'id' => -1,
+			'name' => '',
+			'description' => '',
+			'users' => array(),
+			'created' => time(),
+			'modified' => time()
 			);
 
-		return apply_filters( 'bu_section_edit_group_fields', $fields );
+		return $fields;
 	}
 
+	/**
+	 * Does the specified user exist for this group?
+	 * 
+	 * @return bool true if user exists, false otherwise
+	 */ 
 	public function has_user($user_id) {
 		return in_array($user_id, $this->users);
 	}
 
+	/**
+	 * Add a new user to this group
+	 * 
+	 * @param int $user_id WordPress user ID to add for this group
+	 */ 
 	public function add_user($user_id) {
+
 		// need to make sure the user is a member of the site
 		if(!$this->has_user($user_id)) {
 			array_push($this->users, $user_id);
 		}
+
 	}
 
+	/**
+	 * Remove a user from this group
+	 * 
+	 * @param int $user_id WordPress user ID to remove from this group
+	 */ 
 	public function remove_user($user_id) {
+		
 		if($this->have_user($user_id)) {
 			unset($this->users[array_search($user_id, $this->users)]);
 		}
+
 	}
 
+	/**
+	 * Update data fields for this group
+	 * 
+	 * @param array $args an array of key => value parameters to update
+	 */ 
 	public function update($args = array()) {
-		$current = array(
-			'name' => $this->name,
-			'description' => $this->description,
-			'users' => $this->users
-		);
 
-		$updated = array_merge($current, $args);
+		$valid_fields = array_keys( $this->get_attributes() );
 
-		error_log('Current group: ' );
-		error_log( print_r($current,true ) );
+		foreach( $args as $key => $val ) {
+			if( in_array($key, $valid_fields))
+				$this->$key = $val;
+		}
 
-		$this->name = $updated['name'];
-		$this->description = $updated['description'];
-		$this->users = $updated['users'];
-
-		error_log('Updated group: ' );
-		error_log( print_r($updated,true ) );
 	}
 
-	public function get_name() {
-		return $this->name;
+	public function get_attributes() {
+
+		return get_object_vars( $this );
+
 	}
 
-	public function get_description() {
-		return $this->description;
+	public function __get( $key ) {
+
+		if( isset( $this->$key ) )
+			return $this->$key;
+
+		return null;
 	}
 
-	public function get_users() {
-		return $this->users;
+	public function __set( $key, $val ) {
+
+		$this->$key = $val;
+	
 	}
 
 	/**
 	 * Unfinished.
 	 */
-	function get_posts() {
-		$query = new WP_Query();
+	public function get_posts() {
+		$query = new WP_Query( array('meta_key' => self::META_KEY, 'meta_value' => $this->id ) );
+		return $query->posts;
 	}
 }
 

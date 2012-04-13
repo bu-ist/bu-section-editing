@@ -6,7 +6,7 @@
 <div id="group-stats-widget">
 	<ul>
 		<li><span class="title">Group Name:</span> <span id="group-stats-name"><?php echo ''; ?></span></li>
-		<li><span class="title">Group Members:</span> <span id="group-stats-count"><?php echo count( $group->get_users() ); ?></span></li>
+		<li><span class="title">Group Members:</span> <span id="group-stats-count"><?php echo count( $group->users ); ?></span></li>
 		<li><span class="title">Permissions:</span> <span id="group-stats-permissions"><a href="#">Add Permissions</a></span></li>
 	</ul>
 	<div class="actions">

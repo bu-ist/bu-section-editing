@@ -13,7 +13,7 @@
 </div>
 
 <div id="group-members">
-	<h4>Editor Group List <span class="member-count"><?php echo count( $group->get_users() ); ?> members</span></h4>
+	<h4>Editor Group List <span class="member-count"><?php echo count( $group->users ); ?> members</span></h4>
 	<fieldset>
 		<ul id="group-member-list">
 			<?php $users = get_users(); ?>

@@ -19,9 +19,9 @@
 	<?php if($group_list->have_groups()): ?>
 		<?php while($group_list->have_groups()): $group = $group_list->the_group(); ?>
 		<tr>
-			<td><?php echo $group->get_name(); ?></td>
-			<td><a href="<?php echo BU_Groups_Admin::group_edit_url( $group_list->current_group ); ?>">Edit</a> |
-				<a class="submitdelete" href="<?php echo BU_Groups_Admin::group_delete_url( $group_list->current_group ); ?>">Delete</a>
+			<td><?php echo $group->name; ?></td>
+			<td><a href="<?php echo BU_Groups_Admin::group_edit_url( $group->id ); ?>">Edit</a> |
+				<a class="submitdelete" href="<?php echo BU_Groups_Admin::group_delete_url( $group->id ); ?>">Delete</a>
 			</td>
 		</tr>
 		<?php endwhile; ?>

@@ -173,20 +173,30 @@ class BU_Section_Editing_Roles {
  */ 
 class BU_Section_Editor {
 
+	/**
+	 * Checks whether or not a specific user can edit a post
+	 */ 
 	static function can_edit($post_id, $user_id)  {
 
 		if($user_id == 0) return false;
 
 		$user = get_userdata($user_id);
 
+		// Is this user a section editor?
 		if($user && in_array('section_editor', $user->roles)) {
+
+			// Get groups associated with post
 			$post = get_post($post_id, OBJECT, null);
-			$groups = get_post_meta($post_id, 'bu_group');
+			$groups = get_post_meta($post_id, BU_Edit_Group::META_KEY );
 			$edit_groups_o = BU_Edit_Groups::get_instance();
+
+			// Search attached groups for current user
 			if($edit_groups_o->has_user($groups, $user_id)) {
 				return true;
 			} else {
+				// Check post ancestors for permissions
 				$ancestors = get_post_ancestors($post);
+
 				// iterate through ancestors; needs to be optimized
 				foreach(array_reverse($ancestors) as $ancestor_id) {
 					$groups = get_post_meta($ancestor_id, 'bu_group');
@@ -195,15 +205,15 @@ class BU_Section_Editor {
 					}
 				}
 			}
-
 			return false;
 		}
-
 		return true;
 	}
 
 	/**
 	 * Filter that modifies the caps based on the current state.
+	 * 
+	 * @todo Modify to check custom post type capabiltiies (not just pages)
 	 *
 	 * @param type $caps
 	 * @param type $cap
@@ -213,6 +223,7 @@ class BU_Section_Editor {
 	 */
 	static function map_meta_cap($caps, $cap, $user_id, $args) {
 
+		// edit_page and delete_page get a post ID passed, but publish does not
 		if( isset( $args[0] ) )
 			$post_id = $args[0];
 

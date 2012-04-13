@@ -16,28 +16,25 @@ class BU_Groups_Admin {
 					if( ! check_admin_referer( 'update_section_editing_group' ) )
 						wp_die('Cheatin, uh?');
 
-					$input = $_POST['group'];
+					$group_data = $_POST['group'];
 
-					// Sanitization
-					$group = array(
-						'name' => strip_tags(trim($input['name'])),
-						'users' => isset($input['users']) ? array_map('absint', $input['users']) : array()
-					);
+					// if no users are set, array key for users won't exist
+					if( ! isset($group_data['users']) ) $group_data['users'] = array();
 
 					// @todo Improve error handling
-					if(empty($group['name'])) {
+					if(empty($group_data['name'])) {
 						$redirect_url = add_query_arg( array('errors' => 1 ));
 						wp_redirect($redirect_url);
 						return;
 					}
 
-					if( $group_id == -1 ) {
-						$groups->add_group($group);
+					if( $group_id > 0 ) {
+						$groups->update_group($group_id, $group_data);
 					} else {
-						$groups->update_group($group_id, $group);
+						$test = $groups->add_group($group_data);
 					}
 
-					$groups->update();
+					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','id','tab'));
 					break;
@@ -48,7 +45,7 @@ class BU_Groups_Admin {
 
 					$groups->delete_group( $group_id );
 
-					$groups->update();
+					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
 					break;
@@ -162,12 +159,18 @@ class BU_Groups_Admin_Ajax {
 
 	}
 
+	/**
+	 * Find users for this site who we might want to add to this group
+	 * 
+	 * @todo need some logic related to whether or not a user needs permissions,
+	 * based on their user role/capabilities
+	 */ 
 	static function find_user() {
 
 		$groups = BU_Edit_Groups::get_instance();
 		$user_input = $_POST['user'];
 
-		$wp_user_search = new WP_User_Query( array( 'blog_id' => 0, 'search' => '*' . $user_input .'*' ) );
+		$wp_user_search = new WP_User_Query( array( 'blog_id' => 0, 'search' => '*' . $user_input .'*', 'role' => 'section_editor' ) );
 		$users = $wp_user_search->get_results();
 
 		header("Content-type: application/json");
