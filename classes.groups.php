@@ -205,12 +205,10 @@ class BU_Edit_Groups {
 
 	}
 
-	// ____________________HELPERS________________________
-	
 	/**
 	 * Load group data models and group index counter from database
 	 */ 
-	private function load() {
+	public function load() {
 
 		$groups = get_option(self::OPTION_NAME);
 
@@ -234,6 +232,8 @@ class BU_Edit_Groups {
 
 	}
 
+	// ____________________HELPERS________________________
+	
 	/**
 	 * Add a BU_Edit_Group object to internal groups array
 	 */ 
