@@ -58,6 +58,16 @@ class BU_Edit_Groups {
 	}
 
 	/**
+	 * Return an array of all groups
+	 * 
+	 * @return type 
+	 */
+	public function get_groups() {
+
+		return $this->groups;
+	}
+
+	/**
 	 * Add a new section editing group
 	 * 
 	 * @param array $args an array of parameters for group initialization
@@ -132,6 +142,14 @@ class BU_Edit_Groups {
 
 		return false;
 
+	}
+
+	/**
+	 * Remove all groups from internal array 
+	 */
+	public function delete_groups() {
+
+		$this->groups = array();
 	}
 
 	/**

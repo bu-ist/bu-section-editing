@@ -10,14 +10,8 @@ class Test_BU_Section_Editing extends WPTestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * Tests needed
-	 * 
-	 * Add/remove users from groups
-	 * Assign group permissions to content objects
-	 *
-	 */
-
+	//________________________GROUP CONTROLLER TESTS_______________________
+	
 	/**
 	 * Test proper creation of BU_Edit_Group object from key/value parameter list 
 	 */
@@ -40,13 +34,13 @@ class Test_BU_Section_Editing extends WPTestCase {
 		$controller = BU_Edit_Groups::get_instance();
 
 		// This should be a method
-		$groups_before = $controller->groups;
+		$groups_before = $controller->get_groups();
 		
 		$group_args = $this->generate_test_group_args();
 		$group = $controller->add_group( $group_args );
 
 		// This should be a method (get_groups)
-		$groups_after = $controller->groups;
+		$groups_after = $controller->get_groups();
 
 		$this->assertNotEquals( $groups_before, $groups_after );
 		$this->assertContains( $group, $groups_after );
@@ -59,7 +53,9 @@ class Test_BU_Section_Editing extends WPTestCase {
 		
 		$controller = BU_Edit_Groups::get_instance();
 		
-		$createdgroup = $this->quick_add_group( array('name' => 'Test group for getting' ) );
+		$this->quick_add_group( array('name' => 'Test group for getting' ) );
+
+		$createdgroup = end($controller->get_groups());
 		$fetchedgroup = $controller->get( $createdgroup->id );
 
 		$this->assertSame( $createdgroup, $fetchedgroup );
@@ -73,15 +69,16 @@ class Test_BU_Section_Editing extends WPTestCase {
 		
 		$controller = BU_Edit_Groups::get_instance();
 		
-		$group = $this->quick_add_group( array('name' => 'Test group for deleting' ) );
+		$this->quick_add_group( array('name' => 'Test group for deleting' ) );
+		$group = end($controller->get_groups());
 		
 		// This should be a method
-		$groups_before = $controller->groups;
+		$groups_before = $controller->get_groups();
 		
 		$controller->delete_group( $group->id );
 		
 		// This should be a method (get_groups)
-		$groups_after = $controller->groups;
+		$groups_after = $controller->get_groups();
 
 		$this->assertNotContains( $group, $groups_after );
 		$this->assertNotEquals( $groups_before, $groups_after );
@@ -98,7 +95,7 @@ class Test_BU_Section_Editing extends WPTestCase {
 		$this->quick_add_group( array('name' => 'Test group for updating' ) );	
 
 		// Make a copy so it doesn't get updated
-		$originalgroup = clone end( $controller->groups );
+		$originalgroup = clone end( $controller->get_groups() );
 
 		// Modify group
 		$update_args = array(
@@ -120,12 +117,67 @@ class Test_BU_Section_Editing extends WPTestCase {
 	}
 
 	/**
-	 * Test save 
+	 * Test save to DB
 	 */
+	function test_save_section_editing_groups() {
+
+		// Start fresh
+		$controller = BU_Edit_Groups::get_instance();
+		$controller->delete_groups();
+		
+		// Generate 3 random groups
+		$args = $this->generate_test_group_args();
+		$this->quick_add_group( $args, 3 );
+
+		// Save
+		$result = $controller->save();
+
+		$this->assertNotEquals( $result, false );
+
+		// Cleanup
+		$controller->delete_groups();
+		$controller->save();
+	}
 
 	/**
-	 * Test load 
+	 * Test load from DB
 	 */
+	function test_load_section_editing_groups() {
+
+		// Start fresh
+		$controller = BU_Edit_Groups::get_instance();
+		$controller->delete_groups();
+
+		// Generate 3 random groups
+		$args = $this->generate_test_group_args();
+		$this->quick_add_group( $args, 3 );
+
+		// Save test groups
+		$result = $controller->save();
+
+		// Reset internal groups array
+		$controller->delete_groups();
+		
+		// Re-load from db
+		$controller->load();
+
+		$this->assertCount( 3, $controller->get_groups() );
+
+		foreach( $controller->get_groups() as $group ) {
+			
+			$this->assertInstanceOf( 'BU_Edit_Group', $group );
+			$this->assertEquals( 'Test Group 1', $group->name );
+			$this->assertEquals( 'Group for testing', $group->description );
+			$this->assertEquals( array(1,2), $group->users );
+			
+		}
+
+		// Cleanup
+		$controller->delete_groups();
+		$controller->save();
+
+	}
+	
 
 	//_______________________HELPERS___________________________
 	
@@ -140,13 +192,15 @@ class Test_BU_Section_Editing extends WPTestCase {
 		return wp_parse_args( $args, $group_args );
 	}
 
-	function quick_add_group( $args = array() ) {
+	function quick_add_group( $args = array(), $count = 1 ) {
 		
 		$controller = BU_Edit_Groups::get_instance();
 	
 		$group_args = $this->generate_test_group_args( $args );
 		
-		return $controller->add_group( $group_args );
+		for( $i = 0; $i < $count; $i++ ) {
+			$controller->add_group( $group_args );
+		}
 		
 	}
 	
