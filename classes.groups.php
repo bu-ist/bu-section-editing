@@ -76,7 +76,7 @@ class BU_Edit_Groups {
 	public function add_group($args) {
 
 		// sanitize
-		$args['name'] = strip_tags(trim($args['name']));
+		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
 		// create group
@@ -110,7 +110,12 @@ class BU_Edit_Groups {
 
 		if($group) {
 
+			// sanitize
+			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
+			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+
 			$group->update($args);
+
 			$group->modified = time();
 
 			return $group;
