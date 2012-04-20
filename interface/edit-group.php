@@ -2,7 +2,7 @@
 	<?php screen_icon(); ?>
 	<h2>Edit Group</h2>
 	<?php /* @todo Better error handling */ ?>
-	<?php if( isset($_GET['errors'])): ?><div class="error"><p>Error saving group!</p></div><? endif; ?>
+	<?php if( isset($_GET['errors'])): ?><div class="error"><p>Error saving group!</p></div><?php endif; ?>
 	<div class="form-wrap">
 		<!-- Tab Interface -->
 		<h2 class="nav-tab-wrapper">
