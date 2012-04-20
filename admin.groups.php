@@ -215,7 +215,7 @@ class BU_Groups_Admin_Ajax {
 			// For now we are limiting group membership to section editors
 			// @todo move this check to an isolated class/method so that we can
 			// easily switch this behavior later if needed 
-			if( in_array( 'section_editor', $user->roles ) ) {
+			if( is_array( $user->roles ) && in_array( 'section_editor', $user->roles ) ) {
 
 				$output['status'] = true;
 				$output['user_id'] = $user->ID;

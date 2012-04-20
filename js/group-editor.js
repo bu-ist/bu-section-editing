@@ -114,7 +114,9 @@ jQuery(document).ready(function($){
 			},
 			error: function(response) {
 
-				$('#members-message').attr('class', 'error').html( response.message ).fadeIn();
+				// @todo handle ajax errors more gracefully
+				console.log(response);
+				//$('#members-message').attr('class', 'error').html( response ).fadeIn();
 			
 			}
 		});
