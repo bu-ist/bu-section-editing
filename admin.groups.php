@@ -212,10 +212,49 @@ class BU_Groups_Admin_Ajax {
 
 		if( $user && is_user_member_of_blog( $user->ID ) ) {
 
+			$roles = array();
+
+			/* 
+			 * WP 3.1 doesn't return $user->roles (fixed in ???)
+			 */
+			if( ! isset ( $user->roles ) ) {
+
+				/* Option One */
+
+				/*
+				global $wpdb;
+
+				$capabilities = $user->{$wpdb->prefix . 'capabilities'};
+
+				if( !isset( $wp_roles ) )
+					$wp_roles = new WP_Roles();
+
+				foreach( $wp_roles->role_names as $role => $name ) {
+
+					if ( array_key_exists( $role, $capabilities ) )
+						$roles[] = $role;
+				}
+				*/
+
+				/* Option Two */
+				$temp_user = new WP_User( $user->ID );
+				
+				if( !empty( $temp_user->roles ) && is_array( $temp_user->roles ) ) {
+					foreach( $temp_user->roles as $role ) {
+						$roles[] = $role;
+					}
+				}
+
+			} else {
+
+				$roles = $user->roles;
+			
+			}
+
 			// For now we are limiting group membership to section editors
 			// @todo move this check to an isolated class/method so that we can
 			// easily switch this behavior later if needed 
-			if( is_array( $user->roles ) && in_array( 'section_editor', $user->roles ) ) {
+			if( in_array( 'section_editor', $roles ) ) {
 
 				$output['status'] = true;
 				$output['user_id'] = $user->ID;
@@ -228,6 +267,7 @@ class BU_Groups_Admin_Ajax {
 				$output['user_id'] = $user->ID;
 			
 			}
+
 
 		} else { // User was not found
 
