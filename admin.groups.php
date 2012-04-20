@@ -25,7 +25,7 @@ class BU_Groups_Admin {
 	 */ 
 	public static function admin_menus() {
 
-		$hook = add_users_page('Section Editor Permissions', 'Section Editor Permissions', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
+		$hook = add_users_page('Section Groups', 'Section Groups', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
 		self::$manage_groups_hook = $hook;
 
 		add_action('load-' . $hook, array( 'BU_Groups_Admin', 'load_manage_groups'), 1);
@@ -194,6 +194,12 @@ class BU_Groups_Admin_Ajax {
 
 	}
 
+	/**
+	 * @todo Rename this method -- it doesn't actally add a member, just verifys
+	 * that they are an existing member of the site and have the correct role/capabilities to
+	 * be a member of a section editing group.
+	 * 
+	 */ 
 	static function add_member() {
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -206,16 +212,19 @@ class BU_Groups_Admin_Ajax {
 
 		if( $user && is_user_member_of_blog( $user->ID ) ) {
 
-			// Check that we're not adding someone who already exists
-			if( $groups->has_user( $group_id, $user->ID ) ) {
+			// For now we are limiting group membership to section editors
+			// @todo move this check to an isolated class/method so that we can
+			// easily switch this behavior later if needed 
+			if( in_array( 'section_editor', $user->roles ) ) {
 
-				$output['status'] = false;
-				$output['message'] = '<p>' . $user->user_login . ' is already a member of this group.</p>';
+				$output['status'] = true;
+				$output['user_id'] = $user->ID;
+
 
 			} else { // Otherwise pass on the user ID and status of success
 
-				$output['status'] = true;
-				$output['message'] = '<p>' . $user->user_login . ' added to this group.</p>';
+				$output['status'] = false;
+				$output['message'] = '<p>' . $user->user_login . ' is not a section editor.</p>';
 				$output['user_id'] = $user->ID;
 			
 			}
@@ -223,7 +232,7 @@ class BU_Groups_Admin_Ajax {
 		} else { // User was not found
 
 			$output['status'] = false;
-			$output['message'] = '<p>No user found for: ' . $user_input . '</p>';
+			$output['message'] = '<p>' . $user_input . ' is not a member of this site.</p>';
 
 		}
 
@@ -244,6 +253,9 @@ class BU_Groups_Admin_Ajax {
 		$groups = BU_Edit_Groups::get_instance();
 		$user_input = $_POST['user'];
 
+		// For now we are limiting group membership to section editors
+		// @todo move this check to an isolated class/method so that we can
+		// easily switch this behavior later if needed 
 		$wp_user_search = new WP_User_Query( array( 'blog_id' => 0, 'search' => '*' . $user_input .'*', 'role' => 'section_editor' ) );
 		$users = $wp_user_search->get_results();
 

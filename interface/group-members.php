@@ -1,13 +1,14 @@
 <div id="add-group-members">
 	<h4>Add User to this Editor Group</h4>
 	<fieldset>
+		<div id="members-message" ></div>
 		<div class="form-row">
 			<label for="user_login">Enter the email address of an existing user on this network to add them to this Editor Group.</label>
 			<input id="user_login" type="text" class="regular-text" name="user_login" value="" />
-			<button id="find_user" class="button-secondary">Find User</button>
+			<button id="add_member" class="button-secondary">Add</button>
 		</div>
 		<div class="form-row">
-			<button id="add_member" class="button-secondary">Add</button>
+			<button id="find_user" class="button-secondary">Find User</button>
 		</div>
 	</fieldset>
 </div>
@@ -16,7 +17,8 @@
 	<h4>Editor Group List <span class="member-count"><?php echo count( $group->users ); ?> members</span></h4>
 	<fieldset>
 		<ul id="group-member-list">
-			<?php $users = get_users(); ?>
+			<?php // @todo isolate this user fetching logic in to a method ?>
+			<?php $users = get_users( array( 'role' => 'section_editor' ) ); ?>
 			<?php foreach( $users as $user ): ?>
 			<?php $checked = $group->has_user( $user->ID ) ? 'checked="checked"' : ''; ?>
 			<li class="member<?php if( $group->has_user( $user->ID ) ): ?> active<?php endif; ?>" >
@@ -27,4 +29,5 @@
 			<?php endforeach; ?>
 		</ul>
 	</fieldset>
+	<ul id="inactive-members"></ul>
 </div>

@@ -6,7 +6,7 @@
 #panel-container { 
 	position:absolute;
 	width: 450px;
-	height: 100%;
+	height: auto;
 	padding-right:35px;
 	border-right: 1px solid #CCC;
 }
@@ -21,15 +21,12 @@
 /* Panel containers */
 
 #section-group-editor {
-
 }
 
 #section-group-members {
-
 }
 
 #section-group-permissions {
-
 }
 
 /* Name panel */
@@ -68,6 +65,10 @@
 
 #group-member-list li a {
 	float:right;    
+}
+
+#inactive-members {
+	display: none;
 }
 
 /* Stats widget */
@@ -171,6 +172,14 @@
 	margin-bottom: 10px;
 }
 
+#members-message {
+		display: none;
+}
+
+#members-message p {
+	font-style: normal;
+}
+
 /* Clearing */
 #group-stats-widget .actions:after {
 	display: block;
@@ -186,17 +195,7 @@ body.js input[type="checkbox"] {
 	display: none;
 }
 
-body.js #group-member-list li {
-	display:none;
-}
-
-body.js #group-member-list li.active {
-	display:block;
-}
-
-/* Sans javascript */
-
-body.no-js h2.nav-tab-wrapper {
+body.no-js .nav-tab-wrapper {
 	display: none;
 }
 
