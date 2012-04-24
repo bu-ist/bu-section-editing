@@ -1,3 +1,49 @@
+/* Manage groups page */
+#buse-group-table {
+	width: 50%;
+	border-spacing: 0;
+	margin: 25px 0;
+	border: 1px solid #D3D3D3;
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+
+#buse-group-table thead {
+	background-color: #F1F1F1;
+	background-image: -ms-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -moz-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -o-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#F9F9F9),to(#ECECEC));
+	background-image: -webkit-linear-gradient(top,#F9F9F9,#ECECEC);
+	background-image: linear-gradient(top,#F9F9F9,#ECECEC);
+}
+
+#buse-group-table tbody {
+		
+}
+
+#buse-group-table th {
+	margin: 0;
+	padding: 3px 10px;;
+	text-align: left;
+	border-bottom: 1px solid #ccc;
+	font-weight: normal;
+}
+
+#buse-group-table tr {
+}
+
+#buse-group-table td {
+	border-top: 1px solid #eee;
+	padding: 5px 10px;
+}
+
+#buse-group-table tr:first-child td {
+	border-top: none;
+}
+
 /* Group editor containers */
 #section-group-editor {
 	position:relative;
@@ -49,7 +95,7 @@
 }
 
 #group-member-list li {
-	background-color: white;
+	background-color: #fff;
 	padding: 7px;
 	border-top:1px solid #eee;
 	width:100%;
@@ -74,8 +120,8 @@
 /* Stats widget */
 
 #group-stats-widget {
-	background-color: white;
-	border: 1px solid lightgray;
+	background-color: #fff;
+	border: 1px solid #D3D3D3;
 	border-top: none;
 }
 
@@ -85,7 +131,7 @@
 
 #group-stats-widget li {
 	padding: 7px 10px;
-	border-top: 1px solid lightgray;
+	border-top: 1px solid #D3D3D3;
 }
 
 #group-stats-widget li:first-child {
@@ -128,7 +174,7 @@
 	margin-bottom:0;
 	color: #464646;
 	font-weight:bold;
-	border: 1px solid lightgray;
+	border: 1px solid #D3D3D3;
 	-webkit-border-top-left-radius: 3px;
 	-webkit-border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
@@ -164,7 +210,7 @@
 	background-color: white;
 	margin-bottom: 25px;
 	padding: 10px;
-	border: 1px solid lightgray;
+	border: 1px solid #D3D3D3;
 	border-top: none;
 }
 
@@ -196,7 +242,7 @@ body.js input[type="checkbox"] {
 }
 
 body.no-js .nav-tab-wrapper {
-	display: none;
+
 }
 
 body.no-js #add-group-members {

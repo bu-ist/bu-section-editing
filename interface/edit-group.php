@@ -16,12 +16,15 @@
 			<?php wp_nonce_field( 'update_section_editing_group' ); ?>
 			<div id="panel-container">
 				<div id="group-name-panel" class="edit-group-panel<?php if($tab == 'name') echo ' active'; ?>">
+					<a name="group-name-panel"></a>
 					<?php include 'group-name.php'; ?>	
 				</div>
 				<div id="group-members-panel" class="edit-group-panel<?php if($tab == 'members') echo ' active'; ?>">
+					<a name="group-members-panel"></a>
 					<?php include 'group-members.php'; ?>	
 				</div>
 				<div id="group-permissions-panel" class="edit-group-panel<?php if($tab == 'permissions') echo ' active'; ?>">
+					<a name="group-permissions-panel"></a>
 					<?php include 'group-permissions.php'; ?>	
 				</div>
 			</div><!-- /#panel-container -->

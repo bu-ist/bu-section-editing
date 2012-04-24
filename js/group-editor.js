@@ -8,7 +8,6 @@ jQuery(document).ready(function($){
 	var $panels = $('.edit-group-panel');
 
 	$tabs.click(function(e){
-		e.preventDefault();
 		var $active = $(this);
 		var $panel = $($active.attr('href'));
 
