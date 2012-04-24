@@ -165,6 +165,11 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('delete_page_revisions');
 
 		$role->add_cap('unfiltered_html');
+
+		if( class_exists( 'BU_UserManager' ) ) {
+			$roles = array_merge( BU_UserManager::$allowed_roles, array('administrator', 'lead_editor', 'section_editor', 'contributor' ) );
+			BU_UserManager::$allowed_roles = array_unique( $roles );
+		}
 	}
 }
 
