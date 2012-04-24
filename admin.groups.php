@@ -156,33 +156,26 @@ class BU_Groups_Admin {
 	}
 
 
-	static function group_add_url( $tab = 'name' ) {
-		$page = admin_url(self::MANAGE_GROUPS_PAGE);
+	/**
+	 * Generates query string for manage groups page request
+	 * 
+	 * @param string $action manage groups action: add, edit or delete
+	 * @param array $extra_args optiona list of extra query args to be added
+	 * @return string $url
+	 */ 
+	static function manage_groups_url( $action, $extra_args = array() ) {
+		$page = admin_url( self::MANAGE_GROUPS_PAGE );
 
-		$args = array( 'action' => 'add', 'tab' => $tab );
-		$url = add_query_arg($args, $page);
+		$args = array_merge( array( 'action' => $action ), $extra_args );
 
-		return $url;
-	}
+		$url = add_query_arg( $args, $page );
 
-	static function group_edit_url( $id = -1, $tab = 'name' ) {
-		$page = admin_url(self::MANAGE_GROUPS_PAGE);
-
-		$args = array( 'action' => 'edit', 'id' => $id, 'tab' => $tab );
-		$url = add_query_arg($args, $page);
-
-		return $url;
-	}
-
-	static function group_delete_url( $id ) {
-		$page = admin_url(self::MANAGE_GROUPS_PAGE);
-
-		$url = remove_query_arg( array('tab','errors'), $page );
-		$url = add_query_arg( array('id' => $id, 'action' => 'delete' ), $url );
-		$url = wp_nonce_url( $url, 'delete_section_editing_group' );
+		if( $action == 'delete' )
+			$url = wp_nonce_url( $url, 'delete_section_editing_group' );
 
 		return $url;
 	}
+
 }
 
 class BU_Groups_Admin_Ajax {
