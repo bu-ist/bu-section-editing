@@ -10,14 +10,24 @@ abstract class BU_Permissions_Editor {
 
 	protected $per_page;
 
+	/**
+	 * $group can be either a BU_Edit_Group object or a group ID
+	 */ 
 	function __construct( $group, $post_type ) {
 
 		if( is_numeric( $group ) ) {
 
+			$group_id = intval( $group );
+
 			$controller = BU_Edit_Groups::get_instance();
 			
-			$group_id = intval( $group );
 			$this->group = $controller->get( $group_id );
+
+			// Could be a new group
+			if( ! $this->group ) {
+
+				$this->group = new BU_Edit_Group();
+			}
 
 		} else if ( $group instanceof BU_Edit_Group ) {
 
