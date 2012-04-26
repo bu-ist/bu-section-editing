@@ -17,8 +17,7 @@
 	<h4>Editor Group List <span class="member-count"><?php echo count( $group->users ); ?> members</span></h4>
 	<fieldset>
 		<ul id="group-member-list">
-			<?php // @todo isolate this user fetching logic in to a method ?>
-			<?php $users = get_users( array( 'role' => 'section_editor' ) ); ?>
+			<?php $users = BU_Section_Editing_Plugin::get_allowed_users(); ?>
 			<?php foreach( $users as $user ): ?>
 			<?php $checked = $group->has_user( $user->ID ) ? 'checked="checked"' : ''; ?>
 			<li class="member<?php if( $group->has_user( $user->ID ) ): ?> active<?php endif; ?>" >

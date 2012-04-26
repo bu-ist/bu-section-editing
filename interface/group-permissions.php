@@ -1,21 +1,28 @@
 <div id="group_permission_editor">
 	<h4>Assign Permissions to:</h4>
 	<fieldset>
+	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
+	<?php if( ! empty( $content_types ) ) : ?>
 		<ul id="content_types">
-			<?php /* @todo Dynamically populate based on content types that support section editing */ ?>
-			<li id="perm-tab-page" class="perm-tab"><a href="#perm-panel-page">Pages</a></li>
-			<li id="perm-tab-post" class="perm-tab"><a href="#perm-panel-post">Posts</a></li>
+			<?php foreach( $content_types as $pt ): ?>
+			<li id="perm-tab-<?php echo $pt->name; ?>" class="perm-tab"><a href="#perm-panel-<?php echo $pt->name; ?>"><?php echo $pt->label; ?></a></li>
+			<?php endforeach; ?>
 		</ul>
-		<?php /* @todo dynamically populate permission panels with supported content type editors */ ?>
-		<div id="perm-panel-page" class="perm-panel">
-			<p>Page permission editor goes here</p>
-			<div id="perm-editor-page" class="perm-editor hierarchical">
+		<?php foreach( $content_types as $pt ): ?>
+		<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel">
+			<?php if( $pt->hierarchical ): ?>
+			<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-hierarchical">
+				<?php $permission_editor = new BU_Hierarchical_Permissions_Editor( $group, $pt->name ); ?>
+				<?php $permission_editor->render(); ?>
 			</div>
-		</div>
-		<div id="perm-panel-post" class="perm-panel">
-			<p>Post permission editor goes here</p>
-			<div id="perm-editor-post" class="perm-editor flat">
+			<?php else: ?>
+			<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-flat">
+				<?php $permission_editor = new BU_Flat_Permissions_Editor( $group, $pt->name ); ?>
+				<?php $permission_editor->render(); ?>
 			</div>
+			<?php endif; ?>
 		</div>
+		<?php endforeach; ?>
+	<?php endif; ?>
 	</fieldset>
 </div>

@@ -1,5 +1,9 @@
 <?php
 
+/*
+@todo Need to add an edit lock to editing groups (look at navman)
+*/
+
 class BU_Groups_Admin {
 
 	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
@@ -40,8 +44,13 @@ class BU_Groups_Admin {
 	public static function admin_scripts( $hook ) {
 
 		if( $hook == self::$manage_groups_hook ) {
+
+			wp_enqueue_script( 'jstree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery') );
 			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery') );
+
+			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ) );
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ) );
+
 		}
 
 	}
@@ -178,20 +187,21 @@ class BU_Groups_Admin {
 
 }
 
+/**
+ * Centralized admin ajax routing
+ */ 
 class BU_Groups_Admin_Ajax {
 
 	static function register_hooks() {
 
 		add_action('wp_ajax_buse_add_member', array( 'BU_Groups_Admin_Ajax', 'add_member' ) );
 		add_action('wp_ajax_buse_find_user', array( 'BU_Groups_Admin_Ajax', 'find_user' ) );
+		add_action('wp_ajax_buse_fetch_children', array( 'BU_Groups_Admin_Ajax', 'render_post_children' ) );
 
 	}
 
 	/**
-	 * @todo Rename this method -- it doesn't actally add a member, just verifys
-	 * that they are an existing member of the site and have the correct role/capabilities to
-	 * be a member of a section editing group.
-	 * 
+	 * Add user to current edit group screen if they are valid
 	 */ 
 	static function add_member() {
 
@@ -201,71 +211,24 @@ class BU_Groups_Admin_Ajax {
 		$user_input = $_POST['user'];
 		$output = array();
 
-		$user = get_user_by( 'login', $user_input );
+		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => $user_input ) );
 
-		if( $user && is_user_member_of_blog( $user->ID ) ) {
+		if( is_array( $users ) && ! empty( $users ) ) {
 
-			$roles = array();
-
-			/* 
-			 * WP 3.1 doesn't return $user->roles (fixed in ???)
-			 */
-			if( ! isset ( $user->roles ) ) {
-
-				/* Option One */
-
-				/*
-				global $wpdb;
-
-				$capabilities = $user->{$wpdb->prefix . 'capabilities'};
-
-				if( !isset( $wp_roles ) )
-					$wp_roles = new WP_Roles();
-
-				foreach( $wp_roles->role_names as $role => $name ) {
-
-					if ( array_key_exists( $role, $capabilities ) )
-						$roles[] = $role;
-				}
-				*/
-
-				/* Option Two */
-				$temp_user = new WP_User( $user->ID );
-				
-				if( !empty( $temp_user->roles ) && is_array( $temp_user->roles ) ) {
-					foreach( $temp_user->roles as $role ) {
-						$roles[] = $role;
-					}
-				}
-
-			} else {
-
-				$roles = $user->roles;
-			
+			if( count( $users ) > 1 ) {
+				error_log('More than one users were returned for input: ' . $user_input );
+				die();
 			}
 
-			// For now we are limiting group membership to section editors
-			// @todo move this check to an isolated class/method so that we can
-			// easily switch this behavior later if needed 
-			if( in_array( 'section_editor', $roles ) ) {
+			$user = $users[0];
 
-				$output['status'] = true;
-				$output['user_id'] = $user->ID;
-
-
-			} else { // Otherwise pass on the user ID and status of success
-
-				$output['status'] = false;
-				$output['message'] = '<p>' . $user->user_login . ' is not a section editor.</p>';
-				$output['user_id'] = $user->ID;
-			
-			}
-
+			$output['status'] = true;
+			$output['user_id'] = $user->ID;
 
 		} else { // User was not found
 
 			$output['status'] = false;
-			$output['message'] = '<p>' . $user_input . ' is not a member of this site.</p>';
+			$output['message'] = '<p>' . $user_input . ' is not a member of this site or does not have permission to edit sections.</p>';
 
 		}
 
@@ -276,10 +239,7 @@ class BU_Groups_Admin_Ajax {
 	}
 
 	/**
-	 * Find users for this site who we might want to add to this group
-	 * 
-	 * @todo need some logic related to whether or not a user needs permissions,
-	 * based on their user role/capabilities
+	 * Find valid users based on input string
 	 */ 
 	static function find_user() {
 
@@ -288,13 +248,51 @@ class BU_Groups_Admin_Ajax {
 
 		// For now we are limiting group membership to section editors
 		// @todo move this check to an isolated class/method so that we can
-		// easily switch this behavior later if needed 
-		$wp_user_search = new WP_User_Query( array( 'blog_id' => 0, 'search' => '*' . $user_input .'*', 'role' => 'section_editor' ) );
-		$users = $wp_user_search->get_results();
+		// easily switch this behavior later if needed
+		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $user_input .'*' ) );
 
 		header("Content-type: application/json");
 		echo json_encode( $users );
 		die();
+	}
+
+	/**
+	 * Displays post hierarchy starting at a specifc post ID
+	 * 
+	 * @todo currently only supports HTML output, might decide to use json instead
+	 */ 
+	static function render_post_children() {
+
+		if( defined('DOING_AJAX') && DOING_AJAX ) {
+
+			$parent_id = trim($_REQUEST['parent_id'], 'p');
+			$group_id = $_REQUEST['group_id'];
+			$post_type = $_REQUEST['post_type'];
+
+			$post_type_obj = get_post_type_object( $post_type );
+
+			if( is_null( $post_type_obj ) ) {
+				error_log('Bad post type: ' . $post_type );
+				die();
+			}
+
+			$perm_editor = null;
+
+			if( $post_type_obj->hierarchical ) {
+
+				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
+
+			} else {
+
+				$perm_editor = new BU_Flat_Permissions_Editor( $group_id, $post_type_obj->name );
+
+			}
+
+			$perm_editor->render( $parent_id );
+
+			die();
+		}
+	
 	}
 
 }

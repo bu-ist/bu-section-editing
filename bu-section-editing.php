@@ -7,8 +7,10 @@
 */
 
  require_once('bu-section-roles.php');
+ 
  require_once('admin.groups.php');
  require_once('classes.groups.php');
+ require_once('classes.permissions.php');
 
  define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
@@ -40,6 +42,9 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin_Ajax::register_hooks();
 		}
 
+		add_post_type_support( 'page', 'section-editing' );
+		add_post_type_support( 'post', 'section-editing' );
+
 		// Check plugin version
 		self::version_check();
 
@@ -65,8 +70,27 @@ class BU_Section_Editing_Plugin {
 
 	}
 
+	/**
+	 * Placeholder function until we determine the best method to determine how
+	 * to grant users the ability to edit sections
+	 */ 
+	public static function get_allowed_users( $query_args = array() ) {
+		
+		// For now, allowed users are section editors that belong to the current blog
+		$default_args = array( 
+			'role' => 'section_editor'
+			);
+
+		$query_args = wp_parse_args( $query_args, $default_args );
+
+		$wp_user_query = new WP_User_Query( $query_args );
+
+		return $wp_user_query->get_results();
+
+	}
+
 }
 
 BU_Section_Editing_Plugin::register_hooks();
 
- ?>
+?>

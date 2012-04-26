@@ -55,10 +55,10 @@ jQuery(document).ready(function($){
 			data: userData,
 			type: 'POST',
 			success: function(response) {
-				console.log(response);
+				// console.log(response);
 			},
 			error: function(response) {
-				console.log(response);
+				// console.log(response);
 			}
 		});
 
@@ -95,6 +95,9 @@ jQuery(document).ready(function($){
 						// I don't think we need an update message
 						//$('#members-message').attr('class','updated').html('<p>' + user_login + ' has been added to this group.</p>').fadeIn();
 
+						// Remove any errors
+						$('#members-message').fadeOut('fast', function(e){$(this).attr('class','').html('');});
+
 						$('#member_' + response.user_id ).attr('checked','checked')
 							.parent('.member')
 							.addClass('active')
@@ -114,7 +117,7 @@ jQuery(document).ready(function($){
 			error: function(response) {
 
 				// @todo handle ajax errors more gracefully
-				console.log(response);
+				// console.log(response);
 				//$('#members-message').attr('class', 'error').html( response ).fadeIn();
 			
 			}
@@ -126,6 +129,36 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 
 	});
+
+	// Hierarchical permissions editor
+	
+	var options = {
+		plugins : [ 'themes', 'html_data' ],
+		core : {
+			html_titles : true
+		},
+		html_data : {
+			ajax : {
+				url : ajaxurl,
+				type: 'GET',
+				data : function(n) {
+					return { 
+						parent_id : n.attr ? n.attr('id') : 0,
+						action : 'buse_fetch_children',
+						post_type : 'page',
+						group_id : $('#group_id').val()
+					}
+				}
+			}
+		}
+	};
+
+	// jstree
+	$('.perm-editor-hierarchical')
+		.bind('loaded.jstree', function( event, data ) {
+			// console.log('JS TREE LOADED');
+		})
+		.jstree( options );
 
 	function updateMemberCount() {
 		var count = members_list.children('.member').length;

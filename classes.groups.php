@@ -65,6 +65,7 @@ class BU_Edit_Groups {
 	public function get_groups() {
 
 		return $this->groups;
+		
 	}
 
 	/**
@@ -450,13 +451,22 @@ class BU_Edit_Group {
 	
 	}
 
-	/**
-	 * Unfinished.
-	 */
-	public function get_posts() {
-		$query = new WP_Query( array('meta_key' => self::META_KEY, 'meta_value' => $this->id ) );
+	public function get_posts( $args = array() ) {
+
+		$defaults = array(
+			'post_type' => 'page',
+			'meta_key' => self::META_KEY,
+			'meta_value' => $this->id,
+			'posts_per_page' => -1
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$query = new WP_Query( $args );
+
 		return $query->posts;
 	}
+
 }
 
 ?>
