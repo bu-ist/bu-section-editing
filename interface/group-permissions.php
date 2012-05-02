@@ -10,8 +10,9 @@
 		</ul>
 		<?php foreach( $content_types as $pt ): ?>
 		<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel">
+			<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" name="group[perms][<?php echo $pt->name; ?>]" value="" />
 			<?php if( $pt->hierarchical ): ?>
-			<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-hierarchical">
+			<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-hierarchical" data-post-type="<?php echo $pt->name; ?>" >
 				<?php $permission_editor = new BU_Hierarchical_Permissions_Editor( $group, $pt->name ); ?>
 				<?php $permission_editor->render(); ?>
 			</div>

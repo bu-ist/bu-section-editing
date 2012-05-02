@@ -8,6 +8,8 @@ jQuery(document).ready(function($){
 	var $panels = $('.edit-group-panel');
 
 	$tabs.click(function(e){
+		e.preventDefault();
+
 		var $active = $(this);
 		var $panel = $($active.attr('href'));
 
@@ -33,15 +35,7 @@ jQuery(document).ready(function($){
 
 	});
 
-	$('#user_login').keypress( function(e) {
-
-		// Enter key
-		if( e.keyCode == '13' ) {
-
-			$('#add_member').trigger('click');
-			e.preventDefault();
-		}
-	})
+	/* Find Users */
 
 	$('#find_user').click( function(e) {
 
@@ -65,7 +59,25 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 	})
 
-	$('#add_member').click( function(e) {
+	/* Add Members */
+
+	$('#add_member').bind( 'click', function(e){
+		e.preventDefault();
+
+		add_member();
+	});
+
+	$('#user_login').keypress( function(e) {
+
+		// Enter key
+		if( e.keyCode == '13' ) {
+			e.preventDefault();
+
+			add_member();
+		}
+	});
+
+	var add_member = function() {
 
 		var userData = {
 			action: 'buse_add_member',
@@ -126,16 +138,97 @@ jQuery(document).ready(function($){
 		// For quick member entry (should this only run on successful add?)
 		$('#user_login').val('').focus();
 
-		e.preventDefault();
+	}
 
-	});
-
-	// Hierarchical permissions editor
+	// _______________________ Hierarchical permissions editor ________________________
 	
 	var options = {
-		plugins : [ 'themes', 'html_data' ],
+		plugins : [ 'themes', 'types', 'html_data', 'ui', 'contextmenu' ],
 		core : {
+			animation: 0,
 			html_titles : true
+		},
+		types : {
+			types : {
+				'default' : {
+					clickable	: true,
+					renameable	: true,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						"image": buse_config.pluginUrl + "/images/group_perm_restrict.png"
+					}
+				},
+				'section_restricted' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_restrict.png"
+					}
+				},
+				'section_editable' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_editable.png"
+					}
+				},
+				'section_children_editable' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_children_editable.png"
+					}
+				},
+				'post_editable' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_editable.png"
+					}
+				},
+				'post_restricted' : {
+					clickable	: true,
+					renameable	: true,
+					deletable	: true,
+					creatable	: true,
+					draggable	: true,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						"image": buse_config.pluginUrl + "/images/group_perm_restrict.png"
+					}
+				}
+			}
 		},
 		html_data : {
 			ajax : {
@@ -150,8 +243,103 @@ jQuery(document).ready(function($){
 					}
 				}
 			}
+		},
+		contextmenu : {
+			items : function(node) {
+
+				var label = node.attr('rel') == 'section_editable' ? 'Restrict' : 'Make Editable';
+
+				switch( node.attr('rel') ) {
+					case 'section_editable':
+						label = 'Restrict Section';
+						break;
+					case 'section_restricted':
+					case 'section_children_editable':
+						label = 'Make Section Editable';
+						break;
+					case 'post_editable':
+						label = 'Restrict post';
+						break;
+					case 'post_restricted':
+						label = 'Make post editable';
+						break;
+				}
+
+				return {
+					"edit" : {
+						"label" : label,
+						"action" : editNode,
+						"icon" : "remove"
+					}
+				}
+			}
 		}
 	};
+
+	/**
+	 * Need to figure out the best way to propogate permissions to children,
+	 * both programmatically and visually
+	 */
+	var editNode = function(n) {
+
+		var $node = $(n);
+		var id = $node.attr('id').substr(1);
+		var is_editable = false;
+		var post_type = this.get_container().data('post-type');
+
+		// @todo call a function and pass this node
+		switch( $node.attr('rel') ) {
+
+			case 'section_editable':
+
+				// Has editable children
+				if( $node.find('li[rel="section_editable"],li[rel="post_editable"]').length > 0 )
+					$node.attr('rel', 'section_children_editable');
+				else
+					$node.attr('rel', 'section_restricted')
+
+				is_editable = false;
+				break;
+			case 'section_restricted':
+				$node.attr('rel', 'section_editable' );
+				is_editable = true;
+				break;
+			case 'section_children_editable':
+				$node.attr('rel', 'section_editable');
+				is_editable = false;
+				break;
+			case 'post_editable':
+				$node.attr('rel', 'post_restricted');
+				is_editable = false
+				break;
+			case 'post_restricted':
+				$node.attr('rel', 'post_editable');
+				is_editable = true;
+				break;
+		}
+
+		// fetch existing edits
+		var existing_edits = $('#buse-edits-' + post_type ).val() || '';
+		var edits = existing_edits ? JSON.parse(existing_edits) : {};
+		edits[id] = is_editable;
+
+		// update
+		$('#buse-edits-' + post_type ).val( JSON.stringify(edits) );
+
+	}
+
+	var makeSectionEditable = function() {
+		// Make all children section editable?  How should we hadnle this from both a UI and data standpoint?
+	}
+
+	var restrictSection = function() {
+
+	}
+
+	// Should move JSON parse/stringify logic to this function...
+	$('#group-edit-form').bind('submit', function(){
+
+	})
 
 	// jstree
 	$('.perm-editor-hierarchical')

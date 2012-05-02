@@ -51,6 +51,13 @@ class BU_Groups_Admin {
 			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ) );
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ) );
 
+			$buse_config = array(
+				'adminUrl' => admin_url( 'admin-ajax.php' ),
+				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH )
+				);
+
+			wp_localize_script( 'group-editor', 'buse_config', $buse_config );
+
 		}
 
 	}

@@ -10,7 +10,7 @@
 			<a id="nav-tab-members" href="#group-members-panel" class="nav-tab <?php if($tab == 'members') echo 'nav-tab-active'; ?>">Members</a>
 			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-tab <?php if($tab == 'permissions') echo 'nav-tab-active'; ?>">Permissions</a>
 		</h2>
-		<form method="POST">
+		<form id="group-edit-form" method="POST">
 			<input type="hidden" name="action" value="update"/>
 			<input id="group_id" type="hidden" name="id" value="<?php echo $group_id; ?>" />
 			<?php wp_nonce_field( 'update_section_editing_group' ); ?>

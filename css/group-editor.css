@@ -117,6 +117,12 @@
 	display: none;
 }
 
+/* Permissions Panel / jsTree */
+
+.perm-editor-hierarchical.jstree-default.jstree-focused {
+	background: none;
+}
+
 /* Stats widget */
 
 #group-stats-widget {

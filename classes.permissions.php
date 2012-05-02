@@ -152,10 +152,31 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		foreach( $posts as $post ) {
 
 			$has_children = array_key_exists( $post->ID, $pages_by_parent );
+			$classes = '';
+			$types = '';
+
+			if( $has_children ) {
+				$classes = 'jstree-closed';
+				$types = 'default';
+
+				if( $post->section_editable ) {
+					$types = 'section_editable';
+				} else if ( $this->has_editable_child( $post->ID, $pages_by_parent ) ) {
+					$types = 'section_children_editable';
+				} else {
+					$types = 'section_restricted';
+				}
+			} else {
+				if( $post->section_editable ) {
+					$types = 'post_editable';
+				} else {
+					$types = 'post_restricted';
+				}
+			}
 
 ?>
-	<li id="p<?php echo $post->ID; ?>" class="<?php if( $has_children ): ?>jstree-closed<?php endif; ?>">
-		<a href="#"><?php echo $post->post_title; ?> <?php if ( $post->section_editable ): ?> (Editable!) <?php endif; ?></a>
+	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" rel="<?php echo $types; ?>">
+		<a href="#"><?php echo $post->post_title; ?></a>
 		<?php if( $has_children && $parent_id != 0 ): ?>
 		<ul>
 			<?php $this->display_posts( $post->ID, $pages_by_parent ); ?>
@@ -164,6 +185,16 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	</li>
 <?php
 		}
+	}
+
+	public function has_editable_child( $id, $posts ) {
+		$children = $posts[$id];
+
+		foreach( $children as $child ) {
+			if( $child->section_editable )
+				return true;
+		}
+		return false;
 	}
 
 	//__________________NAVIGATION FILTERS______________________

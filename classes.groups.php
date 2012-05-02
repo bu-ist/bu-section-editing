@@ -80,6 +80,16 @@ class BU_Edit_Groups {
 		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
+
+		// @todo I don't think we should store permissions in the group object ...
+		// just update post meta now
+		foreach( $args['perms'] as $post_type => $json_data ) {
+			if( $json_data )
+				$args['perms'][$post_type] = json_decode( stripslashes( $json_data ), true );
+			else
+				$args['perms'][$post_type] = array();
+		}
+
 		// create group
 		$group = new BU_Edit_Group($args);
 		
@@ -114,6 +124,15 @@ class BU_Edit_Groups {
 			// sanitize
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+
+			// @todo I don't think we should store permissions in the group object ...
+			// just update post meta now
+			foreach( $args['perms'] as $post_type => $json_data ) {
+				if( $json_data )
+					$args['perms'][$post_type] = json_decode( stripslashes( $json_data ), true );
+				else
+					$args['perms'][$post_type] = array();
+			}
 
 			$group->update($args);
 
@@ -222,7 +241,12 @@ class BU_Edit_Groups {
 		$group_data = array();
 
 		foreach( $this->groups as $group ) {
+
+			// @todo move this logic in to the handler for update/add group
+			$this->update_permissions( $group );
+
 			$group_data[] = $group->get_attributes();
+
 		}
 
 		return $this->update( $group_data );
@@ -264,6 +288,27 @@ class BU_Edit_Groups {
 	private function add( BU_Edit_Group $group ) {
 
 		array_push($this->groups, $group);
+
+	}
+
+	/**
+	 * @todo no need to store permissions in group model, just update
+	 * post meta directly and pull permissions via WP_Query
+	 */ 
+	private function update_permissions( $group ) {
+
+		foreach( $group->perms as $post_type => $data ) {
+
+			foreach( $data as $id => $is_editable ) {
+
+				if( $is_editable )
+					update_post_meta( $id, $group::META_KEY, $group->id );
+				else
+					delete_post_meta( $id, $group::META_KEY, $group->id );
+
+			}
+
+		}
 
 	}
 
@@ -336,6 +381,7 @@ class BU_Edit_Group {
 	private $name = null;
 	private $description = null;
 	private $users = array();
+	private $perms = array();
 	private $created = null;
 	private $modified = null;
 
@@ -372,6 +418,7 @@ class BU_Edit_Group {
 			'name' => '',
 			'description' => '',
 			'users' => array(),
+			'perms' => array(),
 			'created' => time(),
 			'modified' => time()
 			);
@@ -416,6 +463,30 @@ class BU_Edit_Group {
 	}
 
 	/**
+	 * Query for all posts that have section editing permissions assigned for this group
+	 * 
+	 * @uses WP_Query
+	 *
+	 * @param array $args an optional array of WP_Query arguments, will override defaults
+	 * @return array an array of posts that have section editing permissions for this group
+	 */ 
+	public function get_posts( $args = array() ) {
+
+		$defaults = array(
+			'post_type' => 'page',
+			'meta_key' => self::META_KEY,
+			'meta_value' => $this->id,
+			'posts_per_page' => -1
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$query = new WP_Query( $args );
+
+		return $query->posts;
+	}
+
+	/**
 	 * Update data fields for this group
 	 * 
 	 * @param array $args an array of key => value parameters to update
@@ -431,6 +502,11 @@ class BU_Edit_Group {
 
 	}
 
+	/**
+	 * Returns privata data field keys as an array of attribute names
+	 * 
+	 * Used for data serialization
+	 */ 
 	public function get_attributes() {
 
 		return get_object_vars( $this );
@@ -449,22 +525,6 @@ class BU_Edit_Group {
 
 		$this->$key = $val;
 	
-	}
-
-	public function get_posts( $args = array() ) {
-
-		$defaults = array(
-			'post_type' => 'page',
-			'meta_key' => self::META_KEY,
-			'meta_value' => $this->id,
-			'posts_per_page' => -1
-			);
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$query = new WP_Query( $args );
-
-		return $query->posts;
 	}
 
 }
