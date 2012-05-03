@@ -44,6 +44,10 @@
 	border-top: none;
 }
 
+#buse-group-table .submitdelete img {
+	vertical-align: bottom;
+}
+
 /* Group editor containers */
 #section-group-editor {
 	position:relative;

@@ -10,6 +10,8 @@ class BU_Groups_Admin {
 
 	public static $manage_groups_hook;
 
+	private static $notices = array();
+
 	/**
 	 * Register for admin hooks
 	 * 
@@ -17,8 +19,8 @@ class BU_Groups_Admin {
 	 */ 
 	public static function register_hooks() {
 
-		add_action('admin_menu', array( 'BU_Groups_Admin','admin_menus'));
-		add_action('admin_enqueue_scripts', array( 'BU_Groups_Admin', 'admin_scripts' ) );
+		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
+		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
 	}
 
@@ -32,7 +34,23 @@ class BU_Groups_Admin {
 		$hook = add_users_page('Section Groups', 'Section Groups', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
 		self::$manage_groups_hook = $hook;
 
-		add_action('load-' . $hook, array( 'BU_Groups_Admin', 'load_manage_groups'), 1);
+		add_action('load-' . $hook, array( __CLASS__, 'load_manage_groups'), 1);
+
+	}
+
+	public static function admin_notices() {
+
+		if( isset( self::$notices['error'] ) ) {
+			foreach( self::$notices['error'] as $msg ) {
+				printf( '<div id="message" class="error">%s</div>', $msg );
+			}
+		}
+
+		if( isset( self::$notices['update'] ) ) {
+			foreach( self::$notices['update'] as $msg ) {
+				printf( '<div id="message" class="updated fade">%s</div>', $msg );
+			}
+		}
 
 	}
 
@@ -83,7 +101,7 @@ class BU_Groups_Admin {
 					$group = $groups->get( $group_id );
 
 					if( $group === false )
-						wp_die("The requested section editing group ($group_id) does not exists");					
+						wp_die("The requested section editing group ($group_id) does not exists");				
 					break;
 
 				case 'update':
@@ -97,7 +115,7 @@ class BU_Groups_Admin {
 
 					// @todo Move validation to controller/model layer?
 					if(empty($group_data['name'])) {
-						$redirect_url = add_query_arg( array('errors' => 1 ));
+						$redirect_url = add_query_arg( array( 'status' => 1 ) );
 						wp_redirect($redirect_url);
 						return;
 					}
@@ -108,20 +126,24 @@ class BU_Groups_Admin {
 						$groups->add_group($group_data);
 					}
 
+					// @todo check for valid save -- save should generate validation error messages / statuses
 					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','id','tab'));
+					$redirect_url = add_query_arg( array( 'status' => 2 ), $redirect_url );
 					break;
 
 				case 'delete':
 					if( ! check_admin_referer( 'delete_section_editing_group' ) )
 						wp_die('Cheatin, uh?');
 
+					// @todo check for valid delete
 					$groups->delete_group( $group_id );
 
 					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
+					$redirect_url = add_query_arg( array( 'status' => 3 ), $redirect_url );
 					break;
 
 			}
@@ -129,6 +151,13 @@ class BU_Groups_Admin {
 			if( $redirect_url )
 				wp_redirect($redirect_url);
 
+		}
+
+		// Generate admin notices
+		self::$notices = self::get_notices();
+
+		if( ! empty( self::$notices ) ) {
+			add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 		}
 
 	}
@@ -167,8 +196,63 @@ class BU_Groups_Admin {
 
 		}
 
+
 		// Render screen
 		include $template_path;
+	}
+
+	/**
+	 * Generate admin notice messages based on incoming status codes
+	 */ 
+	static function get_notices() {
+
+		$notices = array();
+
+		if( isset( $_GET['status'] ) ) {
+
+			switch( $_GET['status'] ) {
+
+				case 1:
+					$notices['error'][] = '<p>There was an error saving the group.</p>';
+					break;
+
+				case 2:
+					$notices['update'][] = '<p>Group updated.</p>';
+					break;
+
+				case 3:
+					$notices['update'][] = '<p>Group deleted.</p>';
+					break;
+
+				default:
+					$notices = array();
+					break;
+			}
+
+		}
+
+		$count_user_args = array( 
+			'count_total' => true,
+			'fields' => 'ID',
+			'number' => 1
+		);
+
+		$valid_user_count = BU_Section_Editing_Plugin::get_allowed_users( $count_user_args );
+
+		if( $valid_user_count == 0 ) {
+
+			$manage_users_url = admin_url('users.php');
+
+			$msg  = <<< MSG
+<p>There are currently no users on your site that are capable of being assigned to section editing groups.</p>
+<p>To start using this plugin, visit the <a href="$manage_users_url">users page</a> and change the role for any users you would like to add to a section editing group to "Section Editor".</p>
+MSG;
+
+			$notices['error'][] = $msg;
+		}
+
+		return $notices;
+
 	}
 
 
@@ -201,9 +285,9 @@ class BU_Groups_Admin_Ajax {
 
 	static function register_hooks() {
 
-		add_action('wp_ajax_buse_add_member', array( 'BU_Groups_Admin_Ajax', 'add_member' ) );
-		add_action('wp_ajax_buse_find_user', array( 'BU_Groups_Admin_Ajax', 'find_user' ) );
-		add_action('wp_ajax_buse_fetch_children', array( 'BU_Groups_Admin_Ajax', 'render_post_children' ) );
+		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
+		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
+		add_action('wp_ajax_buse_fetch_children', array( __CLASS__, 'render_post_children' ) );
 
 	}
 

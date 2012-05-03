@@ -42,6 +42,7 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin_Ajax::register_hooks();
 		}
 
+		// Pages and post support section editing by default
 		add_post_type_support( 'page', 'section-editing' );
 		add_post_type_support( 'post', 'section-editing' );
 
@@ -62,7 +63,8 @@ class BU_Section_Editing_Plugin {
 
 		if( $existing_version === false || $existing_version < self::BUSE_VERSION ) {
 
-			// @todo perform any sort of updates as needed
+			// @todo perform any sort of schema updates as neccessary
+			// ex. upgrade( $existing_version, self::BUSE_VERSION )
 
 			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
 
@@ -84,6 +86,9 @@ class BU_Section_Editing_Plugin {
 		$query_args = wp_parse_args( $query_args, $default_args );
 
 		$wp_user_query = new WP_User_Query( $query_args );
+
+		if( isset( $query_args['count_total'] ) )
+			return $wp_user_query->get_total();
 
 		return $wp_user_query->get_results();
 
