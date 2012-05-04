@@ -40,7 +40,6 @@ class BU_Edit_Groups {
 
 	// ___________________PUBLIC_INTERFACE_____________________
 
-
 	/**
 	 * Returns a group by id from internal groups array
 	 * 
@@ -80,16 +79,6 @@ class BU_Edit_Groups {
 		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
-
-		// @todo I don't think we should store permissions in the group object ...
-		// just update post meta now
-		foreach( $args['perms'] as $post_type => $json_data ) {
-			if( $json_data )
-				$args['perms'][$post_type] = json_decode( stripslashes( $json_data ), true );
-			else
-				$args['perms'][$post_type] = array();
-		}
-
 		// create group
 		$group = new BU_Edit_Group($args);
 		
@@ -101,6 +90,17 @@ class BU_Edit_Groups {
 		// add to internal array & increment group index counter
 		$this->add($group);
 		$this->increment_index();
+
+		// extract permission updates
+		$perms = array();
+
+		foreach( $args['perms'] as $post_type => $json_data ) {
+			if( $json_data )
+				$perms[$post_type] = json_decode( stripslashes( $json_data ), true );
+		}
+
+		// Set group permissions
+		$this->update_group_permissions( $group->id, $perms );
 
 		add_action( 'bu_add_section_editing_group', $group );
 
@@ -125,18 +125,20 @@ class BU_Edit_Groups {
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
-			// @todo I don't think we should store permissions in the group object ...
-			// just update post meta now
-			foreach( $args['perms'] as $post_type => $json_data ) {
-				if( $json_data )
-					$args['perms'][$post_type] = json_decode( stripslashes( $json_data ), true );
-				else
-					$args['perms'][$post_type] = array();
-			}
-
 			$group->update($args);
 
 			$group->modified = time();
+
+			// extract permission updates
+			$perms = array();
+
+			foreach( $args['perms'] as $post_type => $json_data ) {
+				if( $json_data )
+					$perms[$post_type] = json_decode( stripslashes( $json_data ), true );
+			}
+
+			// Set group permissions
+			$this->update_group_permissions( $group->id, $perms );
 
 			return $group;
 
@@ -242,9 +244,6 @@ class BU_Edit_Groups {
 
 		foreach( $this->groups as $group ) {
 
-			// @todo move this logic in to the handler for update/add group
-			$this->update_permissions( $group );
-
 			$group_data[] = $group->get_attributes();
 
 		}
@@ -280,7 +279,6 @@ class BU_Edit_Groups {
 
 	}
 
-	// ____________________HELPERS________________________
 	
 	/**
 	 * Add a BU_Edit_Group object to internal groups array
@@ -291,20 +289,25 @@ class BU_Edit_Groups {
 
 	}
 
+	// ____________________PERSISTENCE________________________
+
+
 	/**
-	 * @todo no need to store permissions in group model, just update
-	 * post meta directly and pull permissions via WP_Query
+	 * Update permissions for a group
+	 * 
+	 * @param int $group_id ID of group to modify ACL for
+	 * @param array $permissions Permissions, as an associative array indexed by post type
 	 */ 
-	private function update_permissions( $group ) {
+	private function update_group_permissions( $group_id, $permissions ) {
 
-		foreach( $group->perms as $post_type => $data ) {
+		foreach( $permissions as $post_type => $perm_settings ) {
 
-			foreach( $data as $id => $is_editable ) {
+			foreach( $perm_settings as $id => $is_editable ) {
 
 				if( $is_editable )
-					update_post_meta( $id, $group::META_KEY, $group->id );
+					update_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
 				else
-					delete_post_meta( $id, $group::META_KEY, $group->id );
+					delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
 
 			}
 
@@ -334,8 +337,11 @@ class BU_Edit_Groups {
 	 * Simulates MySQL autoincrement for group ID field
 	 */ 
 	private function increment_index() {
+
 		$this->index++;
+
 		return update_option( self::INDEX_NAME, $this->index );
+
 	}
 
 }
@@ -381,7 +387,6 @@ class BU_Edit_Group {
 	private $name = null;
 	private $description = null;
 	private $users = array();
-	private $perms = array();
 	private $created = null;
 	private $modified = null;
 
@@ -418,7 +423,6 @@ class BU_Edit_Group {
 			'name' => '',
 			'description' => '',
 			'users' => array(),
-			'perms' => array(),
 			'created' => time(),
 			'modified' => time()
 			);

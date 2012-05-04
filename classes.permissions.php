@@ -77,8 +77,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	}
 
 	public function render() {
+		echo '<p>Flat permissions editor: <br>Coming soon to a BU Section Editing Plugin near you...</p>';
 		
-
 	}
 }
 
