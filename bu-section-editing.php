@@ -33,7 +33,8 @@ class BU_Section_Editing_Plugin {
 	public static function init() {
 
 		// Roles and capabilities
-		add_filter('map_meta_cap', array('BU_Section_Editor', 'map_meta_cap'), 10, 4);
+		add_filter( 'map_meta_cap', array('BU_Section_Editor', 'map_meta_cap'), 10, 4);
+		add_filter( 'bu_user_manager_allowed_roles', array( 'BU_Section_Editing_Roles', 'bu_allowed_roles' ) );
 		BU_Section_Editing_Roles::maybe_create();
 
 		// Admin

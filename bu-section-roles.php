@@ -166,10 +166,23 @@ class BU_Section_Editing_Roles {
 
 		$role->add_cap('unfiltered_html');
 
-		if( class_exists( 'BU_UserManager' ) ) {
-			$roles = array_merge( BU_UserManager::$allowed_roles, array('administrator', 'lead_editor', 'section_editor', 'contributor' ) );
-			BU_UserManager::$allowed_roles = array_unique( $roles );
-		}
+	}
+
+	/**
+	 * This filter is only needed for BU installations where the bu_user_management plugin is active
+	 * 
+	 * Hopefully this will not be required some day soon
+	 */ 
+	static function bu_allowed_roles( $roles ) {
+
+		if( ! array_key_exists( 'lead_editor', $roles ) )
+			$roles[] = 'lead_editor';
+
+		if( ! array_key_exists( 'section_editor', $roles ) )
+			$roles[] = 'section_editor';
+
+		return $roles;
+
 	}
 }
 
@@ -204,7 +217,7 @@ class BU_Section_Editor {
 
 				// iterate through ancestors; needs to be optimized
 				foreach(array_reverse($ancestors) as $ancestor_id) {
-					$groups = get_post_meta($ancestor_id, 'bu_group');
+					$groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY );
 					if($edit_groups_o->has_user($groups, $user_id)) {
 						return true;
 					}
@@ -272,5 +285,6 @@ class BU_Section_Editor {
 	}
 
 }
+
 
 ?>
