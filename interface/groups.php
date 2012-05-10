@@ -7,7 +7,7 @@
 		<thead>
 			<tr>
 				<th>Name</th>
-				<th></th>
+				<th>&nbsp;</th>
 				<th>Remove</th>
 			</tr>
 		</thead>

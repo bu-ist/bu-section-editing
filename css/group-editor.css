@@ -2,6 +2,7 @@
 #buse-group-table {
 	width: 50%;
 	border-spacing: 0;
+	border-collapse: collapse;
 	margin: 25px 0;
 	border: 1px solid #D3D3D3;
 	-webkit-border-top-left-radius: 3px;
@@ -33,9 +34,11 @@
 }
 
 #buse-group-table tr {
+	margin: 0;
 }
 
 #buse-group-table td {
+	margin: 0;
 	border-top: 1px solid #eee;
 	padding: 5px 10px;
 }
@@ -154,8 +157,15 @@
 
 #group-stats-widget .actions {
 	background-color: #ebf2fb;
-	clear: both;
 	padding: 10px;
+}
+
+#group-stats-widget #delete-action {
+	float: left;
+}
+
+#group-stats-widget #update-action {
+	float: right;
 }
 
 #group-stats-widget a.submitdelete {
@@ -166,10 +176,6 @@
 	padding: 1px 2px;
 	text-decoration: none;
 	color: #F00;
-	display: -moz-inline-stack;
-	display: inline-block;
-	zoom: 1;
-	*display: inline;
 }
 
 #group-stats-widget a.submitdelete:hover {
@@ -183,7 +189,7 @@
 	padding: 7px;
 	margin-bottom:0;
 	color: #464646;
-	font-weight:bold;
+	font-weight: bold;
 	border: 1px solid #D3D3D3;
 	-webkit-border-top-left-radius: 3px;
 	-webkit-border-top-right-radius: 3px;
@@ -199,7 +205,7 @@
 }
 
 #section-group-editor h4 .member-count {
-	float:right;
+	float: right;
 }
 
 /* States */
@@ -234,15 +240,6 @@
 
 #members-message p {
 	font-style: normal;
-}
-
-/* Clearing */
-#group-stats-widget .actions:after {
-	display: block;
-	clear: both;
-	content: " ";
-	height: 0;
-	overflow: hidden;
 }
 
 /* Con javascript */

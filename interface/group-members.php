@@ -14,16 +14,16 @@
 </div>
 
 <div id="group-members">
-	<h4>Editor Group List <span class="member-count"><?php echo count( $group->users ); ?> members</span></h4>
+	<h4><span class="member-count"><?php echo count( $group->users ); ?> members</span> Editor Group List</h4>
 	<fieldset>
 		<ul id="group-member-list">
 			<?php $users = BU_Section_Editing_Plugin::get_allowed_users(); ?>
 			<?php foreach( $users as $user ): ?>
 			<?php $checked = $group->has_user( $user->ID ) ? 'checked="checked"' : ''; ?>
 			<li class="member<?php if( $group->has_user( $user->ID ) ): ?> active<?php endif; ?>" >
+				<a id="remove_member_<?php echo $user->ID; ?>" class="remove_member" href="#">Remove</a>
 				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[users][]" value="<?php echo $user->ID; ?>" <?php echo $checked; ?> />
 				<label for="member_<?php echo $user->ID; ?>"><?php echo $user->display_name; ?></label>
-				<a id="remove_member_<?php echo $user->ID; ?>" class="remove_member" href="#">Remove</a>
 			</li>
 			<?php endforeach; ?>
 		</ul>
