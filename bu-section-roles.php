@@ -198,10 +198,8 @@ class BU_Section_Editor {
 
 		if($user_id == 0) return false;
 
-		$user = get_userdata($user_id);
-
-		// Is this user a section editor?
-		if($user && in_array('section_editor', $user->roles)) {
+		// Extra checks for any "allowed" users
+		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
 
 			// Get groups associated with post
 			$post = get_post($post_id, OBJECT, null);
@@ -210,29 +208,34 @@ class BU_Section_Editor {
 
 			// Search attached groups for current user
 			if($edit_groups_o->has_user($groups, $user_id)) {
+
 				return true;
+			
 			} else {
+
 				// Check post ancestors for permissions
 				$ancestors = get_post_ancestors($post);
 
 				// iterate through ancestors; needs to be optimized
 				foreach(array_reverse($ancestors) as $ancestor_id) {
-					$groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY );
+					
+					$groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY);
+
 					if($edit_groups_o->has_user($groups, $user_id)) {
 						return true;
 					}
 				}
 			}
+
 			return false;
-		}
+		} 
+
 		return true;
 	}
 
 	/**
 	 * Filter that modifies the caps based on the current state.
 	 * 
-	 * @todo Modify to check custom post type capabiltiies (not just pages)
-	 *
 	 * @param type $caps
 	 * @param type $cap
 	 * @param type $user_id
@@ -248,13 +251,13 @@ class BU_Section_Editor {
 		if($cap == 'edit_page') {
 			$post = get_post($post_id);
 
-			if($post_id && $post->post_status == 'publish' && !BU_Section_Editor::can_edit($post_id, $user_id)) {
+			if($post_id && $post->post_status == 'publish' && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
 
 		if($cap == 'delete_page') {
-			if($post_id && !BU_Section_Editor::can_edit($post_id, $user_id)) {
+			if($post_id && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
@@ -264,7 +267,7 @@ class BU_Section_Editor {
 
 			$post_id = $post_ID;
 
-			if($post_id && !BU_Section_Editor::can_edit($post_id, $user_id)) {
+			if($post_id && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
@@ -276,7 +279,7 @@ class BU_Section_Editor {
 
 			$revision = get_post($post_id);
 
-			if(!$revision || !BU_Section_Editor::can_edit($revision->post_parent, $user_id)) {
+			if(!$revision || ! self::can_edit($revision->post_parent, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
@@ -285,6 +288,5 @@ class BU_Section_Editor {
 	}
 
 }
-
 
 ?>

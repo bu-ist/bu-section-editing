@@ -95,6 +95,36 @@ class BU_Section_Editing_Plugin {
 
 	}
 
+	/**
+	 * Another placeholder -- checks if the given user is allowed by the plugin
+	 * to hold section editing priviliges
+	 */ 
+	public static function is_allowed_user( $user, $query_args = array() ) {
+
+		if( is_object( $user ) )
+			$user_id = $user->ID;
+		else if ( is_numeric( $user ) )
+			$user_id = intval($user);
+		else {
+			error_log('Invalid parameter for user: ' . $user );
+			return false;
+		}
+
+		// For now, allowed users are section editors that belong to the current blog
+		$default_args = array( 
+			'role' => 'section_editor',
+			'include' => $user_id,
+			'fields' => false
+			);
+
+		$query_args = wp_parse_args( $query_args, $default_args );
+
+		$wp_user_query = new WP_User_Query( $query_args );
+
+		return in_array( $user_id, $wp_user_query->get_results() );
+		
+	}
+
 }
 
 BU_Section_Editing_Plugin::register_hooks();
