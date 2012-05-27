@@ -1,15 +1,14 @@
 <div id="section-group-editor" class="wrap">
 	<?php screen_icon(); ?>
-	<h2>Edit Group</h2>
-	<?php /* @todo Better error handling */ ?>
+	<h2>Edit Section Group</h2>
 	<?php if( isset($_GET['errors'])): ?><div class="error"><p>Error saving group!</p></div><?php endif; ?>
 	<div class="form-wrap">
 		<!-- Tab Interface -->
-		<h2 class="nav-tab-wrapper">
+		<h3 class="nav-tab-wrapper">
 			<a id="nav-tab-name" href="#group-name-panel" class="nav-tab <?php if($tab == 'name') echo 'nav-tab-active'; ?>">Name</a>
 			<a id="nav-tab-members" href="#group-members-panel" class="nav-tab <?php if($tab == 'members') echo 'nav-tab-active'; ?>">Members</a>
 			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-tab <?php if($tab == 'permissions') echo 'nav-tab-active'; ?>">Permissions</a>
-		</h2>
+		</h3>
 		<form id="group-edit-form" method="POST">
 			<input type="hidden" name="action" value="update"/>
 			<input id="group_id" type="hidden" name="id" value="<?php echo $group_id; ?>" />

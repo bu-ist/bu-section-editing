@@ -17,7 +17,7 @@
 		<?php else: ?>
 		<?php $delete_url = BU_Groups_Admin::manage_groups_url( 'delete', array( 'id' => $group_id ) ); ?>
 		<div id="delete-action">
-			<a href="<?php echo $delete_url; ?>" class="submitdelete deletion" title="Delete group">[ Delete ]</a>
+			<a href="<?php echo $delete_url; ?>" class="submitdelete deletion" title="Delete group">Delete</a>
 		</div>
 		<div id="update-action">
 			<input type="submit" class="button-primary" name="submit" value="Update Group" />
