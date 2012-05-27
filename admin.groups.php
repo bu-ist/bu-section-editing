@@ -302,6 +302,7 @@ class BU_Groups_Admin_Ajax {
 		$user_input = $_POST['user'];
 		$output = array();
 
+		// Should we only allow exact matches?
 		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => $user_input ) );
 
 		if( is_array( $users ) && ! empty( $users ) ) {
