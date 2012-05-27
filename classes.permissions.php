@@ -76,12 +76,53 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
 
+		// Setup posts to render
+		$query_args = array(
+			'post_type' => $this->post_type,
+			'post_status' => 'any',		// true?
+			'posts_per_page' => -1, 	// for now, eventually we'll make the river flow
+			'orderby' => 'modified',
+			'order' => 'DESC'
+			);
+
+		$query = new WP_Query( $query_args );
+
+		$this->posts = $query->posts;
+
+		wp_reset_postdata();
+
 	}
 
 	public function render() {
-		echo '<p>Flat permissions editor: <br>Coming soon to a BU Section Editing Plugin near you...</p>';
+
+		if( ! empty( $this->posts ) ) {
+
+			echo "<ul id=\"{$this->post_type}-perm-list\" class=\"perm-list flat\">\n";
+
+			/* @todo -- implement this as a checkbox for no-js */
+
+			foreach( $this->posts as $id => $post ) {
+
+				// Permission status
+				$perm = "<span id=\"{$this->post_type}-{$post->ID}-perm\" class=\"perm-status post_restricted\"></span>\n";
+
+				// Date info
+				if( $post->post_status == 'publish' )
+					$published = " - Published " . $post->post_date;
+				else if( $post->post_status == 'draft' )
+					$published = " - <em>Draft</em>";
+
+				// Output
+				echo "<li>$perm{$post->post_title}$published</li>";
+
+			}
+			
+			echo "</ul>\n";
+
+		}
 		
 	}
+
 }
 
 /**
