@@ -54,15 +54,16 @@ class BU_Section_Editing_Plugin {
 
 	public static function on_activate() {
 
-		self::version_check( true );
+		self::version_check();
 
 	}
 
-	public static function version_check( $activating = false ) {
+	public static function version_check() {
 
 		$existing_version = get_option( self::BUSE_VERSION_OPTION );
 
-		if( $existing_version === false || $existing_version < self::BUSE_VERSION ) {
+		// Check if plugin has been updated (or just installed) and store current version
+		if( $existing_version === false || version_compare( $existing_version, self::BUSE_VERSION, '<' )  ) {
 
 			// @todo perform any sort of schema updates as neccessary
 			// ex. upgrade( $existing_version, self::BUSE_VERSION )
