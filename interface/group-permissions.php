@@ -1,5 +1,5 @@
 <div id="group_permission_editor">
-	<h4>Assign Permissions to:</h4>
+	<div class="buse-panel-header"><h4>Assign Permissions to:</h4></div>
 	<fieldset>
 	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
 	<?php if( ! empty( $content_types ) ) : ?>

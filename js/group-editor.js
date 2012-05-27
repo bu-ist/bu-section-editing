@@ -350,8 +350,7 @@ jQuery(document).ready(function($){
 
 	function updateMemberCount() {
 		var count = members_list.children('.member').length;
-		$('.member-count').html( count + ' members' );
-		$('#group-stats-count').html( count );
+		$('.member-count').html( count );
 	}
 
 });

@@ -101,6 +101,20 @@
 	margin-left:-7px;
 }
 
+#add-group-members-header {
+	background-image: url('../images/user_add.png');
+	background-repeat: no-repeat;
+	background-position: 0;
+	padding-left: 25px;
+}
+
+#edit-group-members-header {
+	background-image: url('../images/group_members.png');
+	background-repeat: no-repeat;
+	background-position: 0;
+	padding-left: 25px;
+}
+
 #group-member-list li {
 	background-color: #fff;
 	padding: 7px;
@@ -172,6 +186,11 @@
 	background: none;
 }
 
+.perm-editor-hierarchical.jstree a > ins {
+	height: 18px;
+	width: 20px;
+}
+
 /* Stats widget */
 
 #group-stats-widget {
@@ -228,10 +247,12 @@
 /* Headings */
 
 #section-group-editor h4 {
-	padding: 7px;
-	margin-bottom:0;
+	margin: 0;
 	color: #464646;
 	font-weight: bold;
+}
+.buse-panel-header {
+	padding: 7px;
 	border: 1px solid #D3D3D3;
 	-webkit-border-top-left-radius: 3px;
 	-webkit-border-top-right-radius: 3px;
@@ -246,8 +267,11 @@
 	background-image: linear-gradient(top,#F9F9F9,#ECECEC);
 }
 
-#section-group-editor h4 .member-count {
+/* Member counts */
+
+#member-list-count {
 	float: right;
+	font-weight: normal;
 }
 
 /* States */

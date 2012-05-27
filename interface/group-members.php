@@ -1,5 +1,7 @@
 <div id="add-group-members">
-	<h4>Add User to this Editor Group</h4>
+	<div class="buse-panel-header">
+		<h4 id="add-group-members-header">Add User to this Editor Group</h4>
+	</div>
 	<fieldset>
 		<div id="members-message" ></div>
 		<div class="form-row">
@@ -14,7 +16,12 @@
 </div>
 
 <div id="group-members">
-	<h4><span class="member-count"><?php echo count( $group->users ); ?> members</span> Editor Group List</h4>
+	<div class="buse-panel-header">
+		<div id="member-list-count">
+			<span class="member-count"><?php echo count( $group->users ); ?></span> members
+		</div>
+		<h4 id="edit-group-members-header">Editor Group List</h4>
+	</div>
 	<fieldset>
 		<ul id="group-member-list">
 			<?php $users = BU_Section_Editing_Plugin::get_allowed_users(); ?>
