@@ -9,6 +9,7 @@ abstract class BU_Permissions_Editor {
 	protected $post_type;
 
 	protected $per_page;
+	protected $posts;
 
 	/**
 	 * $group can be either a BU_Edit_Group object or a group ID
@@ -77,8 +78,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	}
 
 	public function render() {
+		echo '<p>Flat permissions editor: <br>Coming soon to a BU Section Editing Plugin near you...</p>';
 		
-
 	}
 }
 
@@ -98,7 +99,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	}
 
 	// ____________________INTERFACE_________________________
-
 
 	/**
 	 * For investigation of sans bu-navigation approach to hierarchical post display
@@ -124,6 +124,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		if( $child_of == 0 ) $section_args['depth'] = 1;
 		else $section_args['depth'] = 0;
 
+		// Get root pages
 		$sections = bu_navigation_gather_sections( $child_of, $section_args);
 
 		$page_args = array(
@@ -133,8 +134,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			);
 
 		$root_pages = bu_navigation_get_pages( $page_args );
-
-		
 		$pages_by_parent = bu_navigation_pages_by_parent($root_pages);
 
 		// Display posts (recursively)

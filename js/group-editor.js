@@ -3,8 +3,8 @@ jQuery(document).ready(function($){
 	// Globals
 	var members_list = $('#group-member-list');
 
-	// Active tab switching
-	var $tabs = $('a.nav-tab');
+	// Navigation tabs/panels
+	var $tabs = $('.nav-tab');
 	var $panels = $('.edit-group-panel');
 
 	$tabs.click(function(e){

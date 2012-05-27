@@ -126,6 +126,48 @@
 
 /* Permissions Panel / jsTree */
 
+#perm-tab-container {
+	margin-bottom: 0;
+}
+
+#perm-panel-container {
+	padding: 10px;
+	border: 3px solid #A9AAA9;
+	margin: 0 5px 5px 1px;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	overflow: scroll;
+	height: 450px;
+}
+
+#perm-tab-container .nav-tab {
+	color: #777;
+	font-weight: bold;
+	text-shadow: none;
+	padding: 4px 10px;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 0;
+	margin-right: 3px;
+	border: 1px solid #bbb;
+	margin-left:1px;
+}
+
+#perm-tab-container .nav-tab.inline {
+	float: left;
+}
+
+#perm-tab-container .nav-tab-active {
+	background-color: #A9AAA9;
+	color: #fff;
+	border: none;
+	padding: 5px 10px;
+	margin-left: 1px;
+}
+
+.perm-panel.active {
+
+}
+
 .perm-editor-hierarchical.jstree-default.jstree-focused {
 	background: none;
 }
@@ -220,6 +262,16 @@
 	position: static; 
 }
 
+.js .perm-panel { 
+	position: absolute;
+	top: -9999px;
+	left:-9999px;
+}
+
+.perm-panel.active { 
+	position: static; 
+}
+
 /* Form elements */
 
 #section-group-editor fieldset {
@@ -240,6 +292,16 @@
 
 #members-message p {
 	font-style: normal;
+}
+
+/* Clearing */
+#group-stats-widget .actions:after,
+#perm-tab-container:after {
+	display: block;
+	clear: both;
+	content: " ";
+	height: 0;
+	overflow: hidden;
 }
 
 /* Con javascript */
