@@ -123,14 +123,14 @@ class BU_Groups_Admin {
 					if( $group_id > 0 ) {
 						$groups->update_group($group_id, $group_data);
 					} else {
-						$groups->add_group($group_data);
+						$group = $groups->add_group($group_data);
+						$group_id = $group->id;
 					}
 
 					// @todo check for valid save -- save should generate validation error messages / statuses
 					$groups->save();
 
-					$redirect_url = remove_query_arg( array('action','id','tab'));
-					$redirect_url = add_query_arg( array( 'status' => 2 ), $redirect_url );
+					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => 2 ) );
 					break;
 
 				case 'delete':
@@ -276,6 +276,47 @@ MSG;
 		return $url;
 	}
 
+	/**
+	 * Render group permissions string
+	 * 
+	 * @todo should there be a BU_Group_Permissions object that handles all of this?
+	 */ 
+	static function group_permissions_string( $group, $post_type = null, $args = array(), $offset = 0 ) {
+
+
+		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
+		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
+
+		$output = '';
+		$counts = array();
+
+		foreach( $content_types as $pt ) {
+			$defaults = array( 'post_type' => $pt->name );
+			$query_args = wp_parse_args( $args, $defaults );
+
+			$count = $group->get_posts_count( $query_args );
+			$count = $count + $offset;
+
+			if( (int) $count > 0 ) {
+				$label = ( $count > 1 ) ? $pt->label : $pt->labels->singular_name;
+
+				$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"%s-stat-count\">%s</span> %s</span>\n", 
+					$pt->name,
+					$pt->name,
+					$count,
+					$label );
+			}
+
+		}
+
+		if( ! empty( $counts ) ) { 
+			$output = implode(', ', $counts );
+		}
+
+		return $output;
+
+	}
+
 }
 
 /**
@@ -288,6 +329,7 @@ class BU_Groups_Admin_Ajax {
 		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
 		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
 		add_action('wp_ajax_buse_fetch_children', array( __CLASS__, 'render_post_children' ) );
+		add_action('wp_ajax_buse_update_permissions_count', array( __CLASS__, 'update_permissions_count' ) );
 
 	}
 
@@ -385,6 +427,48 @@ class BU_Groups_Admin_Ajax {
 			die();
 		}
 	
+	}
+
+	static function update_permissions_count() {
+
+		if( defined('DOING_AJAX') && DOING_AJAX ) {
+
+			$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : null;
+			$post_type = isset( $_POST['post_type'] ) ? $_POST['post_type'] : null;
+			$count = isset( $_POST['count'] ) ? $_POST['count'] : 0;
+			$edits = isset( $_POST['edits'] ) ? $_POST['edits'] : array();
+
+			// @todo graceful error handling
+			if( is_null( $gid ) || is_null( $post_type ) ) {
+				error_log('Invalid group or post type!');
+				echo 'Bad group or post type!';
+				die();
+			}
+
+			$offset = 0;
+			$args['post__not_in'] = array();
+
+			foreach( $edits as $post_id => $editable ) {
+				if( $editable === 'true' ) $offset++;
+				else $args['post__not_in'][] = $post_id;
+			}
+
+			if( $gid < 0 ) $group = new BU_Edit_Group();
+			else $group = BU_Edit_Groups::get_instance()->get( $gid );
+
+			if( ! ( $group instanceof BU_Edit_Group ) ) {
+				error_log('Invalid group!');
+				echo 'Bad group!';
+				die();
+			}
+
+			$output = BU_Groups_Admin::group_permissions_string( $group, $post_type, $args, $offset );
+
+			echo $output;
+
+			die();
+		}
+
 	}
 
 }

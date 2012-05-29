@@ -4,25 +4,31 @@ jQuery(document).ready(function($){
 	var members_list = $('#group-member-list');
 
 	// Navigation tabs/panels
-	var $tabs = $('.nav-tab');
-	var $panels = $('.edit-group-panel');
+	var $nav_links = $('a.nav-link');
 
-	$tabs.click(function(e){
+	$nav_links.click(function(e){
 		e.preventDefault();
 
-		var $active = $(this);
-		var $panel = $($active.attr('href'));
+		var $tab = $('a.nav-tab[href=' + this.hash + ']');
+		var $target = $(this.hash);
 
-		$active.addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
-		$panel.addClass('active').siblings().removeClass('active');
+		$tab.addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
+		$target.addClass('active').siblings().removeClass('active');
 
 	});
 
-	// Move non active users to different location
+	/* Group Name */
+	$('#edit-group-name').blur(function(e){
+		$('#group-stats-name').html($(this).val());
+	});
+
+	/* Group members */ 
+
 	$('.member:not(.active)').appendTo('#inactive-members');
 
 	// Remove a member from the editor group list
 	members_list.delegate( 'a.remove_member', 'click', function(e){
+		e.preventDefault();
 
 		$(this).parent('.member').removeClass('active').slideUp( 'fast', function() {
 			$(this).appendTo('#inactive-members')
@@ -30,8 +36,6 @@ jQuery(document).ready(function($){
 
 			updateMemberCount();
 		});
-
-		e.preventDefault();
 
 	});
 
@@ -104,9 +108,6 @@ jQuery(document).ready(function($){
 					
 					} else {
 
-						// I don't think we need an update message
-						//$('#members-message').attr('class','updated').html('<p>' + user_login + ' has been added to this group.</p>').fadeIn();
-
 						// Remove any errors
 						$('#members-message').fadeOut('fast', function(e){$(this).attr('class','').html('');});
 
@@ -133,6 +134,7 @@ jQuery(document).ready(function($){
 				//$('#members-message').attr('class', 'error').html( response ).fadeIn();
 			
 			}
+
 		});
 
 		// For quick member entry (should this only run on successful add?)
@@ -287,11 +289,9 @@ jQuery(document).ready(function($){
 		var is_editable = false;
 		var post_type = this.get_container().data('post-type');
 
-		// @todo call a function and pass this node
 		switch( $node.attr('rel') ) {
 
 			case 'section_editable':
-
 				// Has editable children
 				if( $node.find('li[rel="section_editable"],li[rel="post_editable"]').length > 0 )
 					$node.attr('rel', 'section_children_editable');
@@ -318,28 +318,77 @@ jQuery(document).ready(function($){
 				break;
 		}
 
+		// Update post permissions
+		updatePostPermissions( id, is_editable, post_type );
+
+	}
+
+	var updatePostPermissions = function( post_id, is_editable, post_type ) {
+		
 		// fetch existing edits
-		var existing_edits = $('#buse-edits-' + post_type ).val() || '';
+		var $edits_field = $('#buse-edits-' + post_type );
+
+		var existing_edits = $edits_field.val() || '';
 		var edits = existing_edits ? JSON.parse(existing_edits) : {};
-		edits[id] = is_editable;
+		edits[post_id] = is_editable;
 
-		// update
-		$('#buse-edits-' + post_type ).val( JSON.stringify(edits) );
+		// Update edits input
+		$edits_field.val( JSON.stringify(edits) );
 
-	}
-
-	var makeSectionEditable = function() {
-		// Make all children section editable?  How should we hadnle this from both a UI and data standpoint?
-	}
-
-	var restrictSection = function() {
+		// Update counter
+		updatePermissionsCount( post_type, edits );
 
 	}
 
-	// Should move JSON parse/stringify logic to this function...
-	$('#group-edit-form').bind('submit', function(){
+	var updatePermissionsCount = function( post_type, edits ) {
 
-	})
+		var editable_count = 1;
+
+		var permissionsData = {
+			action: 'buse_update_permissions_count',
+			count: editable_count,
+			post_type: post_type,
+			edits: edits,
+			group_id: $('#group_id').val()
+		};
+
+		$.ajax({
+			url: ajaxurl,
+			data: permissionsData,
+			type: 'POST',
+			success: function(response) {
+
+				$container = $('#group-stats-permissions');
+				$existing = $container.children('#' + post_type + '-stats');
+
+				// We have an updated count fragment for this post type
+				if( response.length > 0 ) {
+
+					// check for existance of #add-permissions-link, remove if its there
+					$('#add-permissions-link').remove();
+
+					if( $existing.length > 0 ) {
+						$existing.replaceWith($(response));
+					} else {
+						$container.append($(response));
+					}
+					
+				} else { // We no longer have any count for this post tpye
+					
+					$existing.remove();
+
+					// Reset to 'Add Permissions' link if this was the last editable post
+					if( $container.children('.perm-stats').length == 0 ) {
+						$container.html('<a id="add-permissions-link" class="nav-link" href="#group-permissions-panel" title="Add permissions for this group">Add Permissions</a>');
+					}
+
+				}
+			},
+			error: function(response) {
+				console.log(response);
+			}
+		});
+	}
 
 	// jstree
 	$('.perm-editor-hierarchical')

@@ -216,6 +216,13 @@
 	font-weight: bold;
 }
 
+#group-stats-widget span[id*="count"],
+#group-stats-widget span[class*="count"] {
+	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
+	font-weight: bold;
+	font-size: 18px;
+}
+
 #group-stats-widget .actions {
 	background-color: #ebf2fb;
 	padding: 10px;

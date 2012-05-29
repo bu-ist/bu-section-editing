@@ -491,6 +491,30 @@ class BU_Edit_Group {
 	}
 
 	/**
+	 * Get count for posts with permissions by post type
+	 * 
+	 * @uses WP_Query
+	 *
+	 * @param array $args an optional array of WP_Query arguments, will override defaults
+	 * @return array an array of posts that have section editing permissions for this group
+	 */ 
+	public function get_posts_count( $args = array() ) {
+
+		$defaults = array(
+			'post_type' => 'page',
+			'meta_key' => self::META_KEY,
+			'meta_value' => $this->id,
+			'posts_per_page' => 0
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$query = new WP_Query( $args );
+
+		return $query->found_posts;
+	}
+
+	/**
 	 * Update data fields for this group
 	 * 
 	 * @param array $args an array of key => value parameters to update

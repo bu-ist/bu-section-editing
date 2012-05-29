@@ -1,6 +1,6 @@
 <div class="wrap">
 	<?php screen_icon(); ?>
-	<h2>Section Groups</h2>
+	<h2>Section Groups <a href="<?php echo BU_Groups_Admin::manage_groups_url( 'add' );?>" class="add-new-h2">Add New</a></h2>
 	<p><a href="<?php echo BU_Groups_Admin::manage_groups_url( 'add' ); ?>" class="button-secondary">Add an Editor Group</a></p>
 	<table id="buse-group-table">
 	<!--<table class="wp-list-table widefat">-->

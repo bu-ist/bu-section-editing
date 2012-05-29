@@ -6,7 +6,7 @@
 		<div id="perm-tab-container">
 			<?php foreach( $content_types as $index => $pt ): ?>
 				<?php $active = $index == 0 ? ' nav-tab-active' : ''; ?>
-				<a href="#perm-panel-<?php echo $pt->name; ?>" class="nav-tab inline<?php echo $active; ?>"><?php echo $pt->label; ?></a>
+				<a href="#perm-panel-<?php echo $pt->name; ?>" class="nav-link nav-tab inline<?php echo $active; ?>"><?php echo $pt->label; ?></a>
 			<?php endforeach; ?>
 		</div>
 		<div id="perm-panel-container">
