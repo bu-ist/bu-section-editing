@@ -155,21 +155,22 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$types = '';
 
 			if( $has_children ) {
+				
 				$classes = 'jstree-closed';
 				$types = 'default';
 
 				if( $post->section_editable ) {
-					$types = 'section_editable';
+					$types = 'allowed';
 				} else if ( $this->has_editable_child( $post->ID, $pages_by_parent ) ) {
-					$types = 'section_children_editable';
+					$types = 'desc_allowed';
 				} else {
-					$types = 'section_restricted';
+					$types = 'denied';
 				}
 			} else {
 				if( $post->section_editable ) {
-					$types = 'post_editable';
+					$types = 'allowed';
 				} else {
-					$types = 'post_restricted';
+					$types = 'denied';
 				}
 			}
 

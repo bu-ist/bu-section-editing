@@ -39,7 +39,7 @@ jQuery(document).ready(function($){
 
 	});
 
-	/* Find Users */
+	/* Find Users - not yet implemented */
 
 	$('#find_user').click( function(e) {
 
@@ -145,7 +145,7 @@ jQuery(document).ready(function($){
 	// _______________________ Hierarchical permissions editor ________________________
 	
 	var options = {
-		plugins : [ 'themes', 'types', 'html_data', 'ui', 'contextmenu' ],
+		plugins : [ 'themes', 'types', 'html_data', 'ui' ],
 		core : {
 			animation: 0,
 			html_titles : true
@@ -154,83 +154,60 @@ jQuery(document).ready(function($){
 			types : {
 				'default' : {
 					clickable	: true,
-					renameable	: true,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
+					renameable	: false,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
 					max_children	: -1,
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						"image": buse_config.pluginUrl + "/images/group_perm_restrict.png"
+						"image": buse_config.pluginUrl + "/images/group_perm_denied.png"
 					}
 				},
-				'section_restricted' : {
+				'denied' : {
 					clickable	: true,
 					renameable	: false,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
 					max_children	: -1,
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_restrict.png"
+						image: buse_config.pluginUrl + "/images/group_perm_denied.png"
 					}
 				},
-				'section_editable' : {
+				'allowed' : {
 					clickable	: true,
 					renameable	: false,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
 					max_children	: -1,
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_editable.png"
+						image: buse_config.pluginUrl + "/images/group_perm_allowed.png"
 					}
 				},
-				'section_children_editable' : {
+				'desc_allowed' : {
 					clickable	: true,
 					renameable	: false,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
 					max_children	: -1,
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_children_editable.png"
-					}
-				},
-				'post_editable' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_editable.png"
-					}
-				},
-				'post_restricted' : {
-					clickable	: true,
-					renameable	: true,
-					deletable	: true,
-					creatable	: true,
-					draggable	: true,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						"image": buse_config.pluginUrl + "/images/group_perm_restrict.png"
+						image: buse_config.pluginUrl + "/images/group_perm_desc_allowed.png"
 					}
 				}
 			}
+		},
+		ui: {
+			select_limit: 1
 		},
 		html_data : {
 			ajax : {
@@ -245,84 +222,155 @@ jQuery(document).ready(function($){
 					}
 				}
 			}
-		},
-		contextmenu : {
-			items : function(node) {
-
-				var label = node.attr('rel') == 'section_editable' ? 'Restrict' : 'Make Editable';
-
-				switch( node.attr('rel') ) {
-					case 'section_editable':
-						label = 'Restrict Section';
-						break;
-					case 'section_restricted':
-					case 'section_children_editable':
-						label = 'Make Section Editable';
-						break;
-					case 'post_editable':
-						label = 'Restrict post';
-						break;
-					case 'post_restricted':
-						label = 'Make post editable';
-						break;
-				}
-
-				return {
-					"edit" : {
-						"label" : label,
-						"action" : editNode,
-						"icon" : "remove"
-					}
-				}
-			}
 		}
 	};
 
-	/**
-	 * Need to figure out the best way to propogate permissions to children,
-	 * both programmatically and visually
-	 */
-	var editNode = function(n) {
+	// jstree
+	$('.perm-editor-hierarchical')
+		.jstree( options )
+		.bind('select_node.jstree', function( event, data ) {
 
-		var $node = $(n);
+			//console.log('Selecting node!');
+			toggleContextMenu( data.rslt.obj, data.inst );
+
+		})
+		.bind('deselect_node.jstree', function( event, data ) {
+
+			//console.log('Deselecting node!');
+			toggleContextMenu( data.rslt.obj, data.inst );
+
+		})
+		.bind('deselect_all.jstree', function( event, data ) {
+
+			//console.log('Deselecting all nodes!');
+
+			// Remove existing contect menus if we have a previous selection
+			if( data.rslt.obj.length ) {
+
+				toggleContextMenu( data.rslt.obj, data.inst );
+
+			}
+
+		});
+
+	var toggleContextMenu = function( $el, inst ) {
+
+		var $hasExisting = $el.children('.edit-node').length ? true : false;
+
+		if( $hasExisting == true ) {
+
+			removeContextMenu( $el, inst );
+
+		} else {
+
+			createContextMenu( $el, inst );
+
+		}
+
+	}
+
+	var createContextMenu = function( $el, inst ) {
+
+		// Generate appropriate label
+		var state = $el.attr('rel');
+		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
+
+		// Create actual state modifying link
+		var $editNodeLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
+
+		// Attach event handlers
+		$editNodeLink.click(function(e){
+
+			e.stopPropagation();
+
+			// When button is clicked, deselect parent li
+			inst.deselect_node($el);
+
+			// And process the action
+			handleContextMenuAction( $el, inst );
+
+		});
+
+		// Create edit button
+		var $editNode = $('<span class="edit-node tri-border left"></span>').append($editNodeLink).hide();
+
+		// Append and fade in
+		$el.children('a:first').after($editNode);
+		$editNode.fadeIn();
+	}
+
+	var removeContextMenu = function( $el, inst ) {
+
+		var $menu = $el.children('.edit-node').first();
+
+		if( $menu.length ) {
+			
+			$menu.fadeOut( function(){ 
+
+				$(this).remove();
+
+			});
+
+		}
+
+	}
+
+	/**
+	 * The user has allowed/denied a specific node
+	 */
+	var handleContextMenuAction = function( $node, inst ) {
+
 		var id = $node.attr('id').substr(1);
 		var is_editable = false;
-		var post_type = this.get_container().data('post-type');
+		var post_type = inst.get_container().data('post-type');
 
+		// Look at previous value to determine new one
 		switch( $node.attr('rel') ) {
 
-			case 'section_editable':
-				// Has editable children
-				if( $node.find('li[rel="section_editable"],li[rel="post_editable"]').length > 0 )
-					$node.attr('rel', 'section_children_editable');
-				else
-					$node.attr('rel', 'section_restricted')
+			// Previously allowed: deny
+			case 'allowed':
+				//@todo deny all children (?)
+				
+				// Update rel attribute (look for editable children first)
+				if( $node.find('li[rel="allowed"]').length > 0 ) {
+
+					$node.attr('rel', 'desc_allowed');
+				
+				} else {
+				
+					$node.attr('rel', 'denied');
+				}
 
 				is_editable = false;
 				break;
-			case 'section_restricted':
-				$node.attr('rel', 'section_editable' );
+
+			// Previously denied: allow
+			case 'denied':
+				// @todo allow all descendents
+
+				$node.attr('rel', 'allowed' );
 				is_editable = true;
 				break;
-			case 'section_children_editable':
-				$node.attr('rel', 'section_editable');
-				is_editable = false;
-				break;
-			case 'post_editable':
-				$node.attr('rel', 'post_restricted');
-				is_editable = false
-				break;
-			case 'post_restricted':
-				$node.attr('rel', 'post_editable');
+
+			// Descendents allowed:
+			case 'desc_allowed':
+				// @todo remove editable flags from all editable descendents
+
+				$node.attr('rel', 'allowed');
 				is_editable = true;
 				break;
 		}
 
-		// Update post permissions
+		// @todo Propogate state to ancestors
+
+		// Update edit state
 		updatePostPermissions( id, is_editable, post_type );
 
 	}
 
+	/**
+	 * Given an incoming state change on a specific post, update the list of edits to be processed on save
+	 */
 	var updatePostPermissions = function( post_id, is_editable, post_type ) {
 		
 		// fetch existing edits
@@ -340,6 +388,11 @@ jQuery(document).ready(function($){
 
 	}
 
+	/**
+	 * Update stats widget counter to reflect current state of permissions for a given post type
+	 *
+	 * @uses ajax
+	 */
 	var updatePermissionsCount = function( post_type, edits ) {
 
 		var editable_count = 1;
@@ -389,13 +442,6 @@ jQuery(document).ready(function($){
 			}
 		});
 	}
-
-	// jstree
-	$('.perm-editor-hierarchical')
-		.bind('loaded.jstree', function( event, data ) {
-			// console.log('JS TREE LOADED');
-		})
-		.jstree( options );
 
 	function updateMemberCount() {
 		var count = members_list.children('.member').length;

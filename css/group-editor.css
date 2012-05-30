@@ -186,10 +186,131 @@
 	background: none;
 }
 
+.perm-editor-hierarchical.jstree li {
+    position: relative;
+}
+
 .perm-editor-hierarchical.jstree a > ins {
 	height: 18px;
 	width: 20px;
 }
+
+.perm-editor-hierarchical li a.jstree-clicked{
+    background: #ffff00;
+    border: none;
+}
+
+.perm-editor-hierarchical .edit-node {
+	position: absolute;
+	margin-left: 25px;
+	margin-top: -16px;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	text-align: center;
+}
+
+/* CSS3 Triangles ... replace with image as soon as we have one */
+
+.tri-border:before {
+	content:"";
+	position:absolute;
+	bottom:-20px; /* value = - border-top-width - border-bottom-width */
+	left:40px; /* controls horizontal position */
+	border-width:20px 20px 0;
+	border-style:solid;
+	border-color:#5a8f00 transparent;
+	/* reduce the damage in FF3.0 */
+	display:block; 
+	width: 0px;
+}
+
+/* creates the smaller  triangle */
+.tri-border:after {
+	content:"";
+	position:absolute;
+	bottom:-13px; /* value = - border-top-width - border-bottom-width */
+	left:47px; /* value = (:before left) + (:before border-left) - (:after border-left) */
+	border-width:13px 13px 0;
+	border-style:solid;
+	border-color:#fff transparent;
+	/* reduce the damage in FF3.0 */
+	display:block; 
+	width:0;
+}
+
+/* creates the larger triangle */
+.tri-border.left:before {
+	top: 15px; /* controls vertical position */
+	bottom:auto;
+	left: -18px; /* value = - border-left-width - border-right-width */
+	border-width: 8px 17px 8px 0px;
+	border-color: transparent #ccc;
+}
+
+/* creates the smaller  triangle */
+.tri-border.left:after {
+	top: 15px; /* value = (:before top) + (:before border-top) - (:after border-top) */
+	bottom:auto;
+	left: -17px; /* value = - border-left-width - border-right-width */
+	border-width: 8px 21px 8px 0;
+	border-color:transparent #fff;
+}
+
+
+.perm-editor-hierarchical .edit-node a {
+	color: white;
+	background-repeat: no-repeat;
+	background-position: 5px;
+	background-color: #4790b4;
+	padding: 8px 10px 7px 25px;
+	border-radius: 3px;
+}
+
+.perm-editor-hierarchical .edit-node a.denied,
+.perm-editor-hierarchical .edit-node a.desc_allowed {
+	background-image: url('../images/group_perm_allowed.png');
+}
+
+.perm-editor-hierarchical .edit-node a.allowed {
+	background-image: url('../images/group_perm_denied.png');
+}
+
+
+/*
+.perm-editor-hierarchical .edit-node {
+	position: absolute;
+	display: inline-block;
+	width: 100px;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	text-align: center;
+	margin-left: 10px;
+	margin-top: -8px;
+}
+
+.perm-editor-hierarchical .edit-node a {
+	color: white;
+	background-image: url('../images/group_perm_allowed.png');
+	background-repeat: no-repeat;
+	background-position: 0;
+	background-color: #4790b4;
+	border-radius: 3px;
+	width: 100%;
+	height: 24px;
+}
+*/
+
+/*.perm-editor-hierarchical li[rel="denied"] .jstree-clicked:after,
+.perm-editor-hierarchical li[rel="desc_allowed"] .jstree-clicked:after  {
+	content: 'Allow Editing';
+}
+
+.perm-editor-hierarchical li[rel="allowed"] .jstree-clicked:after{
+	content: 'Deny Editing';
+}*/
+
 
 /* Stats widget */
 
