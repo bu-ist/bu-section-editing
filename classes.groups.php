@@ -132,10 +132,14 @@ class BU_Edit_Groups {
 			// extract permission updates
 			$perms = array();
 
+			// Convert JSON string to array
 			foreach( $args['perms'] as $post_type => $json_data ) {
+
 				if( $json_data )
 					$perms[$post_type] = json_decode( stripslashes( $json_data ), true );
+
 			}
+
 
 			// Set group permissions
 			$this->update_group_permissions( $group->id, $perms );
@@ -302,12 +306,25 @@ class BU_Edit_Groups {
 
 		foreach( $permissions as $post_type => $perm_settings ) {
 
-			foreach( $perm_settings as $id => $is_editable ) {
+			foreach( $perm_settings as $id => $status ) {
 
-				if( $is_editable )
-					update_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
-				else
-					delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
+				// Clear all possible existing values
+				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
+				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-denied' );
+				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-denied-desc-allowed' );
+
+				switch( $status ) {
+
+					case 'allowed':
+						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
+						break;
+
+					case 'denied':
+					case 'denied-desc-allowed':
+						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-' . $status );
+						break;
+
+				}
 
 			}
 
@@ -391,6 +408,7 @@ class BU_Edit_Group {
 	private $modified = null;
 
 	const META_KEY = '_bu_section_group';
+
 
 	/**
 	 * Instantiate new edit group

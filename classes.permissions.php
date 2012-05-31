@@ -120,9 +120,9 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		$section_args = array( 'direction' => 'down', 'post_types' => $this->post_type );
 
-		// Force a depth of 1 for the initial load -- keeps the initial page load manageable
+		// If we're looking for the first level, limit to 
 		if( $child_of == 0 ) $section_args['depth'] = 1;
-		else $section_args['depth'] = 0;
+		else $section_args['depth'] = 0; // fetch all levels otherwise
 
 		// Get root pages
 		$sections = bu_navigation_gather_sections( $child_of, $section_args);
@@ -136,12 +136,24 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		$root_pages = bu_navigation_get_pages( $page_args );
 		$pages_by_parent = bu_navigation_pages_by_parent($root_pages);
 
+		$prev_rel = 'denied';
+
+		if( $child_of != 0 ) {
+
+			// We need the patriarch's setting here to start
+			$root_id = $pages_by_parent[$child_of][0]->post_parent;
+			$status = get_post_meta( $root_id, BU_Edit_Group::META_KEY );
+
+			if( in_array( $this->group->id, $status ) )
+				$prev_rel = 'allowed';
+		}
+
 		// Display posts (recursively)
-		$this->display_posts( $child_of, $pages_by_parent );
+		$this->display_posts( $child_of, $pages_by_parent, $prev_rel );
 	
 	}
 
-	public function display_posts( $parent_id, $pages_by_parent ) {
+	public function display_posts( $parent_id, $pages_by_parent, $prev_rel = 'denied' ) {
 
 		if( array_key_exists( $parent_id, $pages_by_parent ) && ( count( $pages_by_parent[$parent_id] ) > 0 ) )
 			$posts = $pages_by_parent[$parent_id];
@@ -151,35 +163,18 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		foreach( $posts as $post ) {
 
 			$has_children = array_key_exists( $post->ID, $pages_by_parent );
-			$classes = '';
-			$types = '';
 
-			if( $has_children ) {
-				
-				$classes = 'jstree-closed';
-				$types = 'default';
+			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
+			$rel = $post->rel_attr ? $post->rel_attr : $prev_rel;
+			error_log( 'Post Rel: ' . $rel );
 
-				if( $post->section_editable ) {
-					$types = 'allowed';
-				} else if ( $this->has_editable_child( $post->ID, $pages_by_parent ) ) {
-					$types = 'desc_allowed';
-				} else {
-					$types = 'denied';
-				}
-			} else {
-				if( $post->section_editable ) {
-					$types = 'allowed';
-				} else {
-					$types = 'denied';
-				}
-			}
 
 ?>
-	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" rel="<?php echo $types; ?>">
+	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" rel="<?php echo $rel; ?>">
 		<a href="#"><?php echo $post->post_title; ?></a>
 		<?php if( $has_children && $parent_id != 0 ): ?>
 		<ul>
-			<?php $this->display_posts( $post->ID, $pages_by_parent ); ?>
+			<?php $this->display_posts( $post->ID, $pages_by_parent, $rel ); ?>
 		</ul>
 	<?php endif; ?>
 	</li>
@@ -187,15 +182,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		}
 	}
 
-	public function has_editable_child( $id, $posts ) {
-		$children = $posts[$id];
-
-		foreach( $children as $child ) {
-			if( $child->section_editable )
-				return true;
-		}
-		return false;
-	}
 
 	//__________________NAVIGATION FILTERS______________________
 
@@ -206,16 +192,22 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		if( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
-			// Get post ids that this group can edit
-			$editable_ids = $this->group->get_posts( array( 'post_type' => $this->post_type, 'fields' => 'ids' ) );
-
 			// Append property to post object
 			foreach( $posts as $post ) {
 
-				if( in_array( $post->ID, $editable_ids ) )
-					$post->section_editable = true;
-				else
-					$post->section_editable = false;
+				$groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+
+				// Need to set rel_attr from parents
+				$post->rel_attr = '';
+
+				if( in_array( $this->group->id . '-denied', $groups ) )
+					$post->rel_attr = 'denied';
+
+				if( in_array( $this->group->id . '-denied-desc-allowed', $groups ) )
+					$post->rel_attr = 'denied-desc-allowed';
+
+				if( in_array( $this->group->id, $groups ) )
+					$post->rel_attr = 'allowed';
 
 			}
 

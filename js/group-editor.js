@@ -141,6 +141,14 @@ jQuery(document).ready(function($){
 		$('#user_login').val('').focus();
 
 	}
+	
+	var updateMemberCount = function() {
+
+		var count = members_list.children('.member').length;
+
+		$('.member-count').html( count );
+		
+	}
 
 	// _______________________ Hierarchical permissions editor ________________________
 	
@@ -191,7 +199,7 @@ jQuery(document).ready(function($){
 						image: buse_config.pluginUrl + "/images/group_perm_allowed.png"
 					}
 				},
-				'desc_allowed' : {
+				'denied-desc-allowed' : {
 					clickable	: true,
 					renameable	: false,
 					deletable	: false,
@@ -201,7 +209,7 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_desc_allowed.png"
+						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_allowed.png"
 					}
 				}
 			}
@@ -320,71 +328,222 @@ jQuery(document).ready(function($){
 	 */
 	var handleContextMenuAction = function( $node, inst ) {
 
-		var id = $node.attr('id').substr(1);
-		var is_editable = false;
 		var post_type = inst.get_container().data('post-type');
+		var status = $node.attr('rel');
 
 		// Look at previous value to determine new one
-		switch( $node.attr('rel') ) {
+		switch( status ) {
 
-			// Previously allowed: deny
+			// Previously allowed: denied
 			case 'allowed':
-				//@todo deny all children (?)
-				
-				// Update rel attribute (look for editable children first)
-				if( $node.find('li[rel="allowed"]').length > 0 ) {
-
-					$node.attr('rel', 'desc_allowed');
-				
-				} else {
-				
-					$node.attr('rel', 'denied');
-				}
-
-				is_editable = false;
+				$node.attr('rel', 'denied');
 				break;
 
-			// Previously denied: allow
+			// Previously denied: allowed
 			case 'denied':
-				// @todo allow all descendents
-
+			case 'denied-desc-allowed':
 				$node.attr('rel', 'allowed' );
-				is_editable = true;
 				break;
 
-			// Descendents allowed:
-			case 'desc_allowed':
-				// @todo remove editable flags from all editable descendents
-
-				$node.attr('rel', 'allowed');
-				is_editable = true;
-				break;
 		}
 
-		// @todo Propogate state to ancestors
-
-		// Update edit state
-		updatePostPermissions( id, is_editable, post_type );
+		// Diff the changes
+		processUpdatesForNode( $node, post_type );
 
 	}
 
-	/**
-	 * Given an incoming state change on a specific post, update the list of edits to be processed on save
-	 */
-	var updatePostPermissions = function( post_id, is_editable, post_type ) {
+	var processUpdatesForNode = function( $node, post_type ) {
+
+		var id = $node.attr('id').substr(1);
+		var status = $node.attr('rel');
+		var count = 0;
+
+		// Set edit to root note (needs to be adjusted, based on parent settings)
+		console.log( 'Parent status: ' + $node.parentsUntil('li').parent().attr('rel'));
+		console.log( 'New status: ' + status);
+
+		// Update count for edited node
+		if( status == 'allowed' ) count += 1;
+		else if ( status == 'denied' ) count -= 1;
+
+		if( status == 'allowed' ) console.log('Status is now allowed!');
+		if( status == 'denied' ) console.log('Status is now denied!');
+
+		// Fetch all children
+		var $children = $node.find('li');
+
+		// Propogate permissions
+		$children.attr('rel', status)
+
+		// Update count for edited node
+		if( status == 'allowed' ) count += $children.length;
+		else if ( status == 'denied' ) count -= $children.length;
+
+		// Track changes
+		var edits = getExistingEdits(post_type);
 		
+		// Possibly reset status if we are now inheriting from our ancestors
+		if( $node.parentsUntil('li').parent().attr('rel') == status ) edits[id] = '';
+		else edits[id] = status;
+
+		// Look down
+		$children = $node.find('li').each(function(index, child){
+
+			if( status == $(child).attr('rel') ) {
+				child_id = $(this).attr('id').substr(1);
+				edits[child_id] = '';	// remove redundant statusi
+
+				// Revert counts
+				if( status = 'allowed' ) count--;
+				else if ( status = 'denied' ) count++;
+			}
+		});
+
+		// Loop up
+		$node.parents('li').each( function( index, post ) {
+
+			var ancestor_status = $(post).attr('rel');
+			var ancestor_id = $(post).attr('id').substr(1);
+
+			switch( ancestor_status ) {
+
+				case 'allowed':
+					/* no op */
+					break;
+
+				case 'denied':
+					// @todo you left off here
+					// need to differentiate between an explicitly denied post (meaning inherited would be allowed otherwise)
+					// should do this at the type level
+					// trigger denied-explicit state when an ancestor is allowed
+					// when ancestor is denied, explicit denied states should go away
+
+					// this is getting way to overly fucking complicated...
+
+					// Respect explicity denied parents
+					if( ( ancestor_id in edits ) && ( edits[ancestor_id] == 'denied' ) )
+						break;
+
+					// Otherwise look for allowed descendents
+					if( $(post).find('li[rel="allowed"]').length ) {
+
+						$(post).attr('rel','denied-desc-allowed');
+						edits[ancestor_id] = 'denied-desc-allowed';
+
+					}
+
+					break;
+
+				case 'denied-desc-allowed':
+
+					// Look for allowed descendents
+					if( $(post).find('li[rel="allowed"]').length == 0 ) {
+
+						$(post).attr('rel','denied' );
+						edits[ancestor_id] = '';
+
+					}
+
+					break;
+
+			}
+
+		});
+
+		commitEdits( edits, post_type );
+
+		// Calculate count update for this post
+		var count = $children.length + 1;
+		count = ( status == 'allowed' ) ? count : -count;
+
+		// Update the stats widget counter
+		updatePermStats( count, post_type );
+
+	}
+
+	var getExistingEdits = function( post_type ) {
+
 		// fetch existing edits
 		var $edits_field = $('#buse-edits-' + post_type );
+		var edits = $edits_field.val() || '';
 
-		var existing_edits = $edits_field.val() || '';
-		var edits = existing_edits ? JSON.parse(existing_edits) : {};
-		edits[post_id] = is_editable;
+		// Convert to object
+		return edits ? JSON.parse(edits) : {};
+	}
 
-		// Update edits input
+	var commitEdits = function( edits, post_type ) {
+
+		var $edits_field = $('#buse-edits-' + post_type );
+
+		for( id in edits ) {
+			console.log( post_type + ' ' + id + ' set to: ' + edits[id] );
+		}
+			
+		// Update input
 		$edits_field.val( JSON.stringify(edits) );
 
-		// Update counter
-		updatePermissionsCount( post_type, edits );
+	}
+
+	var mergeEdits = function( new_edits, post_type ) {
+
+		// fetch existing edits
+		var $edits_field = $('#buse-edits-' + post_type );
+		var edits = $edits_field.val() || '';
+
+		// Convert to object
+		edits = edits ? JSON.parse(edits) : {};
+
+		// Merge
+		$.extend( edits, new_edits );
+
+		console.log('Resulting updates:');
+		for( id in edits ) {
+			console.log( post_type + ' ' + id + ' set to: ' + edits[id] );
+		}
+			
+		// Update input
+		$edits_field.val( JSON.stringify(edits) );
+
+	}
+
+	var updatePermStats = function( count, post_type ) {
+
+		console.log('Update count for `' + post_type + '`: ' + count );
+
+		var $container = $('#group-stats-permissions');
+		var $existing = $('#' + post_type + '-stat-count');
+		var start_count = 0;
+
+		if( $existing.length == 0 ) {
+			$container.append('<span id="' + post_type + '-stats" class="perm-stats"><span id="' + post_type + '-stat-count"></span> Pages</span>');
+			$existing = $('#' + post_type + '-stat-count' );
+		} else {
+			start_count = parseInt( $existing.text() );
+		}
+
+		var total = start_count + count;
+
+		// We have an updated count fragment for this post type
+		if( total > 0 ) {
+
+			// check for existance of #add-permissions-link, remove if its there
+			$('#add-permissions-link').remove();
+
+			$existing.text(total);
+			
+		} else { // We no longer have any count for this post tpye
+			
+			$existing.parent().remove();
+
+			// Reset to 'Add Permissions' link if this was the last editable post
+			if( $container.children('.perm-stats').length == 0 ) {
+
+				$container.html('<a id="add-permissions-link" class="nav-link" href="#group-permissions-panel" title="Add permissions for this group">Add Permissions</a>');
+			
+			}
+
+		}
+
 
 	}
 
@@ -432,7 +591,9 @@ jQuery(document).ready(function($){
 
 					// Reset to 'Add Permissions' link if this was the last editable post
 					if( $container.children('.perm-stats').length == 0 ) {
+
 						$container.html('<a id="add-permissions-link" class="nav-link" href="#group-permissions-panel" title="Add permissions for this group">Add Permissions</a>');
+					
 					}
 
 				}
@@ -443,9 +604,5 @@ jQuery(document).ready(function($){
 		});
 	}
 
-	function updateMemberCount() {
-		var count = members_list.children('.member').length;
-		$('.member-count').html( count );
-	}
 
 });

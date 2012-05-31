@@ -283,7 +283,7 @@
 }
 
 .perm-editor-hierarchical .edit-node a.denied,
-.perm-editor-hierarchical .edit-node a.desc_allowed {
+.perm-editor-hierarchical .edit-node a.denied-desc-allowed {
 	background-image: url('../images/group_perm_allowed.png');
 }
 

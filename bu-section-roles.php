@@ -204,27 +204,37 @@ class BU_Section_Editor {
 			// Get groups associated with post
 			$post = get_post($post_id, OBJECT, null);
 			$groups = get_post_meta($post_id, BU_Edit_Group::META_KEY );
+
+			// Filter out groups that are explicitly denied for this post
+			$allowed_groups = preg_grep( '/^\d+-denied/', $groups, PREG_GREP_INVERT );
+
+			error_log('Allowed Groups: ' . print_r( $allowed_groups, true ) );
+
 			$edit_groups_o = BU_Edit_Groups::get_instance();
 
-			// Search attached groups for current user
-			if($edit_groups_o->has_user($groups, $user_id)) {
+			// Get groups for this user
+			$groups = $edit_groups_o->find_groups_for_user($allowed_groups, $user_id);
 
-				return true;
-			
-			} else {
+			// Check each group
+			foreach( $groups as $group_id ) {
 
-				// Check post ancestors for permissions
-				$ancestors = get_post_ancestors($post);
+				// This group is good, bail here
+				if( in_array( $allowed_groups, $group_id ) )
+					return true;
 
-				// iterate through ancestors; needs to be optimized
-				foreach(array_reverse($ancestors) as $ancestor_id) {
+				// Check parents
+				$ancestors = get_post_ancestors( $post );
+
+				foreach( array_reverse( $ancestors ) as $ancestor_id ) {
 					
-					$groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY);
+					$ancestor_groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY);
+					$ancestor_groups = preg_grep( '$\d+-denied', $groups, PREG_GREP_INVERT );
 
-					if($edit_groups_o->has_user($groups, $user_id)) {
+					if( in_array( $ancestor_allowed_groups, $group_id ) )
 						return true;
-					}
+
 				}
+
 			}
 
 			return false;
