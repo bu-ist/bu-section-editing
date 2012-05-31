@@ -9,9 +9,9 @@
 			<input id="user_login" type="text" class="regular-text" name="user_login" value="" />
 			<button id="add_member" class="button-secondary">Add</button>
 		</div>
-		<div class="form-row">
+		<!--<div class="form-row">
 			<button id="find_user" class="button-secondary">Find User</button>
-		</div>
+		</div>-->
 	</fieldset>
 </div>
 

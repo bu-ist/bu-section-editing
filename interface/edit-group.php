@@ -26,10 +26,10 @@
 					<a name="group-permissions-panel"></a>
 					<?php include 'group-permissions.php'; ?>	
 				</div>
+				<div id="stats-container">
+					<?php include "group-stats.php"; ?>
+				</div><!-- /#stats-container -->
 			</div><!-- /#panel-container -->
-			<div id="stats-container">
-				<?php include "group-stats.php"; ?>
-			</div><!-- /#stats-container -->
 		</form>
 	</div><!-- /.form-wrap -->
 </div><!-- /.wrap -->

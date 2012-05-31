@@ -56,19 +56,34 @@
 	position:relative;
 }
 
-#panel-container { 
-	position:absolute;
-	width: 450px;
+#section-group-editor .form-wrap {
+	height: 100%;
+}
+
+#section-group-editor h3.nav-tab-wrapper {
+	margin-bottom: 0;
+}
+
+#panel-container {
+	width: 100%;
+	min-width: 750px;
 	height: auto;
-	padding-right:35px;
-	border-right: 1px solid #CCC;
 }
 
 #stats-container {
-	position:absolute;
-	left:500px;
-	width: 350px;
-	margin-left:20px;
+	width: 40%;
+	padding-top: 2em;
+	padding-left: 25px;
+	float: left;
+}
+
+.edit-group-panel {
+	float: left;
+	min-height: 400px;
+	width: 50%;
+	padding-top: 2em;
+	padding-right: 25px;
+	border-right: 1px solid #CCC;
 }
 
 /* Panel containers */
@@ -277,41 +292,6 @@
 }
 
 
-/*
-.perm-editor-hierarchical .edit-node {
-	position: absolute;
-	display: inline-block;
-	width: 100px;
-	padding: 10px;
-	border: 1px solid #ccc;
-	border-radius: 3px;
-	text-align: center;
-	margin-left: 10px;
-	margin-top: -8px;
-}
-
-.perm-editor-hierarchical .edit-node a {
-	color: white;
-	background-image: url('../images/group_perm_allowed.png');
-	background-repeat: no-repeat;
-	background-position: 0;
-	background-color: #4790b4;
-	border-radius: 3px;
-	width: 100%;
-	height: 24px;
-}
-*/
-
-/*.perm-editor-hierarchical li[rel="denied"] .jstree-clicked:after,
-.perm-editor-hierarchical li[rel="desc_allowed"] .jstree-clicked:after  {
-	content: 'Allow Editing';
-}
-
-.perm-editor-hierarchical li[rel="allowed"] .jstree-clicked:after{
-	content: 'Deny Editing';
-}*/
-
-
 /* Stats widget */
 
 #group-stats-widget {
@@ -403,15 +383,15 @@
 }
 
 /* States */
-
 .js .edit-group-panel { 
 	position: absolute;
 	top: -9999px;
-	left:-9999px;
+	left: -9999px;
 }
 
 .edit-group-panel.active { 
 	position: static; 
+	float: left;
 }
 
 .js .perm-panel { 
@@ -438,6 +418,14 @@
 	margin-bottom: 10px;
 }
 
+#section-group-editor label {
+	margin-bottom: 0.5em;
+}
+
+#section-group-editor input#user_login {
+	width: 85%;
+}
+
 #members-message {
 		display: none;
 }
@@ -447,6 +435,7 @@
 }
 
 /* Clearing */
+#panel-container:after,
 #group-stats-widget .actions:after,
 #perm-tab-container:after {
 	display: block;
