@@ -1,6 +1,6 @@
 <div id="section-group-editor" class="wrap">
 	<?php screen_icon(); ?>
-	<h2>Edit Section Group <a href="<?php echo BU_Groups_Admin::manage_groups_url( 'add' );?>" class="add-new-h2">Add New</a></h2>
+	<h2>Edit Section Group <a href="<?php echo BU_Groups_Admin::manage_groups_url( 'add' );?>" class="button add-new-h2">Add New</a></h2>
 	<?php if( isset($_GET['errors'])): ?><div class="error"><p>Error saving group!</p></div><?php endif; ?>
 	<div class="form-wrap">
 		<!-- Tab Interface -->

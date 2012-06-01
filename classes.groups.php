@@ -306,7 +306,7 @@ class BU_Edit_Groups {
 
 		foreach( $permissions as $post_type => $perm_settings ) {
 
-			//error_log('= Updating permissions for: ' . $post_type . '=' );
+			// error_log('= Updating permissions for: ' . $post_type . '=' );
 
 			foreach( $perm_settings as $id => $status ) {
 
@@ -318,12 +318,12 @@ class BU_Edit_Groups {
 
 					case 'allowed':
 						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
-						//error_log('Updating ' . $id . ': ' . $group_id );
+						// error_log('Updating ' . $id . ': ' . $group_id );
 						break;
 
 					case 'denied':
 						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-' . $status );
-						//error_log('Updating ' . $id . ': ' . $group_id . '-' . $status );
+						// error_log('Updating ' . $id . ': ' . $group_id . '-' . $status );
 						break;
 
 
@@ -347,7 +347,7 @@ class BU_Edit_Groups {
 					);
 
 				$query = new WP_Query( $args );
-				error_log('= Group ' . $group_id . ' Stats =' );
+				// error_log('= Group ' . $group_id . ' Stats =' );
 
 				while( $query->have_posts() ) {
 					$query->the_post();
@@ -359,7 +359,7 @@ class BU_Edit_Groups {
 					else if( $status == $group_id . '-denied' ) $status = 'Denied';
 					else error_log('Unexpected status...');
 
-					error_log( 'Post: ' . get_the_title() . ' (' . get_the_ID() . ') => ' . $status );
+					// error_log( 'Post: ' . get_the_title() . ' (' . get_the_ID() . ') => ' . $status );
 
 				}
 			}
@@ -521,6 +521,34 @@ class BU_Edit_Group {
 	}
 
 	/**
+	 * Can this group edit this post?
+	 * 
+	 * @todo not currently used, need to test
+	 */
+	public function permissions_for_post( $post_id ) {
+		global $wpdb;
+
+		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, $post_id, $this->id );
+		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
+		
+		// error_log('Permissions for post meta results: ' . print_r( $group_meta, true ) );
+
+		if (!is_array($group_meta)) $group_meta = array();
+
+		if( empty( $group_meta ) ) {
+
+			return 'inherit';
+
+		} else {
+
+			if( $group_meta[0]->meta_value == $this->id )
+				return 'allowed';
+			else
+				return 'denied';
+		}
+	} 
+
+	/**
 	 * Query for all posts that have section editing permissions assigned for this group
 	 * 
 	 * @uses WP_Query
@@ -547,6 +575,7 @@ class BU_Edit_Group {
 	/**
 	 * Get count for posts with permissions by post type
 	 * 
+	 * @todo Fix this, it's broken :(
 	 * @uses WP_Query
 	 *
 	 * @param array $args an optional array of WP_Query arguments, will override defaults
@@ -567,8 +596,6 @@ class BU_Edit_Group {
 		$allowed_query = new WP_Query( $args );
 
 		$count = count( $allowed_query->posts );
-
-		error_log('Initial count: ' . $count );
 
 		add_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
 		add_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
@@ -601,6 +628,9 @@ class BU_Edit_Group {
 
 	}
 
+	/**
+	 * @todo Fix this 
+	 */ 
 	public function post_count_filter( $posts ) {
 		global $wpdb;
 
@@ -608,15 +638,18 @@ class BU_Edit_Group {
 		$ids = array_keys($posts);
 		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->id );
 		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
+		
 		if (!is_array($group_meta)) $group_meta = array();
 
+		//$pages_by_parent = bu_navigation_pages_by_parent( $posts );
+		// Need to count recursively, stopping if a node with children has any status set
+
 		foreach( $posts as $post ) {
+
 			if( array_key_exists( $post->ID, $group_meta ) ) {
 
-				$perm = $group_meta[$post->ID];
+				unset( $posts[$post->ID] );
 
-				if( $perm->meta_value == $this->id . '-denied' )
-					unset( $posts[$post->ID] );
 			}
 		}
 
@@ -624,7 +657,7 @@ class BU_Edit_Group {
 	}
 
 	public function post_count_fields( $fields ) {
-		return array('ID','post_type');
+		return array('ID','post_type', 'post_parent');
 	}
 
 	/**

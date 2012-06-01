@@ -199,39 +199,52 @@ class BU_Section_Editor {
 		if($user_id == 0) return false;
 
 		// Extra checks for any "allowed" users
+		// @todo we need a less expensive way to check this ... this runs quite often
+		// on the edit posts pages
 		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
 
 			// Get groups associated with post
 			$post = get_post($post_id, OBJECT, null);
-			$groups = get_post_meta($post_id, BU_Edit_Group::META_KEY );
+			$post_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
 
 			// Filter out groups that are explicitly denied for this post
-			$allowed_groups = preg_grep( '/^\d+-denied/', $groups, PREG_GREP_INVERT );
+			$allowed_groups = preg_grep( '/^\d+-denied/', $post_groups, PREG_GREP_INVERT );
+			$denied_groups = preg_grep( '/^\d+-denied/', $post_groups );
 
-			error_log('Allowed Groups: ' . print_r( $allowed_groups, true ) );
-
+			// Get all groups for this user
 			$edit_groups_o = BU_Edit_Groups::get_instance();
-
-			// Get groups for this user
-			$groups = $edit_groups_o->find_groups_for_user($allowed_groups, $user_id);
+			$groups = $edit_groups_o->find_groups_for_user( $user_id );
 
 			// Check each group
-			foreach( $groups as $group_id ) {
+			$status = false;
+
+			foreach( $groups as $group ) {
 
 				// This group is good, bail here
-				if( in_array( $allowed_groups, $group_id ) )
+				if( in_array( $group->id, $allowed_groups ) ) {
 					return true;
+				}
 
-				// Check parents
+				if( in_array( $group->id . '-denied', $denied_groups ) ) {
+					continue;
+				}
+
+				// Our status is inherited -- check our ancestors
 				$ancestors = get_post_ancestors( $post );
 
-				foreach( array_reverse( $ancestors ) as $ancestor_id ) {
+				foreach( $ancestors as $ancestor_id ) {
 					
-					$ancestor_groups = get_post_meta($ancestor_id, BU_Edit_Group::META_KEY);
-					$ancestor_groups = preg_grep( '$\d+-denied', $groups, PREG_GREP_INVERT );
+					$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
+					$ancestor_allowed_groups = preg_grep( '/^\d+-denied$/', $ancestor_groups, PREG_GREP_INVERT );
+					$ancestor_denied_groups = preg_grep( '/^\d+-denied$/', $ancestor_groups );
 
-					if( in_array( $ancestor_allowed_groups, $group_id ) )
+					if( in_array( $group->id, $ancestor_allowed_groups ) ) {
 						return true;
+					}
+
+					if( in_array( $group->id . '-denied', $ancestor_denied_groups ) ) {
+						break;
+					}
 
 				}
 

@@ -225,8 +225,14 @@ jQuery(document).ready(function($){
 		},
 		ui: {
 			select_limit: 1
-		},
-		html_data : {
+		}
+	};
+
+	// jstree
+	$('.perm-editor-hierarchical').each( function() {
+		var post_type = $(this).data('post-type');
+		
+		options['html_data'] = {
 			ajax : {
 				url : ajaxurl,
 				type: 'GET',
@@ -234,40 +240,39 @@ jQuery(document).ready(function($){
 					return { 
 						parent_id : n.attr ? n.attr('id') : 0,
 						action : 'buse_fetch_children',
-						post_type : 'page',
+						post_type : post_type,
 						group_id : $('#group_id').val()
 					}
 				}
 			}
 		}
-	};
 
-	// jstree
-	$('.perm-editor-hierarchical')
-		.jstree( options )
-		.bind('loaded.jstree', function( event, data ) {
+		$(this).jstree( options )
+			.bind('loaded.jstree', function( event, data ) {
 
-		})
-		.bind('select_node.jstree', function( event, data ) {
-
-			toggleOverlay( data.rslt.obj, data.inst );
-
-		})
-		.bind('deselect_node.jstree', function( event, data ) {
-
-			toggleOverlay( data.rslt.obj, data.inst );
-
-		})
-		.bind('deselect_all.jstree', function( event, data ) {
-
-			// Remove existing contect menus if we have a previous selection
-			if( data.rslt.obj.length ) {
+			})
+			.bind('select_node.jstree', function( event, data ) {
 
 				toggleOverlay( data.rslt.obj, data.inst );
 
-			}
+			})
+			.bind('deselect_node.jstree', function( event, data ) {
 
-		});
+				toggleOverlay( data.rslt.obj, data.inst );
+
+			})
+			.bind('deselect_all.jstree', function( event, data ) {
+
+				// Remove existing contect menus if we have a previous selection
+				if( data.rslt.obj.length ) {
+
+					toggleOverlay( data.rslt.obj, data.inst );
+
+				}
+
+			});
+	})
+
 
 	/**
 	 * Toggle allow/deny menu beside element for a given instance
@@ -492,7 +497,7 @@ jQuery(document).ready(function($){
 		commitEdits( edits, post_type );
 
 		// Update the stats widget counter
-		updatePermStats( count, post_type );
+		//updatePermStats( count, post_type );
 
 	}
 
@@ -510,15 +515,15 @@ jQuery(document).ready(function($){
 
 		var $edits_field = $('#buse-edits-' + post_type );
 
-		//console.log( '==== Incoming Edits ====' );
+		// console.log( '==== Incoming Edits ====' );
 		
 		for( id in edits ) {
 			title = $('#p' + id ).children('a').first().text();
 
-		//	console.log( post_type + ': ' + title + ' (' + id + ') set to: ' + edits[id] );
+			// console.log( post_type + ': ' + title + ' (' + id + ') set to: ' + edits[id] );
 		}
 		
-		//console.log( '========================' );
+		// console.log( '========================' );
 			
 		// Update input
 		$edits_field.val( JSON.stringify(edits) );

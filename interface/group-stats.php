@@ -5,7 +5,8 @@
 <div class="buse-panel-header"><h4>Global Stats and Actions</h4></div>
 <div id="group-stats-widget">
 	<?php 
-	$perm_str = BU_Groups_Admin::group_permissions_string( $group );
+	//$perm_str = BU_Groups_Admin::group_permissions_string( $group );
+	$perm_str = '';
 	if( empty( $perm_str ) ) 
 		$perm_str = "<a id=\"add-permissions-link\" class=\"nav-link\" href=\"#group-permissions-panel\" title=\"Add permissions for this group\">Add Permissions</a>";
 	?>

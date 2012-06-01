@@ -116,7 +116,9 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	public function render( $child_of = 0 ) {
 
-		// Navigation filters 
+		// Navigation filters
+		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_exclude' );
+
 		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
 		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
 		
@@ -171,13 +173,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		foreach( $posts as $post ) {
 
 			$has_children = array_key_exists( $post->ID, $pages_by_parent );
-
+			$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
 			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
 			$rel = $post->perm ? $post->perm : $parent_state;
 
 ?>
 	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" data-perm="<?php echo $post->perm; ?>" rel="<?php echo $rel; ?>">
-		<a href="#"><?php echo $post->post_title; ?></a>
+		<a href="#"><?php echo $title; ?></a>
 		<?php if( $has_children && $parent_id != 0 ): ?>
 		<ul>
 			<?php $this->display_posts( $post->ID, $pages_by_parent, $rel ); ?>
@@ -199,16 +201,15 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		if( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
-			/* Groups */
+			/* Gather all group post meta in one shot */
 			$ids = array_keys($posts);
 			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
 			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
 			if (!is_array($group_meta)) $group_meta = array();
 
-			// Append property to post object
+			// Append permissions to post object
 			foreach( $posts as $post ) {
 
-				// Need to set rel_attr from parents
 				$post->perm = '';
 
 				if( array_key_exists( $post->ID, $group_meta ) ) {

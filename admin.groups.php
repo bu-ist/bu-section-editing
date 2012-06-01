@@ -429,48 +429,6 @@ class BU_Groups_Admin_Ajax {
 	
 	}
 
-	static function update_permissions_count() {
-
-		if( defined('DOING_AJAX') && DOING_AJAX ) {
-
-			$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : null;
-			$post_type = isset( $_POST['post_type'] ) ? $_POST['post_type'] : null;
-			$count = isset( $_POST['count'] ) ? $_POST['count'] : 0;
-			$edits = isset( $_POST['edits'] ) ? $_POST['edits'] : array();
-
-			// @todo graceful error handling
-			if( is_null( $gid ) || is_null( $post_type ) ) {
-				error_log('Invalid group or post type!');
-				echo 'Bad group or post type!';
-				die();
-			}
-
-			$offset = 0;
-			$args['post__not_in'] = array();
-
-			foreach( $edits as $post_id => $editable ) {
-				if( $editable === 'true' ) $offset++;
-				else $args['post__not_in'][] = $post_id;
-			}
-
-			if( $gid < 0 ) $group = new BU_Edit_Group();
-			else $group = BU_Edit_Groups::get_instance()->get( $gid );
-
-			if( ! ( $group instanceof BU_Edit_Group ) ) {
-				error_log('Invalid group!');
-				echo 'Bad group!';
-				die();
-			}
-
-			$output = BU_Groups_Admin::group_permissions_string( $group, $post_type, $args, $offset );
-
-			echo $output;
-
-			die();
-		}
-
-	}
-
 }
 
 ?>
