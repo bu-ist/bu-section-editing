@@ -306,26 +306,62 @@ class BU_Edit_Groups {
 
 		foreach( $permissions as $post_type => $perm_settings ) {
 
+			//error_log('= Updating permissions for: ' . $post_type . '=' );
+
 			foreach( $perm_settings as $id => $status ) {
 
 				// Clear all possible existing values
 				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
 				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-denied' );
-				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-denied-desc-allowed' );
 
 				switch( $status ) {
 
 					case 'allowed':
 						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
+						//error_log('Updating ' . $id . ': ' . $group_id );
 						break;
 
 					case 'denied':
-					case 'denied-desc-allowed':
 						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-' . $status );
+						//error_log('Updating ' . $id . ': ' . $group_id . '-' . $status );
 						break;
+
 
 				}
 
+			}
+
+			// For debug ... gives us the full picture of data post update
+			if( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+
+				$meta_query = array(
+					'key' => BU_Edit_Group::META_KEY,
+					'value' => $group_id,
+					'compare' => 'LIKE'
+					);
+
+				$args = array(
+					'post_type' => $post_type,
+					'meta_query' => array( $meta_query ),
+					'posts_per_page' => -1
+					);
+
+				$query = new WP_Query( $args );
+				error_log('= Group ' . $group_id . ' Stats =' );
+
+				while( $query->have_posts() ) {
+					$query->the_post();
+					$results = get_post_meta( get_the_ID(), BU_Edit_Group::META_KEY );
+					$results = preg_grep( '/^' . $group_id . '/', $results );
+					$status = array_pop( $results );
+					
+					if( $status == $group_id ) $status = 'Allowed';
+					else if( $status == $group_id . '-denied' ) $status = 'Denied';
+					else error_log('Unexpected status...');
+
+					error_log( 'Post: ' . get_the_title() . ' (' . get_the_ID() . ') => ' . $status );
+
+				}
 			}
 
 		}
@@ -522,14 +558,73 @@ class BU_Edit_Group {
 			'post_type' => 'page',
 			'meta_key' => self::META_KEY,
 			'meta_value' => $this->id,
-			'posts_per_page' => 0
+			'posts_per_page' => -1,
+			'fields' => 'ids'
 			);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query = new WP_Query( $args );
+		$allowed_query = new WP_Query( $args );
 
-		return $query->found_posts;
+		$count = count( $allowed_query->posts );
+
+		error_log('Initial count: ' . $count );
+
+		add_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
+		add_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
+
+		foreach( $allowed_query->posts as  $allowed_id ) {
+
+			$sections = bu_navigation_gather_sections( $allowed_id, array( 'post_type' => $args['post_type'], 'direction' => 'down' ) );
+
+			if( count( $sections ) > 0 ) {
+
+				$page_args = array(
+					'sections' => $sections,
+					'post_types' => $args['post_type'],
+					'suppress_urls' => true
+					);
+
+
+				$root_pages = bu_navigation_get_pages( $page_args );
+				
+				$count += count($root_pages);
+
+			}
+
+		}
+		
+		remove_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
+		remove_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
+
+		return $count;
+
+	}
+
+	public function post_count_filter( $posts ) {
+		global $wpdb;
+
+		/* Groups */
+		$ids = array_keys($posts);
+		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->id );
+		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
+		if (!is_array($group_meta)) $group_meta = array();
+
+		foreach( $posts as $post ) {
+			if( array_key_exists( $post->ID, $group_meta ) ) {
+
+				$perm = $group_meta[$post->ID];
+
+				if( $perm->meta_value == $this->id . '-denied' )
+					unset( $posts[$post->ID] );
+			}
+		}
+
+		return $posts;
+	}
+
+	public function post_count_fields( $fields ) {
+		return array('ID','post_type');
 	}
 
 	/**

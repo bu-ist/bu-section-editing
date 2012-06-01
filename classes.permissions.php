@@ -92,9 +92,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
 
-		// Navigation filters 
-		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
-		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
+		
 
 	}
 
@@ -118,6 +116,10 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	public function render( $child_of = 0 ) {
 
+		// Navigation filters 
+		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
+		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
+		
 		$section_args = array( 'direction' => 'down', 'post_types' => $this->post_type );
 
 		// If we're looking for the first level, limit to 
@@ -136,24 +138,30 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		$root_pages = bu_navigation_get_pages( $page_args );
 		$pages_by_parent = bu_navigation_pages_by_parent($root_pages);
 
-		$prev_rel = 'denied';
+		$parent_state = 'denied';
 
+		// We are not the root page
 		if( $child_of != 0 ) {
 
 			// We need the patriarch's setting here to start
 			$root_id = $pages_by_parent[$child_of][0]->post_parent;
-			$status = get_post_meta( $root_id, BU_Edit_Group::META_KEY );
+			$perms = get_post_meta( $root_id, BU_Edit_Group::META_KEY );
 
-			if( in_array( $this->group->id, $status ) )
-				$prev_rel = 'allowed';
+			if( in_array( $this->group->id, $perms ) )
+				$parent_state = 'allowed';
+
 		}
 
 		// Display posts (recursively)
-		$this->display_posts( $child_of, $pages_by_parent, $prev_rel );
+		$this->display_posts( $child_of, $pages_by_parent, $parent_state );
+	
+		// Navigation filters 
+		remove_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
+		remove_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
 	
 	}
 
-	public function display_posts( $parent_id, $pages_by_parent, $prev_rel = 'denied' ) {
+	public function display_posts( $parent_id, $pages_by_parent, $parent_state = 'denied' ) {
 
 		if( array_key_exists( $parent_id, $pages_by_parent ) && ( count( $pages_by_parent[$parent_id] ) > 0 ) )
 			$posts = $pages_by_parent[$parent_id];
@@ -165,12 +173,10 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$has_children = array_key_exists( $post->ID, $pages_by_parent );
 
 			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
-			$rel = $post->rel_attr ? $post->rel_attr : $prev_rel;
-			error_log( 'Post Rel: ' . $rel );
-
+			$rel = $post->perm ? $post->perm : $parent_state;
 
 ?>
-	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" rel="<?php echo $rel; ?>">
+	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" data-perm="<?php echo $post->perm; ?>" rel="<?php echo $rel; ?>">
 		<a href="#"><?php echo $post->post_title; ?></a>
 		<?php if( $has_children && $parent_id != 0 ): ?>
 		<ul>
@@ -189,25 +195,32 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 * Add custom section editable properties to the post objects returned by bu_navigation_get_pages()
 	 */ 
 	public function filter_posts( $posts ) {
+		global $wpdb;
 
 		if( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
+
+			/* Groups */
+			$ids = array_keys($posts);
+			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
+			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
+			if (!is_array($group_meta)) $group_meta = array();
 
 			// Append property to post object
 			foreach( $posts as $post ) {
 
-				$groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
-
 				// Need to set rel_attr from parents
-				$post->rel_attr = '';
+				$post->perm = '';
 
-				if( in_array( $this->group->id . '-denied', $groups ) )
-					$post->rel_attr = 'denied';
+				if( array_key_exists( $post->ID, $group_meta ) ) {
+					$perm = $group_meta[$post->ID];
 
-				if( in_array( $this->group->id . '-denied-desc-allowed', $groups ) )
-					$post->rel_attr = 'denied-desc-allowed';
+					if( $perm->meta_value == $this->group->id . '-denied' )
+						$post->perm = 'denied';
 
-				if( in_array( $this->group->id, $groups ) )
-					$post->rel_attr = 'allowed';
+					if( $perm->meta_value == $this->group->id )
+						$post->perm = 'allowed';
+
+				}
 
 			}
 
