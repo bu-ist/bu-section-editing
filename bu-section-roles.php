@@ -199,17 +199,10 @@ class BU_Section_Editor {
 		if($user_id == 0) return false;
 
 		// Extra checks for any "allowed" users
-		// @todo we need a less expensive way to check this ... this runs quite often
-		// on the edit posts pages
 		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
 
 			// Get groups associated with post
-			$post = get_post($post_id, OBJECT, null);
 			$post_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
-
-			// Filter out groups that are explicitly denied for this post
-			$allowed_groups = preg_grep( '/^\d+-denied/', $post_groups, PREG_GREP_INVERT );
-			$denied_groups = preg_grep( '/^\d+-denied/', $post_groups );
 
 			// Get all groups for this user
 			$edit_groups_o = BU_Edit_Groups::get_instance();
@@ -221,39 +214,38 @@ class BU_Section_Editor {
 			foreach( $groups as $group ) {
 
 				// This group is good, bail here
-				if( in_array( $group->id, $allowed_groups ) ) {
+				if( in_array( $group->id, $post_groups ) )
 					return true;
-				}
 
-				if( in_array( $group->id . '-denied', $denied_groups ) ) {
+				// If group is denied, skip this group
+				if( in_array( $group->id . '-denied', $post_groups ) )
 					continue;
-				}
 
-				// Our status is inherited -- check our ancestors
-				$ancestors = get_post_ancestors( $post );
+				// Otherwise our status is inherited
+				$ancestors = get_post_ancestors( $post_id );
 
+				// Bubble up through ancestors, checking status along the way
 				foreach( $ancestors as $ancestor_id ) {
 					
 					$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
-					$ancestor_allowed_groups = preg_grep( '/^\d+-denied$/', $ancestor_groups, PREG_GREP_INVERT );
-					$ancestor_denied_groups = preg_grep( '/^\d+-denied$/', $ancestor_groups );
 
-					if( in_array( $group->id, $ancestor_allowed_groups ) ) {
+					if( in_array( $group->id, $ancestor_groups ) )
 						return true;
-					}
 
-					if( in_array( $group->id . '-denied', $ancestor_denied_groups ) ) {
+					if( in_array( $group->id . '-denied', $ancestor_groups ) )
 						break;
-					}
 
 				}
 
 			}
 
+			// User is section editor, but not allowed for this section
 			return false;
 		} 
 
+		// User is not restricted by plugin, normal meta_caps apply
 		return true;
+		
 	}
 
 	/**
