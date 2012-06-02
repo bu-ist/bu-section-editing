@@ -215,11 +215,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				if( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[$post->ID];
 
-					if( $perm->meta_value == $this->group->id . '-denied' )
+					if( $perm->meta_value === (string) $this->group->id . '-denied' ) {
 						$post->perm = 'denied';
+					}
 
-					if( $perm->meta_value == $this->group->id )
+					if( $perm->meta_value === (string) $this->group->id ) {
 						$post->perm = 'allowed';
+					}
 
 				}
 
