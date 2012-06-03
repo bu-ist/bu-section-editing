@@ -1,8 +1,8 @@
-<div id="add-group-members">
-	<div class="buse-panel-header">
+<div id="add-group-members" class="buse-widget">
+	<div class="buse-widget-header">
 		<h4 id="add-group-members-header">Add User to this Editor Group</h4>
 	</div>
-	<fieldset>
+	<div class="buse-widget-body">
 		<div id="members-message" ></div>
 		<div class="form-row">
 			<label for="user_login">Enter the email address of an existing user on this network to add them to this Editor Group.</label>
@@ -12,17 +12,17 @@
 		<!--<div class="form-row">
 			<button id="find_user" class="button-secondary">Find User</button>
 		</div>-->
-	</fieldset>
+	</div>
 </div>
 
-<div id="group-members">
-	<div class="buse-panel-header">
+<div id="group-members" class="buse-widget">
+	<div class="buse-widget-header">
 		<div id="member-list-count">
 			<span class="member-count"><?php echo count( $group->users ); ?></span> members
 		</div>
 		<h4 id="edit-group-members-header">Editor Group List</h4>
 	</div>
-	<fieldset>
+	<div class="buse-widget-body">
 		<ul id="group-member-list">
 			<?php $users = BU_Section_Editing_Plugin::get_allowed_users(); ?>
 			<?php foreach( $users as $user ): ?>
@@ -34,6 +34,6 @@
 			</li>
 			<?php endforeach; ?>
 		</ul>
-	</fieldset>
+	</div>
 	<ul id="inactive-members"></ul>
 </div>
