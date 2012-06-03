@@ -1,6 +1,6 @@
-<div id="group_permission_editor">
-	<div class="buse-panel-header"><h4>Assign Permissions to:</h4></div>
-	<fieldset>
+<div id="group-permission-editor" class="buse-widget">
+	<div class="buse-widget-header"><h4>Assign Permissions to:</h4></div>
+	<div class="buse-widget-body">
 	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
 	<?php if( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
@@ -29,5 +29,5 @@
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>
-	</fieldset>
+	</div>
 </div>

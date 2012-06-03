@@ -303,6 +303,7 @@ jQuery(document).ready(function($){
 		$overlayLink.click(function(e){
 
 			e.stopPropagation();
+			e.preventDefault();
 
 			// When button is clicked, deselect parent li
 			inst.deselect_node($el);
@@ -313,7 +314,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Create overlay
-		var $overlay = $('<span class="edit-node tri-border left"></span>').append($overlayLink).hide();
+		var $overlay = $('<span class="edit-node"></span>').append($overlayLink).hide();
 
 		// Append and fade in
 		$el.children('a:first').after($overlay);
