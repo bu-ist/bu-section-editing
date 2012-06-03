@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Temporary class until a good solution for creating roles / assignig
+ * Temporary class until a good solution for creating roles / assigning
  * capabilities is arrived upon
  */
 class BU_Section_Editing_Roles {
@@ -12,21 +12,12 @@ class BU_Section_Editing_Roles {
 		$role = get_role('administrator');
 
 		if(empty($role)) {
+
 			add_role('administrator', 'Administrator');
 			include( ABSPATH . '/wp-admin/includes/schema.php');// hack to add all roles if they were deleted.
 			populate_roles();
+		
 		}
-
-		$role = get_role('administrator');
-
-		$role->add_cap('read_page_revisions');
-		$role->add_cap('edit_page_revisions');
-		$role->add_cap('edit_others_page_revisions');
-		$role->add_cap('edit_published_page_revisions');
-		$role->add_cap('publish_page_revisions');
-		$role->add_cap('delete_page_revisions');
-		$role->add_cap('delete_others_page_revisions');
-		$role->add_cap('delete_published_page_revisions');
 
 		$role = get_role( 'lead_editor' );
 
@@ -35,7 +26,7 @@ class BU_Section_Editing_Roles {
 		}
 
 		$role = get_role('lead_editor');
-		$role->remove_cap('edit_published_pages');
+		
 		$role->add_cap('manage_training_manager');
 		$role->add_cap('upload_files');
 		$role->add_cap('edit_posts');
@@ -81,17 +72,6 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('delete_private_pages');
 		$role->add_cap('edit_private_pages');
 		$role->add_cap('read_private_pages');
-
-		$role->add_cap('read_page_revisions');
-		$role->add_cap('edit_page_revisions');
-		$role->add_cap('edit_others_page_revisions');
-		$role->add_cap('edit_published_page_revisions');
-		$role->add_cap('publish_page_revisions');
-		$role->add_cap('delete_page_revisions');
-		$role->add_cap('delete_others_page_revisions');
-		$role->add_cap('delete_published_page_revisions');
-
-
 		$role->add_cap('read_private_posts');
 		$role->add_cap('read_private_pages');
 		$role->add_cap('unfiltered_html');
@@ -99,28 +79,38 @@ class BU_Section_Editing_Roles {
 
 		/** Temporary **/
 		$role = get_role('section_editor');
+
 		if(empty($role)) {
 			add_role('section_editor', 'Section Editor');
 		}
 
 		$role = get_role('section_editor');
+
 		$role->add_cap('manage_training_manager');
 		$role->add_cap('upload_files');
 
 		$role->add_cap('read');
 		$role->add_cap('edit_pages');
-		$role->add_cap('edit_others_pages');
-
+		//$role->add_cap('edit_others_pages');
 		// the following roles are overriden by the section editor functionality
 		$role->add_cap('edit_published_pages');
 		$role->add_cap('publish_pages');
+		$role->add_cap('delete_others_pages');
+		$role->add_cap('delete_published_pages');
+
+
+		$role->add_cap('edit_posts');
+		//$role->add_cap('edit_others_posts');
+		$role->add_cap('edit_published_posts');
+		$role->add_cap('publish_posts');
+		$role->add_cap('delete_posts');
+		$role->add_cap('delete_others_posts');
+		$role->add_cap('delete_published_posts');
 
 		$role->add_cap('moderate_comments');
 		$role->add_cap('manage_categories');
 		$role->add_cap('manage_links');
 		$role->add_cap('upload_files');
-		$role->add_cap('edit_posts');
-		$role->add_cap('read');
 		$role->add_cap('level_7');
 		$role->add_cap('level_6');
 		$role->add_cap('level_5');
@@ -129,40 +119,27 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('level_2');
 		$role->add_cap('level_1');
 		$role->add_cap('level_0');
-		$role->add_cap('edit_private_posts');
+		//$role->add_cap('edit_private_posts');
 		$role->add_cap('read_private_posts');
-		$role->add_cap('edit_private_pages');
+		//$role->add_cap('edit_private_pages');
 		$role->add_cap('read_private_pages');
-
-		$role->add_cap('read_page_revisions');
-		$role->add_cap('edit_page_revisions');
-		$role->add_cap('edit_others_page_revisions');
-		$role->add_cap('edit_published_page_revisions');
-		$role->add_cap('publish_page_revisions');
-		$role->add_cap('delete_page_revisions');
-		$role->add_cap('delete_others_page_revisions');
-		$role->add_cap('delete_published_page_revisions');
 
 		$role->add_cap('unfiltered_html');
 
-				/** Temporary **/
+		/** Temporary **/
 		$role = get_role('contributor');
+
 		if(empty($role)) {
 			add_role('contributor', 'Contributor');
 		}
 
 		$role = get_role('contributor');
+
 		$role->add_cap('manage_training_manager');
 		$role->add_cap('upload_files');
 
 		$role->add_cap('read');
 		$role->add_cap('edit_pages');
-
-		$role->add_cap('read_page_revisions');
-		$role->add_cap('edit_page_revisions');
-		$role->add_cap('edit_others_page_revisions');
-		$role->add_cap('edit_published_page_revisions');
-		$role->add_cap('delete_page_revisions');
 
 		$role->add_cap('unfiltered_html');
 
@@ -266,43 +243,52 @@ class BU_Section_Editor {
 		if( isset( $args[0] ) )
 			$post_id = $args[0];
 
-		if($cap == 'edit_page') {
+		$post_types = BU_Permissions_Editor::get_supported_post_types();
+
+		// Override normal edit post permissions
+		if( in_array( $cap, self::get_caps_for_post_types( 'edit_post', $post_types ) ) ) {
 			$post = get_post($post_id);
 
 			if($post_id && $post->post_status == 'publish' && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
+			} else {
+				error_log('Editing is allowed!');
 			}
 		}
 
-		if($cap == 'delete_page') {
+		// Override normal delete post permissions
+		if( in_array( $cap, self::get_caps_for_post_types( 'delete_post', $post_types ) ) ) {
 			if($post_id && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
 
-		if($cap == 'publish_pages') {
+		// Introduce new permission check for publishing specific posts (for alternate versions)
+		if( in_array( $cap, self::get_caps_for_post_types( 'publish_posts', $post_types ) ) ) {
 			global $post_ID;
 
 			$post_id = $post_ID;
 
 			if($post_id && ! self::can_edit($post_id, $user_id)) {
-				$caps = array('do_not_allow');
-			}
-		}
-
-		if($cap == 'publish_page_revisions') {
-			global $post_ID;
-
-			$post_id = $post_ID;
-
-			$revision = get_post($post_id);
-
-			if(!$revision || ! self::can_edit($revision->post_parent, $user_id)) {
 				$caps = array('do_not_allow');
 			}
 		}
 
 		return $caps;
+
+	}
+
+	public function get_caps_for_post_types( $cap, $post_types ) {
+
+		$caps = array();
+
+		foreach( $post_types as $post_type ) {
+			if( isset( $post_type->cap->$cap ))	
+				$caps[] = $post_type->cap->$cap;
+		}
+
+		return $caps;
+
 	}
 
 }
