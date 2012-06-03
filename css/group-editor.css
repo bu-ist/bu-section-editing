@@ -22,7 +22,7 @@
 }
 
 #buse-group-table tbody {
-		
+
 }
 
 #buse-group-table th {
@@ -111,9 +111,7 @@
 
 /* Members panel */
 #group-member-list {
-	margin-top:0;
-	width:100%;
-	margin-left:-7px;
+
 }
 
 #add-group-members-header {
@@ -132,9 +130,8 @@
 
 #group-member-list li {
 	background-color: #fff;
-	padding: 7px;
+	padding: 10px;
 	border-top:1px solid #eee;
-	width:100%;
 }
 
 #group-member-list li:first-child {
@@ -171,6 +168,7 @@
 	border-bottom-right-radius: 5px;
 	overflow: scroll;
 	height: 450px;
+	clear: both;
 }
 
 #perm-tab-container .nav-tab {
@@ -206,7 +204,7 @@
 }
 
 .perm-editor-hierarchical.jstree li {
-    position: relative;
+	position: relative;
 }
 
 .perm-editor-hierarchical.jstree a > ins {
@@ -215,89 +213,59 @@
 }
 
 .perm-editor-hierarchical li a.jstree-clicked{
-    background: #ffff00;
-    border: none;
+	background: #ffff00;
+	border: none;
+}
+
+.perm-editor-hierarchical .edit-node:before {
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        margin-top: -6px;
+	content: url('../images/left-arrow.png');
+	width: 10px;
 }
 
 .perm-editor-hierarchical .edit-node {
-     background-color: #FFFFFF;
-     border-radius: 3px 3px 3px 3px;
-     border: 1px solid #CCCCCC;
-     box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-     margin-left: 25px;
-     margin-top: -16px;
-     padding: 10px;
-     position: absolute;
-     display: inline-block !important;
-     text-align: center;
-     z-index: 10;
-    *display: inline !important;
+	background-color: #FFFFFF;
+	border-radius: 3px 3px 3px 3px;
+	border: 1px solid #CCCCCC;
+	box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+	margin-left: 20px;
+	margin-top: -20px;
+	padding: 10px;
+	position: absolute;
+	display: inline-block !important;
+	text-align: center;
+	z-index: 10;
 }
-
-/* CSS3 Triangles ... replace with image as soon as we have one */
-
-.tri-border:before {
-	content:"";
-	position:absolute;
-	bottom:-20px; /* value = - border-top-width - border-bottom-width */
-	left:40px; /* controls horizontal position */
-	border-width:20px 20px 0;
-	border-style:solid;
-	border-color:#5a8f00 transparent;
-	/* reduce the damage in FF3.0 */
-	display:block; 
-	width: 0px;
-}
-
-/* creates the smaller  triangle */
-.tri-border:after {
-	content:"";
-	position:absolute;
-	bottom:-13px; /* value = - border-top-width - border-bottom-width */
-	left:47px; /* value = (:before left) + (:before border-left) - (:after border-left) */
-	border-width:13px 13px 0;
-	border-style:solid;
-	border-color:#fff transparent;
-	/* reduce the damage in FF3.0 */
-	display:block; 
-	width:0;
-}
-
-/* creates the larger triangle */
-.tri-border.left:before {
-	top: 15px; /* controls vertical position */
-	bottom:auto;
-	left: -18px; /* value = - border-left-width - border-right-width */
-	border-width: 8px 17px 8px 0px;
-	border-color: transparent #ccc;
-}
-
-/* creates the smaller  triangle */
-.tri-border.left:after {
-	top: 15px; /* value = (:before top) + (:before border-top) - (:after border-top) */
-	bottom:auto;
-	left: -17px; /* value = - border-left-width - border-right-width */
-	border-width: 8px 21px 8px 0;
-	border-color:transparent #fff;
-}
-
 
 .perm-editor-hierarchical .edit-node a {
+	display: block;
+	float: left;
 	color: white;
-	background-repeat: no-repeat;
-	background-position: 5px;
 	background-color: #4790b4;
-	padding: 8px 10px 7px 25px;
+	background-image: -webkit-linear-gradient(top,#6699CC,#1C729E);
+	background-image: linear-gradient(top,#6699CC,#1C729E);
+	padding: 10px 8px;
 	border-radius: 3px;
+
 }
 
-.perm-editor-hierarchical .edit-node a.denied,
-.perm-editor-hierarchical .edit-node a.denied-desc-allowed {
-	background-image: url('../images/group_perm_allowed.png');
+.perm-editor-hierarchical .edit-node a.denied:before,
+.perm-editor-hierarchical .edit-node a.denied-desc-allowed:before {
+	content: url('../images/group_perm_allowed.png');
+	display: block;
+	float: left;
+	padding-right: 3px;
+
 }
 
-.perm-editor-hierarchical .edit-node a.allowed {
-	background-image: url('../images/group_perm_denied.png');
+.perm-editor-hierarchical .edit-node a.allowed:before {
+	content: url('../images/group_perm_denied.png');
+	display: block;
+	float: left;
+	padding-right: 3px;
 }
 
 
@@ -362,7 +330,7 @@
 /* Widgets */
 
 .buse-widget {
-	
+
 }
 
 .buse-widget-header {
@@ -440,7 +408,7 @@
 }
 
 #members-message {
-		display: none;
+	display: none;
 }
 
 #members-message p {
