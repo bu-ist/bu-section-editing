@@ -91,7 +91,7 @@ class BU_Section_Editing_Roles {
 
 		$role->add_cap('read');
 		$role->add_cap('edit_pages');
-		//$role->add_cap('edit_others_pages');
+		$role->add_cap('edit_others_pages');
 		// the following roles are overriden by the section editor functionality
 		$role->add_cap('edit_published_pages');
 		$role->add_cap('publish_pages');
@@ -100,7 +100,7 @@ class BU_Section_Editing_Roles {
 
 
 		$role->add_cap('edit_posts');
-		//$role->add_cap('edit_others_posts');
+		$role->add_cap('edit_others_posts');
 		$role->add_cap('edit_published_posts');
 		$role->add_cap('publish_posts');
 		$role->add_cap('delete_posts');
@@ -119,9 +119,9 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('level_2');
 		$role->add_cap('level_1');
 		$role->add_cap('level_0');
-		//$role->add_cap('edit_private_posts');
+		$role->add_cap('edit_private_posts');
 		$role->add_cap('read_private_posts');
-		//$role->add_cap('edit_private_pages');
+		$role->add_cap('edit_private_pages');
 		$role->add_cap('read_private_pages');
 
 		$role->add_cap('unfiltered_html');
