@@ -167,6 +167,9 @@ jQuery(document).ready(function($){
 			animation: 0,
 			html_titles : true
 		},
+		themes : {
+			theme: 'classic'	
+		},
 		types : {
 			types : {
 				'default' : {
@@ -363,7 +366,9 @@ jQuery(document).ready(function($){
 			} );
 
 		} else {
-
+			// Reveal children
+			inst.open_all( $node );
+				
 			// Toggle state
 			toggleState( $node );
 

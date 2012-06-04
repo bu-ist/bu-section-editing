@@ -216,9 +216,9 @@
 	width: 20px;
 }
 
-.perm-editor-hierarchical li a.jstree-clicked{
-	background: #ffff00;
-	border: none;
+.perm-editor-hierarchical.jstree-classic a.jstree-clicked {
+	background-color: #555;
+	border-color: #555;
 }
 
 .perm-editor-hierarchical .edit-node:before {
