@@ -195,6 +195,10 @@
 	margin-left: 1px;
 }
 
+.perm-panel {
+	padding: 12px 0;	
+}
+
 .perm-panel.active {
 
 }

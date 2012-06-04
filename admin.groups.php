@@ -120,17 +120,20 @@ class BU_Groups_Admin {
 						return;
 					}
 
-					if( $group_id > 0 ) {
-						$groups->update_group($group_id, $group_data);
-					} else {
+					$status = 0;
+					
+					if( $group_id == -1 ) {
 						$group = $groups->add_group($group_data);
 						$group_id = $group->id;
+						$status = 2;
+					} else {
+						$groups->update_group($group_id, $group_data);
+						$status = 3;
 					}
 
-					// @todo check for valid save -- save should generate validation error messages / statuses
 					$groups->save();
 
-					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => 2 ) );
+					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => $status ) );
 					break;
 
 				case 'delete':
@@ -143,7 +146,7 @@ class BU_Groups_Admin {
 					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
-					$redirect_url = add_query_arg( array( 'status' => 3 ), $redirect_url );
+					$redirect_url = add_query_arg( array( 'status' => 4 ), $redirect_url );
 					break;
 
 			}
@@ -217,10 +220,14 @@ class BU_Groups_Admin {
 					break;
 
 				case 2:
-					$notices['update'][] = '<p>Group updated.</p>';
+					$notices['update'][] = '<p>Group added.</p>';
 					break;
 
 				case 3:
+					$notices['update'][] = '<p>Group updated.</p>';
+					break;
+
+				case 4:
 					$notices['update'][] = '<p>Group deleted.</p>';
 					break;
 
