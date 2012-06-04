@@ -252,7 +252,7 @@ class BU_Section_Editor {
 			if($post_id && $post->post_status == 'publish' && ! self::can_edit($post_id, $user_id)) {
 				$caps = array('do_not_allow');
 			} else {
-				error_log('Editing is allowed!');
+				// error_log('Editing is allowed!');
 			}
 		}
 
