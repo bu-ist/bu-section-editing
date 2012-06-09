@@ -1,5 +1,11 @@
 jQuery(document).ready(function($){
 
+	// Globals
+	var $members_list = $('#group-member-list');
+	var $nav_links = $('a.nav-link');
+
+	// _______________________ Navigation Tabs ________________________
+	
 	if( location.hash ) {
 		// Initial state based on incoming hash...
 		var $tab = $('a.nav-tab[href=' + location.hash + ']');
@@ -8,12 +14,6 @@ jQuery(document).ready(function($){
 		$tab.addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
 		$target.addClass('active').siblings().removeClass('active');
 	}
-
-	// Globals
-	var members_list = $('#group-member-list');
-
-	// Navigation tabs/panels
-	var $nav_links = $('a.nav-link');
 
 	$nav_links.click(function(e){
 		e.preventDefault();
@@ -26,17 +26,18 @@ jQuery(document).ready(function($){
 
 	});
 
-	/* Group Name */
+	// _______________________ Group Name ________________________
+	
 	$('#edit-group-name').blur(function(e){
 		$('#group-stats-name').html($(this).val());
 	});
 
-	/* Group members */ 
-
+	// _______________________ Group Members ________________________
+	
 	$('.member:not(.active)').appendTo('#inactive-members');
 
 	// Remove a member from the editor group list
-	members_list.delegate( 'a.remove_member', 'click', function(e){
+	$members_list.delegate( 'a.remove_member', 'click', function(e){
 		e.preventDefault();
 
 		$(this).parent('.member').removeClass('active').slideUp( 'fast', function() {
@@ -123,7 +124,7 @@ jQuery(document).ready(function($){
 						$('#member_' + response.user_id ).attr('checked','checked')
 							.parent('.member')
 							.addClass('active')
-							.appendTo(members_list)
+							.appendTo($members_list)
 							.slideDown('fast');
 
 						updateMemberCount();
@@ -151,9 +152,12 @@ jQuery(document).ready(function($){
 
 	}
 	
+	/**
+	 * Stats widget -- update member count on add/remove
+	 */ 
 	var updateMemberCount = function() {
 
-		var count = members_list.children('.member').length;
+		var count = $members_list.children('.member').length;
 
 		$('.member-count').html( count );
 		
@@ -161,6 +165,7 @@ jQuery(document).ready(function($){
 
 	// _______________________ Hierarchical permissions editor ________________________
 	
+	// jstree configuration
 	var options = {
 		plugins : [ 'themes', 'types', 'html_data', 'ui' ],
 		core : {
@@ -231,7 +236,9 @@ jQuery(document).ready(function($){
 		}
 	};
 
-	// jstree
+	/**
+	 * Create a jstree instance for each hierarchical post type
+	 */ 
 	$('.perm-editor-hierarchical').each( function() {
 		var post_type = $(this).data('post-type');
 		
@@ -404,6 +411,11 @@ jQuery(document).ready(function($){
 
 	}
 
+	/**
+	 * Process changes to hierarchical permissions
+	 * 
+	 * Run whenever a node state is toggled
+	 */ 
 	var processUpdatesForNode = function( $node, post_type ) {
 
 		var id = $node.attr('id').substr(1);
@@ -536,6 +548,9 @@ jQuery(document).ready(function($){
 
 	}
 
+	/**
+	 * Stats widget -- permissions count 
+	 */
 	var updatePermStats = function( count, post_type ) {
 
 		var $container = $('#group-stats-permissions');
@@ -573,5 +588,109 @@ jQuery(document).ready(function($){
 		}
 
 	}
+
+	// _______________________ Pending Edits ________________________
+	
+	// State detection
+	var origName, origMemberList;
+
+	origName = $('#edit-group-name').val();
+
+	var getMembers = function() {
+		var ids = [];
+		$('#group-member-list').children('li.member.active').each(function(index, li){
+			ids.push( $(li).children('input').first().val() );
+		});
+		return ids;
+	}
+	
+	// Store current members
+	origMemberList = getMembers();
+
+	/**
+	 * Prevent leaving this page when edits are present without confirmation
+	 */ 
+	window.onbeforeunload = function() {
+
+		// Detect if we have any changes...
+		if( hasEdits() ) {
+			return 'Your group has pending edits.  If you leave now, your changes will be lost.';
+		}
+		
+	};
+
+	/**
+	 * Logic to determine if a group has pending edits
+	 */ 
+	var hasEdits = function() {
+	
+		// Check name field
+		if( origName != $('#edit-group-name').val() ) {
+			//console.log('Name has changed!');
+			return true;
+		}
+
+		var currentMemberList = getMembers();
+		
+		// Check member list
+		if( origMemberList.length != currentMemberList.length ) {
+			//console.log('Member list has changed!');
+			return true;
+		} else {
+			for( index in origMemberList ) {
+				if( $.inArray( origMemberList[index], currentMemberList ) == -1 ) {
+					//console.log('Member list has changed!');
+					return true;
+				}
+			}
+		}
+		
+		var permEdits = false;
+		
+		// Check permissions for all post types
+		$('.buse-edits').each( function(i, input) {
+			// @todo do a better check -- if json object in buse-edits only has ID's
+			// with a value of "", then actually nothing has changed...
+			if( $(input).val() ) {
+				//console.log('Permissions have changed!');
+				permEdits = true;
+			}
+		});
+
+		return permEdits;
+		
+	}
+
+	/**
+	 * Saving/updating does not trigger alerts
+	 */ 
+	$('input[type="submit"]').click(function(e) {
+		window.onbeforeunload = null;
+
+		//@todo client-side validation
+		// - Does this group have a name?
+	});
+
+	/**
+	 * Generates an alert whenever a user attemps to delete a group
+	 */
+	$('a.submitdelete').click(function(e){
+		
+		e.preventDefault();
+		
+		var msg = "You are about to permanently delete this section editing group.  " +
+			"This action is irreversible.\n\nAre you sure you want to do this?";
+		
+		if( confirm(msg) ) {
+			
+			window.onbeforeunload = null;
+			window.location = $(this).attr('href');
+			
+			// delete the group...
+		} else {
+			// don't follow the link'
+			e.preventDefault();	
+		}
+	});
 
 });
