@@ -290,7 +290,6 @@ MSG;
 	 */ 
 	static function group_permissions_string( $group, $post_type = null, $args = array(), $offset = 0 ) {
 
-
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
 		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
 
@@ -342,6 +341,8 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Add user to current edit group screen if they are valid
+	 * 
+	 * @todo add nonce
 	 */ 
 	static function add_member() {
 
@@ -356,6 +357,7 @@ class BU_Groups_Admin_Ajax {
 
 		if( is_array( $users ) && ! empty( $users ) ) {
 
+			// Temporary ...
 			if( count( $users ) > 1 ) {
 				error_log('More than one users were returned for input: ' . $user_input );
 				die();
@@ -367,10 +369,22 @@ class BU_Groups_Admin_Ajax {
 			$output['user_id'] = $user->ID;
 
 		} else { // User was not found
-
+			
 			$output['status'] = false;
-			$output['message'] = '<p>' . $user_input . ' is not a member of this site or does not have permission to edit sections.</p>';
 
+			// Look for exact user match to tailor error message
+			$user_id = username_exists($user_input);
+
+			if( ! is_null( $user_id ) && is_user_member_of_blog( $user_id ) ) {
+				// User has incorrect role
+				$output['message'] = '<p><b>' . $user_input . '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'.admin_url('users.php?s=' . $user_input ).'">users page</a>.</p>';
+				
+			} else {
+				// User does exist, but is not a member of this blog
+				$output['message'] = '<p><b>' . $user_input . '</b> is not a member of this site.  Please <a href="'.admin_url('user-new.php').'">add them to your site</a> with the "Section Editor" role.';
+				
+			}
+			
 		}
 
 		header("Content-type: application/json");
@@ -381,6 +395,8 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Find valid users based on input string
+	 * 
+	 * @todo add nonce
 	 */ 
 	static function find_user() {
 
@@ -388,8 +404,6 @@ class BU_Groups_Admin_Ajax {
 		$user_input = $_POST['user'];
 
 		// For now we are limiting group membership to section editors
-		// @todo move this check to an isolated class/method so that we can
-		// easily switch this behavior later if needed
 		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $user_input .'*' ) );
 
 		header("Content-type: application/json");
@@ -400,6 +414,7 @@ class BU_Groups_Admin_Ajax {
 	/**
 	 * Displays post hierarchy starting at a specifc post ID
 	 * 
+	 * @todo add nonce
 	 * @todo currently only supports HTML output, might decide to use json instead
 	 */ 
 	static function render_post_children() {
