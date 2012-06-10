@@ -311,18 +311,18 @@ class BU_Edit_Groups {
 			foreach( $perm_settings as $id => $status ) {
 
 				// Clear all possible existing values
-				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
-				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-denied' );
+				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
+				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
 
 				switch( $status ) {
 
 					case 'allowed':
-						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id );
+						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
 						// error_log('Updating ' . $id . ': ' . $group_id );
 						break;
 
 					case 'denied':
-						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . '-' . $status );
+						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
 						// error_log('Updating ' . $id . ': ' . $group_id . '-' . $status );
 						break;
 
@@ -355,8 +355,8 @@ class BU_Edit_Groups {
 					$results = preg_grep( '/^' . $group_id . '/', $results );
 					$status = array_pop( $results );
 					
-					if( $status == $group_id ) $status = 'Allowed';
-					else if( $status == $group_id . '-denied' ) $status = 'Denied';
+					if( $status == $group_id . BU_Edit_Group::SUFFIX_ALLOWED ) $status = 'Allowed';
+					else if( $status == $group_id . BU_Edit_Group::SUFFIX_DENIED ) $status = 'Denied';
 					else error_log('Unexpected status...');
 
 					// error_log( 'Post: ' . get_the_title() . ' (' . get_the_ID() . ') => ' . $status );
@@ -444,6 +444,8 @@ class BU_Edit_Group {
 	private $modified = null;
 
 	const META_KEY = '_bu_section_group';
+	const SUFFIX_ALLOWED = ':allowed';
+	const SUFFIX_DENIED = ':denied';
 
 
 	/**
@@ -519,34 +521,6 @@ class BU_Edit_Group {
 		}
 
 	}
-
-	/**
-	 * Can this group edit this post?
-	 * 
-	 * @todo not currently used, need to test
-	 */
-	public function permissions_for_post( $post_id ) {
-		global $wpdb;
-
-		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, $post_id, $this->id );
-		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
-		
-		// error_log('Permissions for post meta results: ' . print_r( $group_meta, true ) );
-
-		if (!is_array($group_meta)) $group_meta = array();
-
-		if( empty( $group_meta ) ) {
-
-			return 'inherit';
-
-		} else {
-
-			if( $group_meta[0]->meta_value == $this->id )
-				return 'allowed';
-			else
-				return 'denied';
-		}
-	} 
 
 	/**
 	 * Query for all posts that have section editing permissions assigned for this group

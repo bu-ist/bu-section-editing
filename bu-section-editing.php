@@ -2,7 +2,7 @@
 /*
  Plugin Name: BU Section Editing
  Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
- Version: 0.1
+ Version: 0.2
  Author: Boston University (IS&T)
 */
 
@@ -19,7 +19,7 @@
  */ 
 class BU_Section_Editing_Plugin {
 
-	const BUSE_VERSION = '0.1';
+	const BUSE_VERSION = '0.2';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	public static function register_hooks() {
@@ -63,10 +63,10 @@ class BU_Section_Editing_Plugin {
 		$existing_version = get_option( self::BUSE_VERSION_OPTION );
 
 		// Check if plugin has been updated (or just installed) and store current version
-		if( $existing_version === false || version_compare( $existing_version, self::BUSE_VERSION, '<' )  ) {
+		if( $existing_version === false || $existing_version != self::BUSE_VERSION ) {
 
-			// @todo perform any sort of schema updates as neccessary
-			// ex. upgrade( $existing_version, self::BUSE_VERSION )
+			if( $existing_version )
+				self::upgrade( $existing_version );
 
 			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
 
@@ -116,6 +116,48 @@ class BU_Section_Editing_Plugin {
 
 			error_log( 'Error checking for allowed user: ' . print_r($user,true) );
 			return false;
+		}
+		
+	}
+
+	/**
+	 * Perform any data modifications as needed based on version diff
+	 */ 
+	public static function upgrade( $old_version ) {
+		global $wpdb;
+
+		if( version_compare( $old_version, '0.2', '<' ) && version_compare( self::BUSE_VERSION, '0.2', '>=' ) ) {
+			
+			// Upgrade (1.0 -> 2.0)
+			$patterns = array( '/^(\d+)$/', '/^(\d+)-denied$/');
+			$replacements = array('${1}:allowed', '${1}:denied' );
+
+			// Fetch existing values
+			$query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s"', $wpdb->postmeta, BU_Edit_Group::META_KEY );
+			$posts = $wpdb->get_results( $query );
+
+			// Loop through and update
+			foreach( $posts as $post ) {
+				$result = preg_replace( $patterns, $replacements, $post->meta_value );
+				update_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $result, $post->meta_value );
+			}
+
+		} else if( version_compare( $old_version, '0.2', '>=' ) && version_compare( self::BUSE_VERSION, '0.2', '<' )  ) {
+
+			// Downgrade (2.0 -> 1.0)
+			$patterns = array( '/^(\d+):allowed$/', '/^(\d+):denied$/');
+			$replacements = array('$1', '${1}-denied' );
+
+			// Fetch existing values
+			$query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s"', $wpdb->postmeta, BU_Edit_Group::META_KEY );
+			$posts = $wpdb->get_results( $query );
+
+			// Loop through and update
+			foreach( $posts as $post ) {
+				$result = preg_replace( $patterns, $replacements, $post->meta_value );
+				update_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $result, $post->meta_value );
+			}
+
 		}
 		
 	}

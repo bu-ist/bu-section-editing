@@ -150,7 +150,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$root_id = $pages_by_parent[$child_of][0]->post_parent;
 			$perms = get_post_meta( $root_id, BU_Edit_Group::META_KEY );
 
-			if( in_array( $this->group->id, $perms ) )
+			if( in_array( $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED, $perms ) )
 				$parent_state = 'allowed';
 
 		}
@@ -216,11 +216,11 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				if( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[$post->ID];
 
-					if( $perm->meta_value === (string) $this->group->id . '-denied' ) {
+					if( $perm->meta_value === (string) $this->group->id . BU_Edit_Group::SUFFIX_DENIED ) {
 						$post->perm = 'denied';
 					}
 
-					if( $perm->meta_value === (string) $this->group->id ) {
+					if( $perm->meta_value === (string) $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED ) {
 						$post->perm = 'allowed';
 					}
 

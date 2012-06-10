@@ -191,11 +191,11 @@ class BU_Section_Editor {
 			foreach( $groups as $group ) {
 
 				// This group is good, bail here
-				if( in_array( (string) $group->id, $post_groups ) )
+				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $post_groups ) )
 					return true;
 
 				// If group is denied, skip this group
-				if( in_array( (string) $group->id . '-denied', $post_groups ) )
+				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $post_groups ) )
 					continue;
 
 				// Otherwise our status is inherited
@@ -209,10 +209,10 @@ class BU_Section_Editor {
 					
 					$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
 
-					if( in_array( (string) $group->id, $ancestor_groups ) )
+					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $ancestor_groups ) )
 						return true;
 
-					if( in_array( (string) $group->id . '-denied', $ancestor_groups ) )
+					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $ancestor_groups ) )
 						break;
 
 				}
