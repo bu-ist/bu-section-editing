@@ -1,11 +1,12 @@
 <?php
 
-class Test_BU_Section_Editing extends WPTestCase {
+class Test_BU_Section_Editing extends WP_UnitTestCase {
+
+	public $plugin_slug = 'bu-section-editing';
 
 	function setUp() {
 		parent::setUp();
 	}
-
 	function tearDown() {
 		parent::tearDown();
 	}
@@ -99,9 +100,10 @@ class Test_BU_Section_Editing extends WPTestCase {
 
 		// Modify group
 		$update_args = array(
-		    'name' => 'Test Group Updated',
-		    'description' => 'Description updated',
-		    'users' => array( 3, 4 )
+			'name' => 'Test Group Updated',
+			'description' => 'Description updated',
+			'users' => array( 3, 4 ),
+			'perms' => array( 'page' => '', 'post' => '' )
 		);
 
 		$newgroup = $controller->update_group( $originalgroup->id, $update_args );
@@ -184,9 +186,10 @@ class Test_BU_Section_Editing extends WPTestCase {
 	function generate_test_group_args( $args = array() ) {
 		
 		$group_args = array(
-		    'name' => 'Test Group 1',
-		    'description' => 'Group for testing',
-		    'users' => array( 1, 2 )
+			'name' => 'Test Group 1',
+			'description' => 'Group for testing',
+			'users' => array( 1, 2 ),
+			'perms' => array( 'page' => '', 'post' => '')
 		);
 		
 		return wp_parse_args( $args, $group_args );
