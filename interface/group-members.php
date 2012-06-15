@@ -1,6 +1,6 @@
 <div id="add-group-members" class="buse-widget">
 	<div class="buse-widget-header">
-		<h4 id="add-group-members-header">Add User to this Editor Group</h4>
+		<h4 id="add-group-members-header">Add User to this Group</h4>
 	</div>
 	<div class="buse-widget-body">
 		<div id="members-message" ></div>
@@ -20,7 +20,7 @@
 		<div id="member-list-count">
 			<span class="member-count"><?php echo count( $group->users ); ?></span> members
 		</div>
-		<h4 id="edit-group-members-header">Editor Group List</h4>
+		<h4 id="edit-group-members-header">Group Member List</h4>
 	</div>
 	<div class="buse-widget-body">
 		<ul id="group-member-list">
