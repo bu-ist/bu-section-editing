@@ -113,15 +113,9 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$args = array();
 
 		$groups = BU_Edit_Groups::get_instance();
-		$args['perms'] = array();
-
-		foreach($perms as $post_type => $acl) {
-			$args['perms'][$post_type] = json_encode($acl);
-		}
-
+		$args['perms'] = $perms;
 		$args['name'] = $name;
 		$args['users'] = $user_ids;
-
 
 		$this->groups[] = $groups->add_group($args);
 		$groups->save();
