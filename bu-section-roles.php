@@ -205,7 +205,7 @@ class BU_Section_Editor {
 			$parent_id = null;
 			$id = $post_ID;
 			$post = get_post($id);
-			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && $post->post_parent != $_POST['parent_id']) {
+			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
 				$parent_id = (int) $_POST['parent_id'];
 			}
 			if (!isset($id) || !self::can_edit($user_id, $id, $parent_id)) {
