@@ -26,7 +26,8 @@ class BU_Section_Editing_Plugin {
 
 		register_activation_hook( __FILE__, array('BU_Section_Editing_Plugin','on_activate' ));
 
-		add_action( 'init', array('BU_Section_Editing_Plugin','init') );
+		add_action( 'init', array('BU_Section_Editing_Plugin', 'init' ) );
+		add_action( 'init', array('BU_Section_Editing_Plugin', 'add_post_type_support' ), 20 );
 
 	}
 
@@ -43,12 +44,20 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin_Ajax::register_hooks();
 		}
 
-		// Pages and post support section editing by default
-		add_post_type_support( 'page', 'section-editing' );
-		add_post_type_support( 'post', 'section-editing' );
-
 		// Check plugin version
 		self::version_check();
+
+	}
+
+	public static function add_post_type_support() {
+
+		// Support posts and pages + all public custom post types by default
+		$post_types = get_post_types( array( 'public' => true, '_builtin' => false ) );
+		$post_types = array_merge( $post_types, array('post','page') );
+
+		foreach( $post_types as $post_type ) {
+			add_post_type_support( $post_type, 'section-editing' );
+		}
 
 	}
 

@@ -50,9 +50,9 @@ abstract class BU_Permissions_Editor {
 	abstract public function render();
 
 	/**
-	 * Allows developers to opt-in for section editing feature
+	 * Allows developers to opt-out for section editing feature
 	 */ 
-	public static function get_supported_post_types() {
+	public static function get_supported_post_types( $output = 'objects') {
 
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 		$supported_post_types = array();
@@ -60,7 +60,7 @@ abstract class BU_Permissions_Editor {
 		foreach( $post_types as $post_type ) {
 			// @todo temporarily disabled flat post types for alpha release
 			if( post_type_supports( $post_type->name, 'section-editing' ) && $post_type->hierarchical )
-				$supported_post_types[] = $post_type;
+				$supported_post_types[] = ( $output == 'objects' ) ? $post_type : $post_type->name;
 		}
 
 		return $supported_post_types;
