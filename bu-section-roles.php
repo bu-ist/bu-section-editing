@@ -8,75 +8,6 @@ class BU_Section_Editing_Roles {
 
 	// need to figure out the *best* way to create roles
 	static public function maybe_create() {
-
-		$role = get_role('administrator');
-
-		if(empty($role)) {
-
-			add_role('administrator', 'Administrator');
-			include( ABSPATH . '/wp-admin/includes/schema.php');// hack to add all roles if they were deleted.
-			populate_roles();
-
-		}
-
-		$role = get_role( 'lead_editor' );
-
-		if(empty($role)) {
-			add_role('lead_editor', 'Lead Editor');
-		}
-
-		$role = get_role('lead_editor');
-
-		$role->add_cap('manage_training_manager');
-		$role->add_cap('upload_files');
-		$role->add_cap('edit_posts');
-		$role->add_cap('read');
-		$role->add_cap('delete_posts');
-
-		$role->add_cap('moderate_comments');
-		$role->add_cap('manage_categories');
-		$role->add_cap('manage_links');
-		$role->add_cap('upload_files');
-		$role->add_cap('import');
-		$role->add_cap('unfiltered_html');
-		$role->add_cap('edit_posts');
-		$role->add_cap('edit_others_posts');
-		$role->add_cap('edit_published_posts');
-		$role->add_cap('publish_posts');
-		$role->add_cap('edit_pages');
-		$role->add_cap('read');
-		$role->add_cap('level_10');
-		$role->add_cap('level_9');
-		$role->add_cap('level_8');
-		$role->add_cap('level_7');
-		$role->add_cap('level_6');
-		$role->add_cap('level_5');
-		$role->add_cap('level_4');
-		$role->add_cap('level_3');
-		$role->add_cap('level_2');
-		$role->add_cap('level_1');
-		$role->add_cap('level_0');
-
-		$role->add_cap('edit_others_pages');
-		$role->add_cap('edit_published_pages');
-		$role->add_cap('publish_pages');
-		$role->add_cap('delete_pages');
-		$role->add_cap('delete_others_pages');
-		$role->add_cap('delete_published_pages');
-		$role->add_cap('delete_posts');
-		$role->add_cap('delete_others_posts');
-		$role->add_cap('delete_published_posts');
-		$role->add_cap('delete_private_posts');
-		$role->add_cap('edit_private_posts');
-		$role->add_cap('read_private_posts');
-		$role->add_cap('delete_private_pages');
-		$role->add_cap('edit_private_pages');
-		$role->add_cap('read_private_pages');
-		$role->add_cap('read_private_posts');
-		$role->add_cap('read_private_pages');
-		$role->add_cap('unfiltered_html');
-
-
 		/** Temporary **/
 		$role = get_role('section_editor');
 
@@ -86,12 +17,13 @@ class BU_Section_Editing_Roles {
 
 		$role = get_role('section_editor');
 
-		$role->add_cap('manage_training_manager');
 		$role->add_cap('upload_files');
 
 		$role->add_cap('read');
 		$role->add_cap('edit_pages');
 		$role->add_cap('edit_others_pages');
+
+
 		// the following roles are overriden by the section editor functionality
 		$role->add_cap('edit_published_pages');
 		$role->add_cap('publish_pages');
@@ -102,22 +34,14 @@ class BU_Section_Editing_Roles {
 
 		$role->add_cap('edit_posts');
 		$role->add_cap('edit_others_posts');
+
+		// the following roles are overriden by the section editor functionality
 		$role->add_cap('edit_published_posts');
 		$role->add_cap('publish_posts');
 		$role->add_cap('delete_posts');
 		$role->add_cap('delete_others_posts');
 		$role->add_cap('delete_published_posts');
 
-		$role->add_cap('moderate_comments');
-		$role->add_cap('manage_categories');
-		$role->add_cap('manage_links');
-		$role->add_cap('upload_files');
-		$role->add_cap('level_7');
-		$role->add_cap('level_6');
-		$role->add_cap('level_5');
-		$role->add_cap('level_4');
-		$role->add_cap('level_3');
-		$role->add_cap('level_2');
 		$role->add_cap('level_1');
 		$role->add_cap('level_0');
 		$role->add_cap('edit_private_posts');
@@ -125,24 +49,9 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('edit_private_pages');
 		$role->add_cap('read_private_pages');
 
-		$role->add_cap('unfiltered_html');
-
-		/** Temporary **/
-		$role = get_role('contributor');
-
-		if(empty($role)) {
-			add_role('contributor', 'Contributor');
+		if(defined('BU_CMS') && BU_CMS == true) {
+			$role->add_cap('unfiltered_html');
 		}
-
-		$role = get_role('contributor');
-
-		$role->add_cap('manage_training_manager');
-		$role->add_cap('upload_files');
-
-		$role->add_cap('read');
-		$role->add_cap('edit_pages');
-
-		$role->add_cap('unfiltered_html');
 
 	}
 
