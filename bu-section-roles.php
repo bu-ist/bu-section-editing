@@ -190,6 +190,10 @@ class BU_Section_Editor {
 			$edit_groups_o = BU_Edit_Groups::get_instance();
 			$groups = $edit_groups_o->find_groups_for_user( $user_id );
 
+			if(empty($groups)) {
+				return false;
+			}
+
 			foreach( $groups as $key => $group ) {
 
 				// This group is good, bail here
@@ -204,9 +208,13 @@ class BU_Section_Editor {
 
 			// check a different ancestor tree from that of the existing post
 			if(isset($parent_id)) {
-				$post = get_post( $parent_id, OBJECT, null);
-				$ancestors = get_post_ancestors( $post );
-				array_unshift($ancestors, $post->ID);
+				if($parent_id != 0) {
+					$post = get_post( $parent_id, OBJECT, null);
+					$ancestors = get_post_ancestors( $post );
+					array_unshift($ancestors, $post->ID);
+				} else {
+					return false;
+				}
 			} else {
 				// Note that get_post_ancestors only works if the post object is unfiltered
 				$post = get_post( $post_id, OBJECT, null );
@@ -265,8 +273,13 @@ class BU_Section_Editor {
 
 		// Override normal edit post permissions
 		if( in_array( $cap, self::get_caps_for_post_types( 'edit_post', $post_types ) ) ) {
+			$parent_id = null;
 			$post = get_post($id);
-			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
+
+			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) &&  $post->post_parent != $_POST['parent_id']) {
+				$parent_id = (int) $_POST['parent_id'];
+			}
+			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id, $parent_id)) {
 				$caps = array('do_not_allow');
 			}
 			return $caps;
@@ -280,9 +293,13 @@ class BU_Section_Editor {
 		}
 
 		if( in_array( $cap, self::get_caps_for_post_types( 'publish_posts', $post_types ) ) ) {
+			$parent_id = null;
 			$id = $post_ID;
 			$post = get_post($id);
-			if (!$id || !self::can_edit($user_id, $id)) {
+			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && $post->post_parent != $_POST['parent_id']) {
+				$parent_id = (int) $_POST['parent_id'];
+			}
+			if (!isset($id) || !self::can_edit($user_id, $id, $parent_id)) {
 				$caps = array('do_not_allow');
 			}
 

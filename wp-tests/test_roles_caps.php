@@ -92,6 +92,15 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->assertFalse(current_user_can('publish_posts'));
 
 		// now the fun begins....
+
+		$post_id = $this->pages['section_editor-draft']->ID;
+		$GLOBALS['post_ID'] = $post_id;
+		$this->assertTrue(current_user_can('publish_pages'));
+
+		$_POST['post_ID'] = $post_id;
+		$_POST['parent_id'] = 0;
+		$this->assertFalse(current_user_can('publish_pages'));
+		unset($_POST['parent_id']);
 	}
 
 
