@@ -16,7 +16,7 @@ class BU_Section_Editing_Roles {
 			add_role('administrator', 'Administrator');
 			include( ABSPATH . '/wp-admin/includes/schema.php');// hack to add all roles if they were deleted.
 			populate_roles();
-		
+
 		}
 
 		$role = get_role( 'lead_editor' );
@@ -26,7 +26,7 @@ class BU_Section_Editing_Roles {
 		}
 
 		$role = get_role('lead_editor');
-		
+
 		$role->add_cap('manage_training_manager');
 		$role->add_cap('upload_files');
 		$role->add_cap('edit_posts');
@@ -97,6 +97,7 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('publish_pages');
 		$role->add_cap('delete_others_pages');
 		$role->add_cap('delete_published_pages');
+		$role->add_cap('delete_pages');
 
 
 		$role->add_cap('edit_posts');
@@ -147,9 +148,9 @@ class BU_Section_Editing_Roles {
 
 	/**
 	 * This filter is only needed for BU installations where the bu_user_management plugin is active
-	 * 
+	 *
 	 * Hopefully this will not be required some day soon
-	 */ 
+	 */
 	static function bu_allowed_roles( $roles ) {
 
 		if( ! array_key_exists( 'lead_editor', $roles ) )
@@ -165,13 +166,17 @@ class BU_Section_Editing_Roles {
 
 /**
  * Section Editor
- */ 
+ */
 class BU_Section_Editor {
 
 	/**
 	 * Checks whether or not a specific user can edit a post
-	 */ 
-	static function can_edit($post_id, $user_id)  {
+	 *
+	 * @param int $user_id
+	 * @param int $post_id
+	 * @param int $parent_id
+	 */
+	static function can_edit($user_id, $post_id, $parent_id = null)  {
 
 		if($user_id == 0) return false;
 
@@ -185,52 +190,62 @@ class BU_Section_Editor {
 			$edit_groups_o = BU_Edit_Groups::get_instance();
 			$groups = $edit_groups_o->find_groups_for_user( $user_id );
 
-			// Check each group
-			$status = false;
-
-			foreach( $groups as $group ) {
+			foreach( $groups as $key => $group ) {
 
 				// This group is good, bail here
-				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $post_groups ) )
+				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $post_groups ) ) {
 					return true;
-
+				}
 				// If group is denied, skip this group
-				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $post_groups ) )
-					continue;
+				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $post_groups ) ) {
+					unset($groups[$key]); // remove group so that we don't check the ancestors for the present of the group
+				}
+			}
 
-				// Otherwise our status is inherited
-
+			// check a different ancestor tree from that of the existing post
+			if(isset($parent_id)) {
+				$post = get_post( $parent_id, OBJECT, null);
+				$ancestors = get_post_ancestors( $post );
+				array_unshift($ancestors, $post->ID);
+			} else {
 				// Note that get_post_ancestors only works if the post object is unfiltered
 				$post = get_post( $post_id, OBJECT, null );
 				$ancestors = get_post_ancestors( $post );
+			}
 
-				// Bubble up through ancestors, checking status along the way
-				foreach( $ancestors as $ancestor_id ) {
-					
-					$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
 
-					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $ancestor_groups ) )
+			// Bubble up through ancestors, checking status along the way
+			foreach( $ancestors as $ancestor_id ) {
+
+				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
+
+				foreach( $groups as $key => $group ) {
+
+					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $ancestor_groups ) ) {
 						return true;
+					}
 
-					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $ancestor_groups ) )
-						break;
-
+					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $ancestor_groups ) ) {
+						unset($groups[$key]);
+					}
 				}
-
+				if( empty($groups) ) {
+					break;
+				}
 			}
 
 			// User is section editor, but not allowed for this section
 			return false;
-		} 
+		}
 
 		// User is not restricted by plugin, normal meta_caps apply
 		return true;
-		
+
 	}
 
 	/**
 	 * Filter that modifies the caps based on the current state.
-	 * 
+	 *
 	 * @param type $caps
 	 * @param type $cap
 	 * @param type $user_id
@@ -238,40 +253,40 @@ class BU_Section_Editor {
 	 * @return string
 	 */
 	static function map_meta_cap($caps, $cap, $user_id, $args) {
+		global $post_ID;
 
 		// edit_page and delete_page get a post ID passed, but publish does not
-		if( isset( $args[0] ) )
-			$post_id = $args[0];
+		if( isset( $args[0] ) ) {
+			$id = $args[0];
+		}
 
-		$post_types = BU_Permissions_Editor::get_supported_post_types();
+		// get all post types because section editors start with no rights
+		$post_types = get_post_types(null, 'objects');
 
 		// Override normal edit post permissions
 		if( in_array( $cap, self::get_caps_for_post_types( 'edit_post', $post_types ) ) ) {
-			$post = get_post($post_id);
-
-			if($post_id && $post->post_status == 'publish' && ! self::can_edit($post_id, $user_id)) {
+			$post = get_post($id);
+			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
 				$caps = array('do_not_allow');
-			} else {
-				// error_log('Editing is allowed!');
 			}
+			return $caps;
 		}
 
-		// Override normal delete post permissions
 		if( in_array( $cap, self::get_caps_for_post_types( 'delete_post', $post_types ) ) ) {
-			if($post_id && ! self::can_edit($post_id, $user_id)) {
+			if($id && ! self::can_edit($user_id, $id)) {
 				$caps = array('do_not_allow');
 			}
+			return $caps;
 		}
 
-		// Introduce new permission check for publishing specific posts (for alternate versions)
 		if( in_array( $cap, self::get_caps_for_post_types( 'publish_posts', $post_types ) ) ) {
-			global $post_ID;
-
-			$post_id = $post_ID;
-
-			if($post_id && ! self::can_edit($post_id, $user_id)) {
+			$id = $post_ID;
+			$post = get_post($id);
+			if (!$id || !self::can_edit($user_id, $id)) {
 				$caps = array('do_not_allow');
 			}
+
+			return $caps;
 		}
 
 		return $caps;
@@ -283,7 +298,7 @@ class BU_Section_Editor {
 		$caps = array();
 
 		foreach( $post_types as $post_type ) {
-			if( isset( $post_type->cap->$cap ))	
+			if( isset( $post_type->cap->$cap ))
 				$caps[] = $post_type->cap->$cap;
 		}
 
