@@ -12,7 +12,10 @@ jQuery(function($) {
 			data: data,
 			type: 'POST',
 			success: function(response) {
-				console.log(response);
+				if($('#post [name="parent_id"]').val() == response.parent_id && response.can_edit == false) {
+					alert("You cannot place this page there.");
+					$('#post [name="parent_id"]').val(response.original_parent);
+				}
 			},
 			error: function(response) {
 				console.log(response);

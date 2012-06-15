@@ -487,6 +487,9 @@ class BU_Groups_Admin_Ajax {
 			$response->parent_id = $parent_id;
 			$response->can_edit = $answer;
 
+			$post = get_post($post_id);
+			$response->original_parent = $post->post_parent;
+
 			header("Content-type: application/json");
 			echo json_encode( $response );
 			die();
