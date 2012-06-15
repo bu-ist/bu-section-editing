@@ -68,6 +68,23 @@ class BU_Edit_Groups {
 	}
 
 	/**
+	 * Add a BU_Edit_Group object to internal groups array
+	 */ 
+	private function add( BU_Edit_Group $group ) {
+
+		array_push($this->groups, $group);
+
+	}
+
+	/**
+	 * Remove all groups from internal array 
+	 */
+	public function delete_groups() {
+
+		$this->groups = array();
+	}
+
+	/**
 	 * Add a new section editing group
 	 * 
 	 * @param array $args an array of parameters for group initialization
@@ -75,32 +92,39 @@ class BU_Edit_Groups {
 	 */ 
 	public function add_group($args) {
 
-		// sanitize
+		// Process input
 		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+		foreach( $args['perms'] as $post_type => $post_statuses ) {
+			if( ! is_array( $post_statuses ) ) {
+				error_log("Unepected value for post stati: $post_statuses" );
+				unset( $args['perms'][$post_type]);
+				continue;
+			}
 
-		// create group
+			foreach( $post_statuses as $post_id => $status ) {
+				if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+					error_log("Removing post $post_id due to unexpected status: $status" );
+					unset( $args['perms'][$post_type][$post_id] );
+				}
+			}
+		}
+
+		// Create new model
 		$group = new BU_Edit_Group($args);
 		
-		// update attributes
+		// Update attributes
 		$group->id = $this->index;
 		$group->created = time();
 		$group->modified = time();
 
-		// add to internal array & increment group index counter
+		// Add to our model list
 		$this->add($group);
+
+		// Commit updates
 		$this->increment_index();
-
-		// extract permission updates
-		$perms = array();
-
-		foreach( $args['perms'] as $post_type => $json_data ) {
-			if( $json_data )
-				$perms[$post_type] = json_decode( stripslashes( $json_data ), true );
-		}
-
-		// Set group permissions
-		$this->update_group_permissions( $group->id, $perms );
+		$this->update_group_permissions( $group->id, $args['perms'] );
+		$this->save();
 
 		add_action( 'bu_add_section_editing_group', $group );
 
@@ -121,28 +145,33 @@ class BU_Edit_Groups {
 
 		if($group) {
 
-			// sanitize
+			// Process input
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+			foreach( $args['perms'] as $post_type => $post_statuses ) {
+				if( ! is_array( $post_statuses ) ) {
+					error_log("Unepected value for post stati: $post_statuses" );
+					unset( $args['perms'][$post_type]);
+					continue;
+				}
 
-			$group->update($args);
-
-			$group->modified = time();
-
-			// extract permission updates
-			$perms = array();
-
-			// Convert JSON string to array
-			foreach( $args['perms'] as $post_type => $json_data ) {
-
-				if( $json_data )
-					$perms[$post_type] = json_decode( stripslashes( $json_data ), true );
-
+				foreach( $post_statuses as $post_id => $status ) {
+					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+						error_log("Removing post $post_id due to unexpected status: $status" );
+						unset( $args['perms'][$post_type][$post_id] );
+					}
+				}
 			}
 
+			// Update our model list
+			$group->update($args);
 
-			// Set group permissions
-			$this->update_group_permissions( $group->id, $perms );
+			// Bump modified time
+			$group->modified = time();
+
+			// Commit updates
+			$this->update_group_permissions( $group->id, $args['perms'] );
+			$this->save();
 
 			return $group;
 
@@ -166,21 +195,21 @@ class BU_Edit_Groups {
 
 				unset($this->groups[$index]);
 				$this->groups = array_values($this->groups);	// reindex
+
+				// Remove permissions data
+				$this->delete_group_permissions($id);
+
+				// Commit changes
+				$this->save();
+
 				return true;
 			
 			}
+
 		}
 
 		return false;
 
-	}
-
-	/**
-	 * Remove all groups from internal array 
-	 */
-	public function delete_groups() {
-
-		$this->groups = array();
 	}
 
 	/**
@@ -224,17 +253,6 @@ class BU_Edit_Groups {
 			}
 
 			return false;
-	}
-
-	// not currently used, possibly delete
-	public function delete_user($user_id) {
-
-		$groups = $this->find_groups_for_user($user_id);
-		
-		foreach($groups as $group) {
-			$group->remove_user($user_id);
-		}
-
 	}
 
 	/**
@@ -283,16 +301,6 @@ class BU_Edit_Groups {
 
 	}
 
-	
-	/**
-	 * Add a BU_Edit_Group object to internal groups array
-	 */ 
-	private function add( BU_Edit_Group $group ) {
-
-		array_push($this->groups, $group);
-
-	}
-
 	// ____________________PERSISTENCE________________________
 
 
@@ -304,26 +312,33 @@ class BU_Edit_Groups {
 	 */ 
 	private function update_group_permissions( $group_id, $permissions ) {
 
+		if( ! is_array( $permissions ) )
+			return false;
+
 		foreach( $permissions as $post_type => $perm_settings ) {
 
 			// error_log('= Updating permissions for: ' . $post_type . '=' );
+			if( ! is_array( $perm_settings ) ) {
+				error_log( "Unexpected value found while updating permissions: $perm_settings" );
+				continue;
+			}
 
-			foreach( $perm_settings as $id => $status ) {
+			foreach( $perm_settings as $post_id => $status ) {
 
 				// Clear all possible existing values
-				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-				delete_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
+				delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
+				delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
 
 				switch( $status ) {
 
 					case 'allowed':
-						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-						// error_log('Updating ' . $id . ': ' . $group_id );
+						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
+						//error_log('Updating ' . $post_id . ': ' . $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
 						break;
 
 					case 'denied':
-						add_post_meta( $id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
-						// error_log('Updating ' . $id . ': ' . $group_id . '-' . $status );
+						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
+						//error_log('Updating ' . $post_id . ': ' . $group_id . BU_Edit_Group::SUFFIX_DENIED );
 						break;
 
 
@@ -364,6 +379,32 @@ class BU_Edit_Groups {
 				}
 			}
 
+		}
+
+	}
+
+	private function delete_group_permissions( $group_id ) {
+
+		$supported_post_types = BU_Permissions_Editor::get_supported_post_types( 'names' );
+
+		$meta_query = array(
+			'key' => BU_Edit_Group::META_KEY,
+			'value' => $group_id . ':',
+			'compare' => 'LIKE'
+			);
+
+		$args = array(
+			'post_type' => $supported_post_types,
+			'meta_query' => array( $meta_query ),
+			'posts_per_page' => -1,
+			'fields' => 'ids'
+			);
+
+		$query = new WP_Query( $args );
+
+		foreach( $query->posts as $post_id ) {
+			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
+			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
 		}
 
 	}

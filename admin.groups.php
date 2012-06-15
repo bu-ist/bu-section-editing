@@ -108,17 +108,31 @@ class BU_Groups_Admin {
 					if( ! check_admin_referer( 'update_section_editing_group' ) )
 						wp_die('Cheatin, uh?');
 
+					// Process input
 					$group_data = $_POST['group'];
 
 					// if no users are set, array key for users won't exist
 					if( ! isset($group_data['users']) ) $group_data['users'] = array();
 
-					// @todo Move validation to controller/model layer?
-					if(empty($group_data['name'])) {
+					if( ! isset($group_data['name'])) {
 						$redirect_url = add_query_arg( array( 'status' => 1 ) );
 						wp_redirect($redirect_url);
 						return;
 					}
+
+					if( isset( $group_data['perms'] ) ) {
+
+						// Convert JSON string to array
+						foreach( $group_data['perms'] as $post_type => $json_data ) {
+							$post_ids = array();
+							if( $json_data )
+								$post_ids = json_decode( stripslashes( $json_data ), true );
+							$group_data['perms'][$post_type] = $post_ids;
+						}
+
+					}	
+
+					// Save group
 
 					$status = 0;
 					
@@ -131,8 +145,6 @@ class BU_Groups_Admin {
 						$status = 3;
 					}
 
-					$groups->save();
-
 					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => $status ) );
 					break;
 
@@ -142,8 +154,6 @@ class BU_Groups_Admin {
 
 					// @todo check for valid delete
 					$groups->delete_group( $group_id );
-
-					$groups->save();
 
 					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
 					$redirect_url = add_query_arg( array( 'status' => 4 ), $redirect_url );
@@ -198,7 +208,6 @@ class BU_Groups_Admin {
 				break;
 
 		}
-
 
 		// Render screen
 		include $template_path;
