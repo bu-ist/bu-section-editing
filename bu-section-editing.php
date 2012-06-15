@@ -6,17 +6,17 @@
  Author: Boston University (IS&T)
 */
 
- require_once('bu-section-roles.php');
- 
- require_once('admin.groups.php');
- require_once('classes.groups.php');
- require_once('classes.permissions.php');
+require_once(dirname(__FILE__) . '/bu-section-roles.php');
+// @todo only load admin code when is_admin()
+require_once(dirname(__FILE__) . '/admin.groups.php');
+require_once(dirname(__FILE__) . '/classes.groups.php');
+require_once(dirname(__FILE__) . '/classes.permissions.php');
 
- define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
+define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
 /**
  * Plugin entry point
- */ 
+ */
 class BU_Section_Editing_Plugin {
 
 	const BUSE_VERSION = '0.2';
@@ -86,11 +86,11 @@ class BU_Section_Editing_Plugin {
 	/**
 	 * Placeholder function until we determine the best method to determine how
 	 * to grant users the ability to edit sections
-	 */ 
+	 */
 	public static function get_allowed_users( $query_args = array() ) {
-		
+
 		// For now, allowed users are section editors that belong to the current blog
-		$default_args = array( 
+		$default_args = array(
 			'role' => 'section_editor'
 			);
 
@@ -108,7 +108,7 @@ class BU_Section_Editing_Plugin {
 	/**
 	 * Another placeholder -- checks if the given user is allowed by the plugin
 	 * to hold section editing priviliges
-	 */ 
+	 */
 	public static function is_allowed_user( $user = null, $query_args = array() ) {
 
 		if( is_null( $user ) ) {
@@ -126,17 +126,17 @@ class BU_Section_Editing_Plugin {
 			error_log( 'Error checking for allowed user: ' . print_r($user,true) );
 			return false;
 		}
-		
+
 	}
 
 	/**
 	 * Perform any data modifications as needed based on version diff
-	 */ 
+	 */
 	public static function upgrade( $old_version ) {
 		global $wpdb;
 
 		if( version_compare( $old_version, '0.2', '<' ) && version_compare( self::BUSE_VERSION, '0.2', '>=' ) ) {
-			
+
 			// Upgrade (1.0 -> 2.0)
 			$patterns = array( '/^(\d+)$/', '/^(\d+)-denied$/');
 			$replacements = array('${1}:allowed', '${1}:denied' );
@@ -168,7 +168,7 @@ class BU_Section_Editing_Plugin {
 			}
 
 		}
-		
+
 	}
 
 }

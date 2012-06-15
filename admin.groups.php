@@ -14,9 +14,9 @@ class BU_Groups_Admin {
 
 	/**
 	 * Register for admin hooks
-	 * 
+	 *
 	 * Called from main plugin class during init
-	 */ 
+	 */
 	public static function register_hooks() {
 
 		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
@@ -26,9 +26,9 @@ class BU_Groups_Admin {
 
 	/**
 	 * Add manage groups page
-	 * 
+	 *
 	 * @hook admin_menus
-	 */ 
+	 */
 	public static function admin_menus() {
 
 		$hook = add_users_page('Section Groups', 'Section Groups', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
@@ -56,13 +56,13 @@ class BU_Groups_Admin {
 
 	/**
 	 * Register manage group css/js
-	 * 
+	 *
 	 * @hook admin_enqueue_scripts
-	 */ 
+	 */
 	public static function admin_scripts( $hook ) {
 
 		if( $hook == self::$manage_groups_hook ) {
-
+			// @todo we should use the same handle as the other places we use jstree
 			wp_enqueue_script( 'jstree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery') );
 			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery') );
 
@@ -78,17 +78,21 @@ class BU_Groups_Admin {
 
 		}
 
+		if( in_array($hook, array('post.php', 'post-new.php') ) ) {
+			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post.js', __FILE__), array('jquery'), '1.0', true);
+		}
+
 	}
 
 	/**
 	 * Handle page load for manage groups, pre-headers send
-	 * 
+	 *
 	 * @hook load-users_page_manage_groups
-	 * 
+	 *
 	 * This method handles $_REQUEST data and redirection before page is loaded
-	 */ 
+	 */
 	static function load_manage_groups() {
-		
+
 		if( isset($_REQUEST['action']) ) {
 
 			$groups = BU_Edit_Groups::get_instance();
@@ -101,7 +105,7 @@ class BU_Groups_Admin {
 					$group = $groups->get( $group_id );
 
 					if( $group === false )
-						wp_die("The requested section editing group ($group_id) does not exists");				
+						wp_die("The requested section editing group ($group_id) does not exists");
 					break;
 
 				case 'update':
@@ -130,12 +134,12 @@ class BU_Groups_Admin {
 							$group_data['perms'][$post_type] = $post_ids;
 						}
 
-					}	
+					}
 
 					// Save group
 
 					$status = 0;
-					
+
 					if( $group_id == -1 ) {
 						$group = $groups->add_group($group_data);
 						$group_id = $group->id;
@@ -177,9 +181,9 @@ class BU_Groups_Admin {
 
 	/**
 	 * Display the manage groups admin screen
-	 * 
+	 *
 	 * Attached on add_users_page, called during admin_menus
-	 */  
+	 */
 	static function manage_groups_screen() {
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -187,7 +191,7 @@ class BU_Groups_Admin {
 		$group_id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : -1;
 		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
 		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'name';
-		
+
 		$template_path = 'interface/groups.php';
 
 		switch( $action ) {
@@ -215,7 +219,7 @@ class BU_Groups_Admin {
 
 	/**
 	 * Generate admin notice messages based on incoming status codes
-	 */ 
+	 */
 	static function get_notices() {
 
 		$notices = array();
@@ -247,7 +251,7 @@ class BU_Groups_Admin {
 
 		}
 
-		$count_user_args = array( 
+		$count_user_args = array(
 			'count_total' => true,
 			'fields' => 'ID',
 			'number' => 1
@@ -274,11 +278,11 @@ MSG;
 
 	/**
 	 * Generates query string for manage groups page request
-	 * 
+	 *
 	 * @param string $action manage groups action: add, edit or delete
 	 * @param array $extra_args optiona list of extra query args to be added
 	 * @return string $url
-	 */ 
+	 */
 	static function manage_groups_url( $action, $extra_args = array() ) {
 		$page = admin_url( self::MANAGE_GROUPS_PAGE );
 
@@ -294,9 +298,9 @@ MSG;
 
 	/**
 	 * Render group permissions string
-	 * 
+	 *
 	 * @todo should there be a BU_Group_Permissions object that handles all of this?
-	 */ 
+	 */
 	static function group_permissions_string( $group, $post_type = null, $args = array(), $offset = 0 ) {
 
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
@@ -315,7 +319,7 @@ MSG;
 			if( (int) $count > 0 ) {
 				$label = ( $count > 1 ) ? $pt->label : $pt->labels->singular_name;
 
-				$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"%s-stat-count\">%s</span> %s</span>\n", 
+				$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"%s-stat-count\">%s</span> %s</span>\n",
 					$pt->name,
 					$pt->name,
 					$count,
@@ -324,7 +328,7 @@ MSG;
 
 		}
 
-		if( ! empty( $counts ) ) { 
+		if( ! empty( $counts ) ) {
 			$output = implode(', ', $counts );
 		}
 
@@ -336,7 +340,9 @@ MSG;
 
 /**
  * Centralized admin ajax routing
- */ 
+ *
+ * @todo sanitize ALL input
+ */
 class BU_Groups_Admin_Ajax {
 
 	static function register_hooks() {
@@ -345,14 +351,14 @@ class BU_Groups_Admin_Ajax {
 		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
 		add_action('wp_ajax_buse_fetch_children', array( __CLASS__, 'render_post_children' ) );
 		add_action('wp_ajax_buse_update_permissions_count', array( __CLASS__, 'update_permissions_count' ) );
-
+		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
 	}
 
 	/**
 	 * Add user to current edit group screen if they are valid
-	 * 
+	 *
 	 * @todo add nonce
-	 */ 
+	 */
 	static function add_member() {
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -378,7 +384,7 @@ class BU_Groups_Admin_Ajax {
 			$output['user_id'] = $user->ID;
 
 		} else { // User was not found
-			
+
 			$output['status'] = false;
 
 			// Look for exact user match to tailor error message
@@ -387,13 +393,13 @@ class BU_Groups_Admin_Ajax {
 			if( ! is_null( $user_id ) && is_user_member_of_blog( $user_id ) ) {
 				// User has incorrect role
 				$output['message'] = '<p><b>' . $user_input . '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'.admin_url('users.php?s=' . $user_input ).'">users page</a>.</p>';
-				
+
 			} else {
 				// User does exist, but is not a member of this blog
 				$output['message'] = '<p><b>' . $user_input . '</b> is not a member of this site.  Please <a href="'.admin_url('user-new.php').'">add them to your site</a> with the "Section Editor" role.';
-				
+
 			}
-			
+
 		}
 
 		header("Content-type: application/json");
@@ -404,9 +410,9 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Find valid users based on input string
-	 * 
+	 *
 	 * @todo add nonce
-	 */ 
+	 */
 	static function find_user() {
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -422,10 +428,10 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Displays post hierarchy starting at a specifc post ID
-	 * 
+	 *
 	 * @todo add nonce
 	 * @todo currently only supports HTML output, might decide to use json instead
-	 */ 
+	 */
 	static function render_post_children() {
 
 		if( defined('DOING_AJAX') && DOING_AJAX ) {
@@ -457,7 +463,33 @@ class BU_Groups_Admin_Ajax {
 
 			die();
 		}
-	
+
+
+	}
+
+
+	static public function can_edit() {
+
+			$user_id = get_current_user_id();
+			$post_id = (int) trim($_POST['post_id']);
+			$parent_id = (int) trim($_POST['parent_id']);
+
+
+			if(!isset($post_id) || !isset($parent_id)) {
+				echo '-1';
+				die();
+			}
+			$answer = BU_Section_Editor::can_edit($user_id, $post_id, $parent_id);
+
+			$response = new stdClass();
+
+			$response->post_id = $post_id;
+			$response->parent_id = $parent_id;
+			$response->can_edit = $answer;
+
+			header("Content-type: application/json");
+			echo json_encode( $response );
+			die();
 	}
 
 }
