@@ -479,6 +479,8 @@ class BU_Groups_Admin_Ajax {
 				echo '-1';
 				die();
 			}
+
+			$post = get_post($post_id);
 			$answer = BU_Section_Editor::can_edit($user_id, $post_id, $parent_id);
 
 			$response = new stdClass();
@@ -486,9 +488,8 @@ class BU_Groups_Admin_Ajax {
 			$response->post_id = $post_id;
 			$response->parent_id = $parent_id;
 			$response->can_edit = $answer;
-
-			$post = get_post($post_id);
 			$response->original_parent = $post->post_parent;
+			$response->status = $post->post_status;
 
 			header("Content-type: application/json");
 			echo json_encode( $response );
