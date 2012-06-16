@@ -59,7 +59,7 @@ abstract class BU_Permissions_Editor {
 
 		foreach( $post_types as $post_type ) {
 			// @todo temporarily disabled flat post types for alpha release
-			if( post_type_supports( $post_type->name, 'section-editing' ) && $post_type->hierarchical )
+			if( post_type_supports( $post_type->name, 'section-editing' ) )
 				$supported_post_types[] = ( $output == 'objects' ) ? $post_type : $post_type->name;
 		}
 

@@ -163,7 +163,59 @@ jQuery(document).ready(function($){
 		
 	}
 
-	// _______________________ Hierarchical permissions editor ________________________
+	// ______________________ PERMISSIONS _____________________
+
+	/* Overlay UI */
+
+	var createOverlay = function( $el, callbck ) {
+
+		// Generate appropriate label
+		var state = $el.attr('rel');
+		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
+
+		// Create actual state modifying link
+		var $overlayLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
+
+		// Attach event handlers
+		$overlayLink.click(function(e){
+
+			e.stopPropagation();
+			e.preventDefault();
+
+			// And process the action
+			callbck.call( $el, e )
+
+		});
+
+		// Create overlay
+		var $overlay = $('<span class="edit-node"></span>').append($overlayLink).hide();
+
+		// Append and fade in
+		$el.children('a:first').after($overlay);
+		$overlay.fadeIn();
+	}
+
+	var removeOverlay = function( $el, callbck ) {
+
+		var $overlay = $el.children('.edit-node').first();
+
+		if( $overlay.length ) {
+			
+			$overlay.fadeOut( function(){ 
+
+				$(this).remove();
+
+			});
+
+		}
+
+	}
+
+	// _______________________ Flat Permissions Editor _______________________
+
+
+
+	// _______________________ Hierarchical Permissions Editor _______________________
 	
 	// jstree configuration
 	var options = {
@@ -259,16 +311,29 @@ jQuery(document).ready(function($){
 
 		$(this).jstree( options )
 			.bind('loaded.jstree', function( event, data ) {
-
+				/* no op, yet... */
 			})
 			.bind('select_node.jstree', function( event, data ) {
 
-				toggleOverlay( data.rslt.obj, data.inst );
+				// Event handler for permissions update
+				var actionCallback = function( e ) {
+					var $el = $(this);
+					updateTreePermissions( $el, data.inst );
+				}
+
+				if( data.inst.is_selected( data.rslt.obj ) ) {
+
+					createOverlay( data.rslt.obj, actionCallback );
+
+				} else {
+
+					removeOverlay( data.rslt.obj );
+				}
 
 			})
 			.bind('deselect_node.jstree', function( event, data ) {
 
-				toggleOverlay( data.rslt.obj, data.inst );
+				removeOverlay( data.rslt.obj );
 
 			})
 			.bind('deselect_all.jstree', function( event, data ) {
@@ -276,83 +341,20 @@ jQuery(document).ready(function($){
 				// Remove existing contect menus if we have a previous selection
 				if( data.rslt.obj.length ) {
 
-					toggleOverlay( data.rslt.obj, data.inst );
+					removeOverlay( data.rslt.obj );
 
 				}
 
 			});
 	})
 
-
-	/**
-	 * Toggle allow/deny menu beside element for a given instance
-	 */
-	var toggleOverlay = function( $el, inst ) {
-
-		if( inst.is_selected( $el ) ) {
-
-			createOverlay( $el, inst );
-
-		} else {
-
-			removeOverlay( $el, inst );
-		}
-
-	}
-
-	var createOverlay = function( $el, inst ) {
-
-		// Generate appropriate label
-		var state = $el.attr('rel');
-		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
-
-		// Create actual state modifying link
-		var $overlayLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
-
-		// Attach event handlers
-		$overlayLink.click(function(e){
-
-			e.stopPropagation();
-			e.preventDefault();
-
-			// When button is clicked, deselect parent li
-			inst.deselect_node($el);
-
-			// And process the action
-			handleOverlayAction( $el, inst );
-
-		});
-
-		// Create overlay
-		var $overlay = $('<span class="edit-node"></span>').append($overlayLink).hide();
-
-		// Append and fade in
-		$el.children('a:first').after($overlay);
-		$overlay.fadeIn();
-	}
-
-	var removeOverlay = function( $el, inst ) {
-
-		var $overlay = $el.children('.edit-node').first();
-
-		if( $overlay.length ) {
-			
-			$overlay.fadeOut( function(){ 
-
-				$(this).remove();
-
-			});
-
-		}
-
-	}
-
 	/**
 	 * The user has allowed/denied a specific node
 	 */
-	var handleOverlayAction = function( $node, inst ) {
-		
-		// console.log( $node );
+	var updateTreePermissions = function( $node, inst ) {
+	
+		// When button is clicked, deselect parent li
+		inst.deselect_node($node);
 
 		var post_type = inst.get_container().data('post-type');
 
@@ -547,6 +549,8 @@ jQuery(document).ready(function($){
 		$edits_field.val( JSON.stringify(edits) );
 
 	}
+
+	/* Perm Stats */
 
 	/**
 	 * Stats widget -- permissions count 
