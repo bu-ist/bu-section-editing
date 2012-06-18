@@ -214,16 +214,48 @@ jQuery(document).ready(function($){
 
 	// _______________________ Flat Permissions Editor _______________________
 
-	$('.perm-list.flat').delegate('li', 'click', function(e){
-		console.log('Post was clicked!');
+	$('.perm-list.flat').delegate('a', 'click', function(e) {
+
+		// Don't follow me
+		e.preventDefault();
+
+		// Keep track of current selection
+		var $target_a = $(this);
+		var $target_li = $target_a.parent('li');
+
+		$target_a.addClass('perm-item-clicked')
 
 		var callbck = function(e) {
-			console.log("Clicked me:");
-			console.log($(this));
-			$(this).togglePermissions();
+
+			// Remove the overlay
+			removeOverlay($target_li);
+
+			// Toggle checkbox
+			var $checkbox = $target_li.children('input').first();
+			$checkbox.attr('checked', ! $checkbox.attr('checked') );
+
+			// Remove selection
+			$target_a.removeClass('perm-item-clicked');
+
+			// Toggle state
+			toggleState( $target_li );
+
 		}
 
-		createOverlay( $(this), callbck );
+		// Remove any previously active overlays
+		$.each( $target_li.siblings('li').children('.edit-node'), function(index, el) {
+
+			var $parent_li = $(el).parent('li');
+			var $item = $parent_li.children('a').first();
+
+			$item.removeClass('perm-item-clicked');
+			removeOverlay( $parent_li );
+
+		});
+
+		// Create a new one for the current selection if none existed
+		if( $target_li.children('.edit-node').length == 0 )
+			createOverlay( $target_li, callbck );
 		
 	});
 

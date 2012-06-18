@@ -122,17 +122,21 @@ class BU_Groups_Admin {
 
 					if( isset( $group_data['perms'] ) ) {
 
-						// Convert JSON string to array
-						foreach( $group_data['perms'] as $post_type => $json_data ) {
+						// Convert JSON string to array for hierarchical post types
+						foreach( $group_data['perms'] as $post_type => $data ) {
 							$post_ids = array();
-							if( $json_data )
-								$post_ids = json_decode( stripslashes( $json_data ), true );
-							$group_data['perms'][$post_type] = $post_ids;
+							
+							if( is_string( $data ) ) {
+								$post_ids = json_decode( stripslashes( $data ), true );
+
+								if( is_null( $post_ids ) )
+									$post_ids = array();
+
+								$group_data['perms'][$post_type] = $post_ids;
+							}
 						}
 
-					}	
-
-					// Save group
+					}
 
 					$status = 0;
 					

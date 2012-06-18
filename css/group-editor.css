@@ -222,7 +222,7 @@
 	text-decoration: none;
 }
 
-.perm-editor-flat .perm-status-icon.allowed {
+.perm-editor-flat li[rel="allowed"] > .flat-perm-icon {
 	background: url('../images/group_perm_allowed.png');
 	background-repeat: no-repeat;
 	display: block;
@@ -232,7 +232,7 @@
 	height: 15px;
 }
 
-.perm-editor-flat .perm-status-icon.denied {
+.perm-editor-flat li[rel="denied"] > .flat-perm-icon {
 	background: url('../images/group_perm_denied.png');
 	background-repeat: no-repeat;
 	display: block;
@@ -250,6 +250,7 @@
 .perm-list.flat li {
 	padding: 10px;
 	margin: 0;
+	position: relative;
 }
 
 .perm-list.flat li.odd {
@@ -281,7 +282,7 @@
 	z-index: 10;
 }
 
-.edit-node a {
+#perm-panel-container .edit-node a {
 	display: block;
 	float: left;
 	color: white;

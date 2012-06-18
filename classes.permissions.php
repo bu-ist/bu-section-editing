@@ -107,17 +107,14 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 				// HTML checkbox
 				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
-				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms-flat][%s]\" value=\"%s\" %s/>",
+				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms][%s][%s]\" value=\"allowed\" %s/>",
 					$this->post_type,
 					$post->ID,
 					$is_checked
 					 );
 
 				// Permission status
-				$status = ( $is_allowed ) ? 'allowed' : 'denied';
-				$icon = sprintf( "<ins class=\"perm-status-icon %s\"></ins>\n",
-					$status
-				 );
+				$icon = "<ins class=\"flat-perm-icon\"> </ins>\n";
 
 				// Date info
 				if( $post->post_status == 'publish' )
@@ -129,6 +126,9 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				// Alternating backgrounds
 				$odd_even = $count % 2;
 				$li_class = $odd_even ? 'odd' : 'even';
+
+				// Allowed / denied status
+				$status = ( $is_allowed ) ? 'allowed' : 'denied';
 
 				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s %s <a href=\"#\">%s %s</a></li>\n", 
 					$post->ID,
