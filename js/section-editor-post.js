@@ -18,7 +18,6 @@ jQuery(function($) {
 			data: data,
 			type: 'POST',
 			success: function(response) {
-				console.log();
 				if(response.can_edit == false) {
 					if(response.status == 'publish') {
 						alert("You cannot place this page there.");
