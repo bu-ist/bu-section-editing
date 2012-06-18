@@ -18,8 +18,8 @@ jQuery(function($) {
 			data: data,
 			type: 'POST',
 			success: function(response) {
-				console.log(response);
-				if($('#post [name="parent_id"]').val() == response.parent_id && response.can_edit == false) {
+				console.log();
+				if(response.can_edit == false) {
 					if(response.status == 'publish') {
 						alert("You cannot place this page there.");
 						$('#post [name="parent_id"]').val(response.original_parent);
@@ -31,7 +31,7 @@ jQuery(function($) {
 					return;
 				}
 
-				if($('#post [name="parent_id"]').val() == response.parent_id && response.can_edit == true) {
+				if(response.can_edit == true) {
 					if(response.status != 'publish') {
 						$('#post #publish').val('Publish');
 						$('.misc-pub-section.curtime').show();
@@ -39,7 +39,6 @@ jQuery(function($) {
 				}
 			},
 			error: function(response) {
-				console.log(response);
 			}
 		});
 	});
