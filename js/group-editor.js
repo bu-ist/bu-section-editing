@@ -171,6 +171,7 @@ jQuery(document).ready(function($){
 
 		// Generate appropriate label
 		var state = $el.attr('rel');
+		console.log("Overlay state: " + state );
 		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
 
 		// Create actual state modifying link
@@ -213,6 +214,18 @@ jQuery(document).ready(function($){
 
 	// _______________________ Flat Permissions Editor _______________________
 
+	$('.perm-list.flat').delegate('li', 'click', function(e){
+		console.log('Post was clicked!');
+
+		var callbck = function(e) {
+			console.log("Clicked me:");
+			console.log($(this));
+			$(this).togglePermissions();
+		}
+
+		createOverlay( $(this), callbck );
+		
+	});
 
 
 	// _______________________ Hierarchical Permissions Editor _______________________

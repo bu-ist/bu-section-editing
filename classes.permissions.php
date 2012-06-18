@@ -58,7 +58,6 @@ abstract class BU_Permissions_Editor {
 		$supported_post_types = array();
 
 		foreach( $post_types as $post_type ) {
-			// @todo temporarily disabled flat post types for alpha release
 			if( post_type_supports( $post_type->name, 'section-editing' ) )
 				$supported_post_types[] = ( $output == 'objects' ) ? $post_type : $post_type->name;
 		}
@@ -95,25 +94,55 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	public function render() {
 
+		$count = 0;
+
 		if( ! empty( $this->posts ) ) {
 
 			echo "<ul id=\"{$this->post_type}-perm-list\" class=\"perm-list flat\">\n";
 
-			/* @todo -- implement this as a checkbox for no-js */
 
 			foreach( $this->posts as $id => $post ) {
 
+				$is_allowed = get_post_meta( $post->ID, BU_Edit_Group::META_KEY, $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED );
+
+				// HTML checkbox
+				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
+				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms-flat][%s]\" value=\"%s\" %s/>",
+					$this->post_type,
+					$post->ID,
+					$is_checked
+					 );
+
 				// Permission status
-				$perm = "<span id=\"{$this->post_type}-{$post->ID}-perm\" class=\"perm-status post_restricted\"></span>\n";
+				$status = ( $is_allowed ) ? 'allowed' : 'denied';
+				$icon = sprintf( "<ins class=\"perm-status-icon %s\"></ins>\n",
+					$status
+				 );
 
 				// Date info
 				if( $post->post_status == 'publish' )
-					$published = " - Published " . $post->post_date;
+					$post_status = " - Published " . $post->post_date;
 				else if( $post->post_status == 'draft' )
-					$published = " - <em>Draft</em>";
+					$post_status = " - <em>Draft</em>";
 
-				// Output
-				echo "<li>$perm{$post->post_title}$published</li>";
+
+				// Alternating backgrounds
+				$odd_even = $count % 2;
+				$li_class = $odd_even ? 'odd' : 'even';
+
+				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s %s <a href=\"#\">%s %s</a></li>\n", 
+					$post->ID,
+					$li_class,
+					$status,
+					$input,
+					$icon,
+					$post->post_title,
+					$post_status
+					);
+
+				echo $li;
+
+				$count++;
 
 			}
 			
