@@ -228,6 +228,19 @@ jQuery(document).ready(function($){
 					icon: {
 						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_allowed.png"
 					}
+				},
+				'allowed-desc-denied' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_allowed_desc_denied.png"
+					}
 				}
 			}
 		},
