@@ -171,7 +171,6 @@ jQuery(document).ready(function($){
 
 		// Generate appropriate label
 		var state = $el.attr('rel');
-		console.log("Overlay state: " + state );
 		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
 
 		// Create actual state modifying link
@@ -214,10 +213,11 @@ jQuery(document).ready(function($){
 
 	// _______________________ Flat Permissions Editor _______________________
 
-	$('.perm-list.flat').delegate('a', 'click', function(e) {
+	$('.perm-list.flat').delegate( 'a', 'click', function(e) {
 
 		// Don't follow me
 		e.preventDefault();
+		e.stopPropagation();
 
 		// Keep track of current selection
 		var $target_a = $(this);
@@ -377,7 +377,6 @@ jQuery(document).ready(function($){
 
 			})
 			.bind('deselect_node.jstree', function( event, data ) {
-
 				removeOverlay( data.rslt.obj );
 
 			})
@@ -391,7 +390,52 @@ jQuery(document).ready(function($){
 				}
 
 			});
-	})
+	});
+
+	/* Overlay removal on container click */
+	$('#perm-panel-container').click(function(e){
+
+		/* For hierarchical permission editors */
+		var $perms_hierarchical = $(this).find('.perm-panel.active > .perm-editor-hierarchical');
+
+		if( $perms_hierarchical.length > 0 ) {
+
+			/* 
+			Need to make sure we're not in the process of selecting a node,
+			as the jstree method select_node does not allows us to stop click
+			events from bubbling up on selection
+			*/
+			if( $(e.target).hasClass('jstree-clicked') )
+				return;
+
+			var $inst = $.jstree._reference($perms_hierarchical);
+
+			if( $inst ) {
+
+				var $selected = $inst.get_selected();
+
+				if( $selected.length > 0 ) 
+					$inst.deselect_all();
+
+			}
+
+		}
+
+		/* For flat permission editors */
+		var $perms_flat = $(this).find('.perm-panel.active > .perm-editor-flat');
+
+		if( $perms_flat.length > 0 ) {
+
+			var $selected_lis = $perms_flat.find('a.perm-item-clicked').parent('li');
+
+			$selected_lis.each(function(){
+				$(this).children('a').removeClass('perm-item-clicked');
+				removeOverlay( $(this) );
+			});
+
+		}
+
+	});
 
 	/**
 	 * The user has allowed/denied a specific node
