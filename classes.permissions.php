@@ -103,7 +103,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 			foreach( $this->posts as $id => $post ) {
 
-				$is_allowed = get_post_meta( $post->ID, BU_Edit_Group::META_KEY, $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED );
+				$is_allowed = get_post_meta( $post->ID, BU_Edit_Group::META_KEY, $this->group->id );
 
 				// HTML checkbox
 				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
@@ -211,22 +211,8 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		$root_pages = bu_navigation_get_pages( $page_args );
 		$pages_by_parent = bu_navigation_pages_by_parent($root_pages);
 
-		$parent_state = 'denied';
-
-		// We are not the root page
-		if( $child_of != 0 ) {
-
-			// We need the patriarch's setting here to start
-			$root_id = $pages_by_parent[$child_of][0]->post_parent;
-			$perms = get_post_meta( $root_id, BU_Edit_Group::META_KEY );
-
-			if( in_array( $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED, $perms ) )
-				$parent_state = 'allowed';
-
-		}
-
 		// Display posts (recursively)
-		$this->display_posts( $child_of, $pages_by_parent, $parent_state );
+		$this->display_posts( $child_of, $pages_by_parent );
 	
 		// Navigation filters 
 		remove_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
@@ -234,7 +220,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	
 	}
 
-	public function display_posts( $parent_id, $pages_by_parent, $parent_state = 'denied' ) {
+	public function display_posts( $parent_id, $pages_by_parent ) {
 
 		if( array_key_exists( $parent_id, $pages_by_parent ) && ( count( $pages_by_parent[$parent_id] ) > 0 ) )
 			$posts = $pages_by_parent[$parent_id];
@@ -246,14 +232,14 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$has_children = array_key_exists( $post->ID, $pages_by_parent );
 			$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
 			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
-			$rel = $post->perm ? $post->perm : $parent_state;
+			$rel = $post->perm;
 
 ?>
 	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" data-perm="<?php echo $post->perm; ?>" rel="<?php echo $rel; ?>">
 		<a href="#"><?php echo $title; ?></a>
 		<?php if( $has_children && $parent_id != 0 ): ?>
 		<ul>
-			<?php $this->display_posts( $post->ID, $pages_by_parent, $rel ); ?>
+			<?php $this->display_posts( $post->ID, $pages_by_parent ); ?>
 		</ul>
 	<?php endif; ?>
 	</li>
@@ -274,23 +260,19 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys($posts);
-			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
+			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
 			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
 			if (!is_array($group_meta)) $group_meta = array();
 
 			// Append permissions to post object
 			foreach( $posts as $post ) {
 
-				$post->perm = '';
+				$post->perm = 'denied';
 
 				if( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[$post->ID];
 
-					if( $perm->meta_value === (string) $this->group->id . BU_Edit_Group::SUFFIX_DENIED ) {
-						$post->perm = 'denied';
-					}
-
-					if( $perm->meta_value === (string) $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED ) {
+					if( $perm->meta_value === (string) $this->group->id ) {
 						$post->perm = 'allowed';
 					}
 

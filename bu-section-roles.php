@@ -106,49 +106,10 @@ class BU_Section_Editor {
 			foreach( $groups as $key => $group ) {
 
 				// This group is good, bail here
-				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $post_groups ) ) {
+				if( in_array( (string) $group->id, $post_groups ) ) {
 					return true;
 				}
-				// If group is denied, skip this group
-				if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $post_groups ) ) {
-					unset($groups[$key]); // remove group so that we don't check the ancestors for the present of the group
-				}
-			}
-
-			// check a different ancestor tree from that of the existing post
-			if(isset($parent_id)) {
-				if($parent_id != 0) {
-					$post = get_post( $parent_id, OBJECT, null);
-					$ancestors = get_post_ancestors( $post );
-					array_unshift($ancestors, $post->ID);
-				} else {
-					return false;
-				}
-			} else {
-				// Note that get_post_ancestors only works if the post object is unfiltered
-				$post = get_post( $post_id, OBJECT, null );
-				$ancestors = get_post_ancestors( $post );
-			}
-
-
-			// Bubble up through ancestors, checking status along the way
-			foreach( $ancestors as $ancestor_id ) {
-
-				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
-
-				foreach( $groups as $key => $group ) {
-
-					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_ALLOWED, $ancestor_groups ) ) {
-						return true;
-					}
-
-					if( in_array( (string) $group->id . BU_Edit_Group::SUFFIX_DENIED, $ancestor_groups ) ) {
-						unset($groups[$key]);
-					}
-				}
-				if( empty($groups) ) {
-					break;
-				}
+				
 			}
 
 			// User is section editor, but not allowed for this section

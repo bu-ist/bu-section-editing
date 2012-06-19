@@ -318,9 +318,6 @@ class BU_Edit_Groups {
 		if( ! is_array( $permissions ) )
 			return false;
 
-		$allowed_meta_value = $group_id . BU_Edit_Group::SUFFIX_ALLOWED;
-		$denied_meta_value = $group_id . BU_Edit_Group::SUFFIX_DENIED;
-
 		foreach( $permissions as $post_type => $new_perms ) {
 
 			// error_log('= Updating permissions for: ' . $post_type . '=' );
@@ -332,60 +329,80 @@ class BU_Edit_Groups {
 			// For later need to differentiate between flat/hierarchical post types
 			$post_type_obj = get_post_type_object( $post_type );
 
+			if( is_null( $post_type_obj ) ) {
+				error_log('Bad post type!');
+				continue;
+			}
+
 			// Hierarchical post types
 			if( $post_type_obj->hierarchical ) {
 
-				foreach( $permissions[$post_type] as $post_id => $status ) {
-					
-					/**
-					 * Adjust post meta values based on incoming status
-					 * 
-					 * Will need to adjust for hierarchical perms if we want the ancestor logic to be
-					 * replicated (expensively) server side
-					 */ 
-					switch( $status ) {
+				// Incoming allowed posts
+				$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
 
-						case 'allowed':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							
-							// Add new one
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							//error_log('Updating ' . $post_id . ': ' . $allowed_meta_value );
-							break;
+				if( ! empty( $allowed_ids ) ) {
 
-						case 'denied':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+					/* 
+					Could cut down on update_post_meta calls by only allowing posts that weren't previously allowed:
 
-							// Add new one
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Updating ' . $post_id . ': ' . $denied_meta_value );
-							break;
+					$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+						$wpdb->postmeta,
+						implode( ',', $allowed_ids ),
+						BU_Edit_Group::META_KEY,
+						$group_id
+						);
 
-						// not currently used
-						case 'inherit':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Updating ' . $post_id . ': Now inheriting, removing existing settings' );
-							break;
+					$previously_allowed = $wpdb->get_col( $allowed_select );
+					$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
+					*/
 
-						default:
-							/* no op */
-							//error_log( 'No perm adjustments found for post ' . $post_id . ', leaving it alone...' );
-							break;
+					foreach( $allowed_ids as $post_id ) {
+						error_log('Allowing post: ' . $post_id );
+						update_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id, $group_id );
+					}
+
+				}
+
+				// Incoming restricted posts
+				$denied_ids = array_keys( $permissions[$post_type], 'denied' );
+
+				if( ! empty( $denied_ids ) ) {
+
+					// Select meta_id's for removal based on incoming posts
+					$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+						$wpdb->postmeta,
+						implode( ',', $denied_ids ),
+						BU_Edit_Group::META_KEY,
+						$group_id
+						);
+
+					$denied_meta_ids = $wpdb->get_col( $denied_select );
+
+					// Bulk deletion
+					if( ! empty( $denied_meta_ids ) ) {
+
+						$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
+							$wpdb->postmeta,
+							implode(',', $denied_meta_ids )
+							);
+
+						// Remove allowed status in one query
+						$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
+
+						// Purge cache
+						foreach( $denied_meta_ids as $meta_id ) {
+							error_log('Puring post_meta cache for meta id: ' . $meta_id );
+							wp_cache_delete( $meta_id, 'post_meta' );
+						}
 
 					}
-					
+
 				}
 
 			} else {
 
-				// Fetch all existing permissions for this post type
-				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value LIKE '%s:%%' AND p.post_type = '%s'", 
+				// Fetch all existing permissions for this post type for possible removal
+				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value = '%s' AND p.post_type = '%s'", 
 					$wpdb->postmeta,
 					$wpdb->posts, 
 					BU_Edit_Group::META_KEY, 
@@ -399,31 +416,22 @@ class BU_Edit_Groups {
 				$post_ids = array_merge( array_keys( $prev_perms ), array_keys( $new_perms ) );
 				$post_ids = array_unique( $post_ids );
 
+				// @todo clean this up so that we don't update post meta unnecessarily
 				foreach( $post_ids as $post_id ) {
 				
 					// Get new status, if there is one
-					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : '';
+					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : 'denied';
 
 					// No new value = post is now denied, delete existing perms
-					if( empty( $status ) ) {
+					if( $status == 'allowed' ) {
 
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Deleting existing statuses for post: ' . $post_id );
+							update_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
+							error_log('Updating status for post: ' . $post_id );
 
 					} else {
 
-						// Don't add meta data redundantly -- check for existing first
-						if( ! array_key_exists( $post_id, $prev_perms ) || $prev_perms[$post_id]->meta_value == $allowed_meta_value ) {
-							
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							//error_log('Setting status for post: ' . $post_id );
-
-						} else {
-
-							//error_log('I should not be here...');
-
-						}
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
+							error_log('Deleting existing statuses for post: ' . $post_id );
 
 					}
 
@@ -537,9 +545,6 @@ class BU_Edit_Group {
 	private $modified = null;
 
 	const META_KEY = '_bu_section_group';
-	const SUFFIX_ALLOWED = ':allowed';
-	const SUFFIX_DENIED = ':denied';
-
 
 	/**
 	 * Instantiate new edit group
@@ -661,83 +666,13 @@ class BU_Edit_Group {
 	 * @param array $args an optional array of WP_Query arguments, will override defaults
 	 * @return array an array of posts that have section editing permissions for this group
 	 */ 
-	public function get_posts_count( $args = array() ) {
+	public function get_posts_count() {
+		global $wpdb;
 
-		$defaults = array(
-			'post_type' => 'page',
-			'meta_key' => self::META_KEY,
-			'meta_value' => $this->id,
-			'posts_per_page' => -1,
-			'fields' => 'ids'
-			);
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$allowed_query = new WP_Query( $args );
-
-		$count = count( $allowed_query->posts );
-
-		add_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
-		add_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
-
-		foreach( $allowed_query->posts as  $allowed_id ) {
-
-			$sections = bu_navigation_gather_sections( $allowed_id, array( 'post_type' => $args['post_type'], 'direction' => 'down' ) );
-
-			if( count( $sections ) > 0 ) {
-
-				$page_args = array(
-					'sections' => $sections,
-					'post_types' => $args['post_type'],
-					'suppress_urls' => true
-					);
-
-
-				$root_pages = bu_navigation_get_pages( $page_args );
-				
-				$count += count($root_pages);
-
-			}
-
-		}
-		
-		remove_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
-		remove_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
+		// YOU WERE HERE
 
 		return $count;
 
-	}
-
-	/**
-	 * @todo Fix this 
-	 */ 
-	public function post_count_filter( $posts ) {
-		global $wpdb;
-
-		/* Groups */
-		$ids = array_keys($posts);
-		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->id );
-		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
-		
-		if (!is_array($group_meta)) $group_meta = array();
-
-		//$pages_by_parent = bu_navigation_pages_by_parent( $posts );
-		// Need to count recursively, stopping if a node with children has any status set
-
-		foreach( $posts as $post ) {
-
-			if( array_key_exists( $post->ID, $group_meta ) ) {
-
-				unset( $posts[$post->ID] );
-
-			}
-		}
-
-		return $posts;
-	}
-
-	public function post_count_fields( $fields ) {
-		return array('ID','post_type', 'post_parent');
 	}
 
 	/**

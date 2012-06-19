@@ -171,7 +171,7 @@ jQuery(document).ready(function($){
 
 		// Generate appropriate label
 		var state = $el.attr('rel');
-		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
+		var label = state == 'allowed' || state == 'allowed-desc-denied' ? 'Deny Editing' : 'Allow Editing';
 
 		// Create actual state modifying link
 		var $overlayLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
@@ -502,6 +502,7 @@ jQuery(document).ready(function($){
 
 			// Previously allowed: denied
 			case 'allowed':
+			case 'allowed-desc-denied':
 				$node.attr('rel', 'denied');
 				break;
 
@@ -530,29 +531,8 @@ jQuery(document).ready(function($){
 		var count = 0;
 
 		// Set our persistent data attr first
-		if( $node.parent().parent().hasClass('perm-editor-hierarchical') ) {
-
-			// For root nodes, only explicitly set allowed
-			if( status == 'allowed' )
-				edits[id] = status;
-			else
-				edits[id] = '';
-
-		} else {
-			
-			// For children, need to check for inheritance
-			var $parent = $node.parentsUntil('li').parent();
-			var parent_state = $parent.data('perm');
-
-			if( parent_state == status ) {
-				$node.data('perm','');
-				edits[id] = '';
-			} else {
-				$node.data('perm',status);
-				edits[id] = status;
-			}
-
-		}
+		$node.data('perm',status);
+		edits[id] = status;
 
 		if( status == 'allowed' ) count += 1;
 		else count -= 1;
@@ -560,35 +540,24 @@ jQuery(document).ready(function($){
 		// Fetch all children
 		var $children = $node.find('li');
 
-		// Propogate permissions (both visually and cleaning up redundant data attr)
+		// Propogate permissions to children
 		$children.each(function(index, child) {
 
 			var existing_perm = $(child).data('perm');
-			var current_rel = $(child).attr('rel');
 			var child_id = $(this).attr('id').substr(1);
 
-			if( existing_perm == status ) {
-				$(child).data('perm','');	// reset
-				edits[child_id] = '';
+			if( existing_perm != status ) {
+				$(child).data('perm', status);
+				$(child).attr('rel', status);
 
-			} else if( existing_perm == '' ) {	// this node is inheriting
+				edits[child_id] = status;
 
-				// Examine existing state, switch if necessary
-				if( current_rel != status ) {
+				if( status == 'allowed' ) count += 1;
+				else count -= 1;
 
-					$(child).attr('rel',status);
-					
-					if( status == 'allowed' ) count += 1;
-					else count -= 1;
-
-				}
 			}
 
 		});
-
-		/*
-
-		HOLDING OFF ON THIS PROBLEM FOR NOW
 
 		// Update ancestors visiual appearance to reflect allowed children where necessary
 
@@ -597,29 +566,51 @@ jQuery(document).ready(function($){
 			var ancestor_status = $(post).attr('rel');
 			var ancestor_id = $(post).attr('id').substr(1);
 
-			if( ancestor_status == 'denied' ) {
-				if( $(post).find('li[rel="allowed"]').length ) {
+			switch( ancestor_status ) {
 
-					$(post).attr('rel','denied-desc-allowed');
+				case 'allowed':
+					if( $(post).find('li[rel="denied"]').length ) {
 
-				}
-			} else if ( ancestor_status == 'denied-desc-allowed' ) {
-				// Look for allowed descendents
-				if( $(post).find('li[rel="allowed"]').length == 0 ) {
+						$(post).attr('rel','allowed-desc-denied');
 
-					$(post).attr('rel','denied' );
+					}
+					break;
 
-				}
+				case 'denied':
+					if( $(post).find('li[rel="allowed"]').length ) {
+
+						$(post).attr('rel','denied-desc-allowed');
+
+					}
+					break;
+
+				case 'denied-desc-allowed':
+					// Look for allowed descendents
+					if( $(post).find('li[rel="allowed"]').length == 0 ) {
+
+						$(post).attr('rel','denied' );
+
+					}
+					break;
+
+				case 'allowed-desc-denied':
+					// Look for denied descendents
+					if( $(post).find('li[rel="denied"]').length == 0 ) {
+
+						$(post).attr('rel','allowed' );
+
+					}
+					break;
+
 			}
 
 		});
-		*/
 
 		// Save edits
 		commitEdits( edits, post_type );
 
 		// Update the stats widget counter
-		//updatePermStats( count, post_type );
+		updatePermStats( count, post_type );
 
 	}
 

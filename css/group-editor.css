@@ -303,7 +303,8 @@
 
 }
 
-.edit-node a.allowed:before {
+.edit-node a.allowed:before,
+.edit-node a.allowed-desc-denied:before{
 	content: url('../images/group_perm_denied.png');
 	display: block;
 	float: left;
