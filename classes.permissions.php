@@ -58,8 +58,7 @@ abstract class BU_Permissions_Editor {
 		$supported_post_types = array();
 
 		foreach( $post_types as $post_type ) {
-			// @todo temporarily disabled flat post types for alpha release
-			if( post_type_supports( $post_type->name, 'section-editing' ) && $post_type->hierarchical )
+			if( post_type_supports( $post_type->name, 'section-editing' ) )
 				$supported_post_types[] = ( $output == 'objects' ) ? $post_type : $post_type->name;
 		}
 
@@ -76,12 +75,83 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
 
+		// Setup posts to render
+		$query_args = array(
+			'post_type' => $this->post_type,
+			'post_status' => 'any',		// true?
+			'posts_per_page' => -1, 	// for now, eventually we'll make the river flow
+			'orderby' => 'modified',
+			'order' => 'DESC'
+			);
+
+		$query = new WP_Query( $query_args );
+
+		$this->posts = $query->posts;
+
+		wp_reset_postdata();
+
 	}
 
 	public function render() {
-		echo '<p>Flat permissions editor: <br>Coming soon to a BU Section Editing Plugin near you...</p>';
+
+		$count = 0;
+
+		if( ! empty( $this->posts ) ) {
+
+			echo "<ul id=\"{$this->post_type}-perm-list\" class=\"perm-list flat\">\n";
+
+
+			foreach( $this->posts as $id => $post ) {
+
+				$is_allowed = get_post_meta( $post->ID, BU_Edit_Group::META_KEY, $this->group->id . BU_Edit_Group::SUFFIX_ALLOWED );
+
+				// HTML checkbox
+				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
+				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms][%s][%s]\" value=\"allowed\" %s/>",
+					$this->post_type,
+					$post->ID,
+					$is_checked
+					 );
+
+				// Permission status
+				$icon = "<ins class=\"flat-perm-icon\"> </ins>\n";
+
+				// Date info
+				if( $post->post_status == 'publish' )
+					$post_status = " - Published " . $post->post_date;
+				else if( $post->post_status == 'draft' )
+					$post_status = " - <em>Draft</em>";
+
+
+				// Alternating backgrounds
+				$odd_even = $count % 2;
+				$li_class = $odd_even ? 'odd' : 'even';
+
+				// Allowed / denied status
+				$status = ( $is_allowed ) ? 'allowed' : 'denied';
+
+				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s %s <a href=\"#\">%s %s</a></li>\n", 
+					$post->ID,
+					$li_class,
+					$status,
+					$input,
+					$icon,
+					$post->post_title,
+					$post_status
+					);
+
+				echo $li;
+
+				$count++;
+
+			}
+			
+			echo "</ul>\n";
+
+		}
 		
 	}
+
 }
 
 /**

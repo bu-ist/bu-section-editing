@@ -95,6 +95,7 @@ class BU_Edit_Groups {
 		// Process input
 		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+
 		foreach( $args['perms'] as $post_type => $post_statuses ) {
 			if( ! is_array( $post_statuses ) ) {
 				error_log("Unepected value for post stati: $post_statuses" );
@@ -148,6 +149,7 @@ class BU_Edit_Groups {
 			// Process input
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+
 			foreach( $args['perms'] as $post_type => $post_statuses ) {
 				if( ! is_array( $post_statuses ) ) {
 					error_log("Unepected value for post stati: $post_statuses" );
@@ -311,72 +313,122 @@ class BU_Edit_Groups {
 	 * @param array $permissions Permissions, as an associative array indexed by post type
 	 */ 
 	private function update_group_permissions( $group_id, $permissions ) {
+		global $wpdb;
 
 		if( ! is_array( $permissions ) )
 			return false;
 
-		foreach( $permissions as $post_type => $perm_settings ) {
+		$allowed_meta_value = $group_id . BU_Edit_Group::SUFFIX_ALLOWED;
+		$denied_meta_value = $group_id . BU_Edit_Group::SUFFIX_DENIED;
+
+		foreach( $permissions as $post_type => $new_perms ) {
 
 			// error_log('= Updating permissions for: ' . $post_type . '=' );
-			if( ! is_array( $perm_settings ) ) {
-				error_log( "Unexpected value found while updating permissions: $perm_settings" );
+			if( ! is_array( $new_perms ) ) {
+				error_log( "Unexpected value found while updating permissions: $new_perms" );
 				continue;
 			}
 
-			foreach( $perm_settings as $post_id => $status ) {
+			// For later need to differentiate between flat/hierarchical post types
+			$post_type_obj = get_post_type_object( $post_type );
 
-				// Clear all possible existing values
-				delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-				delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
+			// Hierarchical post types
+			if( $post_type_obj->hierarchical ) {
 
-				switch( $status ) {
-
-					case 'allowed':
-						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-						//error_log('Updating ' . $post_id . ': ' . $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-						break;
-
-					case 'denied':
-						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
-						//error_log('Updating ' . $post_id . ': ' . $group_id . BU_Edit_Group::SUFFIX_DENIED );
-						break;
-
-
-				}
-
-			}
-
-			// For debug ... gives us the full picture of data post update
-			if( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-
-				$meta_query = array(
-					'key' => BU_Edit_Group::META_KEY,
-					'value' => $group_id,
-					'compare' => 'LIKE'
-					);
-
-				$args = array(
-					'post_type' => $post_type,
-					'meta_query' => array( $meta_query ),
-					'posts_per_page' => -1
-					);
-
-				$query = new WP_Query( $args );
-				// error_log('= Group ' . $group_id . ' Stats =' );
-
-				while( $query->have_posts() ) {
-					$query->the_post();
-					$results = get_post_meta( get_the_ID(), BU_Edit_Group::META_KEY );
-					$results = preg_grep( '/^' . $group_id . '/', $results );
-					$status = array_pop( $results );
+				foreach( $permissions[$post_type] as $post_id => $status ) {
 					
-					if( $status == $group_id . BU_Edit_Group::SUFFIX_ALLOWED ) $status = 'Allowed';
-					else if( $status == $group_id . BU_Edit_Group::SUFFIX_DENIED ) $status = 'Denied';
-					else error_log('Unexpected status...');
+					/**
+					 * Adjust post meta values based on incoming status
+					 * 
+					 * Will need to adjust for hierarchical perms if we want the ancestor logic to be
+					 * replicated (expensively) server side
+					 */ 
+					switch( $status ) {
 
-					// error_log( 'Post: ' . get_the_title() . ' (' . get_the_ID() . ') => ' . $status );
+						case 'allowed':
+							// Remove existing statuses
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+							
+							// Add new one
+							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							//error_log('Updating ' . $post_id . ': ' . $allowed_meta_value );
+							break;
+
+						case 'denied':
+							// Remove existing statuses
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+
+							// Add new one
+							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+							//error_log('Updating ' . $post_id . ': ' . $denied_meta_value );
+							break;
+
+						// not currently used
+						case 'inherit':
+							// Remove existing statuses
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+							//error_log('Updating ' . $post_id . ': Now inheriting, removing existing settings' );
+							break;
+
+						default:
+							/* no op */
+							//error_log( 'No perm adjustments found for post ' . $post_id . ', leaving it alone...' );
+							break;
+
+					}
+					
+				}
+
+			} else {
+
+				// Fetch all existing permissions for this post type
+				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value LIKE '%s:%%' AND p.post_type = '%s'", 
+					$wpdb->postmeta,
+					$wpdb->posts, 
+					BU_Edit_Group::META_KEY, 
+					$group_id,
+					$post_type
+					);
+
+				$prev_perms = $wpdb->get_results( $prev_perm_query, OBJECT_K );
+
+				// Create list of all unique post ID's with permissions assigned, new or existing
+				$post_ids = array_merge( array_keys( $prev_perms ), array_keys( $new_perms ) );
+				$post_ids = array_unique( $post_ids );
+
+				foreach( $post_ids as $post_id ) {
+				
+					// Get new status, if there is one
+					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : '';
+
+					// No new value = post is now denied, delete existing perms
+					if( empty( $status ) ) {
+
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+							//error_log('Deleting existing statuses for post: ' . $post_id );
+
+					} else {
+
+						// Don't add meta data redundantly -- check for existing first
+						if( ! array_key_exists( $post_id, $prev_perms ) || $prev_perms[$post_id]->meta_value == $allowed_meta_value ) {
+							
+							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
+							//error_log('Setting status for post: ' . $post_id );
+
+						} else {
+
+							//error_log('I should not be here...');
+
+						}
+
+					}
 
 				}
+
 			}
 
 		}

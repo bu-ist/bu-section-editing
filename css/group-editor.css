@@ -161,7 +161,6 @@
 }
 
 #perm-panel-container {
-	padding: 10px;
 	border: 3px solid #A9AAA9;
 	margin: 0 5px 5px 1px;
 	border-bottom-left-radius: 5px;
@@ -195,12 +194,8 @@
 	margin-left: 1px;
 }
 
-.perm-panel {
-	padding: 12px 0;	
-}
-
-.perm-panel.active {
-
+.perm-editor-hierarchical {
+	margin: 15px;
 }
 
 .perm-editor-hierarchical.jstree-default.jstree-focused {
@@ -221,7 +216,50 @@
 	border-color: #555;
 }
 
-.perm-editor-hierarchical .edit-node:before {
+/* Flat Permissions */
+.perm-editor-flat a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.perm-editor-flat li[rel="allowed"] > .flat-perm-icon {
+	background: url('../images/group_perm_allowed.png');
+	background-repeat: no-repeat;
+	display: block;
+	float: left;
+	padding-right: 10px;
+	width: 15px;
+	height: 15px;
+}
+
+.perm-editor-flat li[rel="denied"] > .flat-perm-icon {
+	background: url('../images/group_perm_denied.png');
+	background-repeat: no-repeat;
+	display: block;
+	float: left;
+	padding-right: 10px;
+	width: 15px;
+	height: 15px;
+}
+
+.perm-list {
+	padding: 0;
+	margin: 0;
+}
+
+.perm-list.flat li {
+	padding: 10px;
+	margin: 0;
+	position: relative;
+}
+
+.perm-list.flat li.odd {
+	background-color: #ECECEC;
+}
+
+/* Overlay */
+
+.edit-node:before {
         position: absolute;
         left: -10px;
         top: 50%;
@@ -230,7 +268,7 @@
 	width: 10px;
 }
 
-.perm-editor-hierarchical .edit-node {
+.edit-node {
 	background-color: #FFFFFF;
 	border-radius: 3px 3px 3px 3px;
 	border: 1px solid #CCCCCC;
@@ -244,7 +282,7 @@
 	z-index: 10;
 }
 
-.perm-editor-hierarchical .edit-node a {
+#perm-panel-container .edit-node a {
 	display: block;
 	float: left;
 	color: white;
@@ -256,8 +294,8 @@
 
 }
 
-.perm-editor-hierarchical .edit-node a.denied:before,
-.perm-editor-hierarchical .edit-node a.denied-desc-allowed:before {
+.edit-node a.denied:before,
+.edit-node a.denied-desc-allowed:before {
 	content: url('../images/group_perm_allowed.png');
 	display: block;
 	float: left;
@@ -265,7 +303,7 @@
 
 }
 
-.perm-editor-hierarchical .edit-node a.allowed:before {
+.edit-node a.allowed:before {
 	content: url('../images/group_perm_denied.png');
 	display: block;
 	float: left;
