@@ -550,6 +550,19 @@ class BU_Edit_Group {
 
 	}
 
+	public function get_active_users() {
+
+		$active_users = array();
+
+		foreach( $this->users as $user_id ) {
+			if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) )
+				$active_users[] = $user_id;
+		}
+
+		return $active_users;
+		
+	}
+
 	/**
 	 * Remove a user from this group
 	 * 
