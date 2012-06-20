@@ -109,7 +109,43 @@ class BU_Section_Editor {
 				if( in_array( (string) $group->id, $post_groups ) ) {
 					return true;
 				}
-				
+
+			}
+
+			// check a different ancestor tree from that of the existing post
+			if(isset($parent_id)) {
+				if($parent_id != 0) {
+					$post = get_post( $parent_id, OBJECT, null);
+					$ancestors = get_post_ancestors( $post );
+					array_unshift($ancestors, $post->ID);
+				} else {
+					return false;
+				}
+			} else {
+				// Note that get_post_ancestors only works if the post object is unfiltered
+				$post = get_post( $post_id, OBJECT, null );
+				$ancestors = get_post_ancestors( $post );
+			}
+
+
+			// Bubble up through ancestors, checking status along the way
+			foreach( $ancestors as $ancestor_id ) {
+
+				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
+
+				foreach( $groups as $key => $group ) {
+
+					if( in_array( (string) $group->id, $ancestor_groups ) ) {
+						return true;
+					}
+
+					unset($groups[$key]);
+
+				}
+
+				if( empty($groups) ) {
+					break;
+				}
 			}
 
 			// User is section editor, but not allowed for this section
@@ -156,7 +192,9 @@ class BU_Section_Editor {
 		}
 
 		if( in_array( $cap, self::get_caps_for_post_types( 'delete_post', $post_types ) ) ) {
-			if($id && ! self::can_edit($user_id, $id)) {
+			$post = get_post($id);
+
+			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
 				$caps = array('do_not_allow');
 			}
 			return $caps;
