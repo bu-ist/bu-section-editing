@@ -315,10 +315,8 @@ MSG;
 		$counts = array();
 
 		foreach( $content_types as $pt ) {
-			$defaults = array( 'post_type' => $pt->name );
-			$query_args = wp_parse_args( $args, $defaults );
 
-			$count = $group->get_posts_count( $query_args );
+			$count = $group->get_posts_count( $pt->name );
 			$count = $count + $offset;
 
 			if( (int) $count > 0 ) {

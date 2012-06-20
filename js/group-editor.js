@@ -232,6 +232,9 @@ jQuery(document).ready(function($){
 
 			// Toggle checkbox
 			var $checkbox = $target_li.children('input').first();
+
+			//@todo update perm counts for this post type
+
 			$checkbox.attr('checked', ! $checkbox.attr('checked') );
 
 			// Remove selection

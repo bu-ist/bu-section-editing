@@ -449,7 +449,7 @@ class BU_Edit_Groups {
 
 		$meta_query = array(
 			'key' => BU_Edit_Group::META_KEY,
-			'value' => $group_id . ':',
+			'value' => $group_id,
 			'compare' => 'LIKE'
 			);
 
@@ -463,8 +463,7 @@ class BU_Edit_Groups {
 		$query = new WP_Query( $args );
 
 		foreach( $query->posts as $post_id ) {
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
+			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 		}
 
 	}
@@ -660,16 +659,27 @@ class BU_Edit_Group {
 	/**
 	 * Get count for posts with permissions by post type
 	 * 
-	 * @todo Fix this, it's broken :(
-	 * @uses WP_Query
-	 *
-	 * @param array $args an optional array of WP_Query arguments, will override defaults
-	 * @return array an array of posts that have section editing permissions for this group
+	 * @return int allowed post count for the given post type 
 	 */ 
-	public function get_posts_count() {
+	public function get_posts_count( $post_type = 'any' ) {
 		global $wpdb;
 
-		// YOU WERE HERE
+		$posts_join = $post_type_and = '';
+
+		if( $post_type !== 'any' && ! is_null( get_post_type_object( $post_type ) ) ) {
+			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
+			$post_type_and = "AND p.post_type = '$post_type'";
+		}
+
+		$count_query = sprintf( "SELECT COUNT(*) FROM %s %sWHERE meta_key = '%s' AND meta_value = '%s' %s",
+			$wpdb->postmeta,
+			$posts_join,
+			BU_Edit_Group::META_KEY,
+			$this->id,
+			$post_type_and
+			);
+
+		$count = $wpdb->get_var( $count_query );
 
 		return $count;
 

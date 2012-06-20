@@ -13,8 +13,8 @@
 
 		<ul>
 			<li><span class="title">Name:</span> <span id="group-stats-name"><?php echo $group->name; ?></span></li>
-			<li><span class="title">Members:</span> <span class="member-count"><?php echo count( $group->users ); ?></span></li>
-			<li><span class="title">Permissions:</span> <span id="group-stats-permissions">### pages</span></li>
+			<li><span class="title">Members:</span> <span class="member-count"><?php echo count( $group->get_active_users() ); ?></span></li>
+			<li><span class="title">Permissions:</span> <span id="group-stats-permissions"><?php echo $perm_str; ?></span></li>
 		</ul>
 		<div class="actions">
 			<?php if( $group_id == -1): ?>
