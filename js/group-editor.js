@@ -220,6 +220,7 @@ jQuery(document).ready(function($){
 		e.stopPropagation();
 
 		// Keep track of current selection
+		var post_type = $(this).closest('.perm-editor-flat').data('post-type');
 		var $target_a = $(this);
 		var $target_li = $target_a.parent('li');
 
@@ -232,10 +233,12 @@ jQuery(document).ready(function($){
 
 			// Toggle checkbox
 			var $checkbox = $target_li.children('input').first();
-
-			//@todo update perm counts for this post type
-
 			$checkbox.attr('checked', ! $checkbox.attr('checked') );
+
+			if( $checkbox.attr('checked') )
+				updatePermStats( 1, post_type );
+			else
+				updatePermStats( -1, post_type );
 
 			// Remove selection
 			$target_a.removeClass('perm-item-clicked');
@@ -654,38 +657,26 @@ jQuery(document).ready(function($){
 	var updatePermStats = function( count, post_type ) {
 
 		var $container = $('#group-stats-permissions');
-		var $existing = $('#' + post_type + '-stat-count');
+		var $count_span = $('#' + post_type + '-stat-count');
 		var start_count = 0;
 
-		if( $existing.length == 0 ) {
-			$container.append('<span id="' + post_type + '-stats" class="perm-stats"><span id="' + post_type + '-stat-count"></span> Pages</span>');
-			$existing = $('#' + post_type + '-stat-count' );
-		} else {
-			start_count = parseInt( $existing.text() );
-		}
+		// Grab existing count
+		start_count = parseInt( $count_span.text() );
 
+		// Check total count for post type with incoming edits
 		var total = start_count + count;
 
-		// We have an updated count fragment for this post type
-		if( total > 0 ) {
-
-			// check for existance of #add-permissions-link, remove if its there
-			$('#add-permissions-link').remove();
-
-			$existing.text(total);
-			
-		} else { // We no longer have any count for this post tpye
-			
-			$existing.parent().remove();
-
-			// Reset to 'Add Permissions' link if this was the last editable post
-			if( $container.children('.perm-stats').length == 0 ) {
-
-				$container.html('<a id="add-permissions-link" class="nav-link" href="#group-permissions-panel" title="Add permissions for this group">Add Permissions</a>');
-			
-			}
-
+		// Relabel based on new counts
+		if( total == 1 ) {
+			var label = $count_span.parent().data('label-singular');
+			$count_span.next('.perm-label').text(label);
+		} else {
+			var label = $count_span.parent().data('label-plural');
+			$count_span.next('.perm-label').text(label);
 		}
+
+		// Update total
+		$count_span.text(total);
 
 	}
 

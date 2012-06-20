@@ -318,16 +318,15 @@ MSG;
 
 			$count = $group->get_posts_count( $pt->name );
 			$count = $count + $offset;
+			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
 
-			if( (int) $count > 0 ) {
-				$label = ( $count > 1 ) ? $pt->label : $pt->labels->singular_name;
-
-				$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"%s-stat-count\">%s</span> %s</span>\n",
-					$pt->name,
-					$pt->name,
-					$count,
-					$label );
-			}
+			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\" data-label-singular=\"%s\" data-label-plural=\"%s\"><span id=\"%s-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",
+				$pt->name,
+				$pt->labels->singular_name,
+				$pt->label,
+				$pt->name,
+				$count,
+				$label );
 
 		}
 

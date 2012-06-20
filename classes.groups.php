@@ -632,6 +632,18 @@ class BU_Edit_Group {
 
 	}
 
+
+	/**
+	 * Can this group edit a particular post
+	 * 
+	 */ 
+	public function can_edit( $post_id ) {
+		
+		$allowed_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
+		return in_array( $this->id, $allowed_groups ) ? true : false;
+	
+	}
+
 	/**
 	 * Query for all posts that have section editing permissions assigned for this group
 	 * 

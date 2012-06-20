@@ -20,7 +20,7 @@
 					<?php $permission_editor->render(); ?>
 				</div>
 				<?php else: ?>
-				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-flat">
+				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-flat" data-post-type="<?php echo $pt->name; ?>">
 					<?php $permission_editor = new BU_Flat_Permissions_Editor( $group, $pt->name ); ?>
 					<?php $permission_editor->render(); ?>
 				</div>

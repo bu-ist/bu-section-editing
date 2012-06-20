@@ -100,10 +100,9 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 			echo "<ul id=\"{$this->post_type}-perm-list\" class=\"perm-list flat\">\n";
 
-
 			foreach( $this->posts as $id => $post ) {
 
-				$is_allowed = get_post_meta( $post->ID, BU_Edit_Group::META_KEY, $this->group->id );
+				$is_allowed = $this->group->can_edit( $post->ID );
 
 				// HTML checkbox
 				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
