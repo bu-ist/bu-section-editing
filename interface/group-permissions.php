@@ -15,14 +15,10 @@
 			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>">
 				<?php if( $pt->hierarchical ): ?>
 				<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
-				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-hierarchical" data-post-type="<?php echo $pt->name; ?>" >
-					<?php $permission_editor = new BU_Hierarchical_Permissions_Editor( $group, $pt->name ); ?>
-					<?php $permission_editor->render(); ?>
+				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor hierarchical" data-post-type="<?php echo $pt->name; ?>" >
 				</div>
 				<?php else: ?>
-				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor-flat" data-post-type="<?php echo $pt->name; ?>">
-					<?php $permission_editor = new BU_Flat_Permissions_Editor( $group, $pt->name ); ?>
-					<?php $permission_editor->render(); ?>
+				<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor flat" data-post-type="<?php echo $pt->name; ?>">
 				</div>
 				<?php endif; ?>
 			</div>

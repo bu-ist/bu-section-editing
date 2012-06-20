@@ -117,27 +117,32 @@ class BU_Groups_Admin {
 
 					// if no users are set, array key for users won't exist
 					if( ! isset($group_data['users']) ) $group_data['users'] = array();
+					if( ! isset($group_data['perms'] ) ) $group_data['perms'] = array();
 
-					if( ! isset($group_data['name'])) {
+					if( ! isset($group_data['name']) || empty( $group_data['name'] ) ) {
 						$redirect_url = add_query_arg( array( 'status' => 1 ) );
 						wp_redirect($redirect_url);
 						return;
 					}
 
-					if( isset( $group_data['perms'] ) ) {
+					$post_types = BU_Permissions_Editor::get_supported_post_types( 'names' );
 
+					foreach( $post_types as $post_type ) {
+
+						// flat permission type use checkboxes, need to add empty array for post type
+						if( ! isset( $group_data['perms'][$post_type] ) )
+							$group_data['perms'][$post_type] = array();
+
+						$data = $group_data['perms'][$post_type];
+						
 						// Convert JSON string to array for hierarchical post types
-						foreach( $group_data['perms'] as $post_type => $data ) {
-							$post_ids = array();
-							
-							if( is_string( $data ) ) {
-								$post_ids = json_decode( stripslashes( $data ), true );
+						if( is_string( $data ) ) {
+							$post_ids = json_decode( stripslashes( $data ), true );
 
-								if( is_null( $post_ids ) )
-									$post_ids = array();
+							if( is_null( $post_ids ) )
+								$post_ids = array();
 
-								$group_data['perms'][$post_type] = $post_ids;
-							}
+							$group_data['perms'][$post_type] = $post_ids;
 
 						}
 
@@ -347,11 +352,12 @@ MSG;
  */
 class BU_Groups_Admin_Ajax {
 
-	static function register_hooks() {
+	static public function register_hooks() {
 
 		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
 		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
-		add_action('wp_ajax_buse_fetch_children', array( __CLASS__, 'render_post_children' ) );
+		add_action('wp_ajax_buse_load_editor', array( __CLASS__, 'load_permissions_editor' ) );
+		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
 		add_action('wp_ajax_buse_update_permissions_count', array( __CLASS__, 'update_permissions_count' ) );
 		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
 	}
@@ -361,7 +367,7 @@ class BU_Groups_Admin_Ajax {
 	 *
 	 * @todo add nonce
 	 */
-	static function add_member() {
+	static public function add_member() {
 
 		$groups = BU_Edit_Groups::get_instance();
 
@@ -415,7 +421,7 @@ class BU_Groups_Admin_Ajax {
 	 *
 	 * @todo add nonce
 	 */
-	static function find_user() {
+	static public function find_user() {
 
 		$groups = BU_Edit_Groups::get_instance();
 		$user_input = $_POST['user'];
@@ -429,18 +435,20 @@ class BU_Groups_Admin_Ajax {
 	}
 
 	/**
-	 * Displays post hierarchy starting at a specifc post ID
-	 *
+	 * Renders an unordered list of posts for specified post type, optionally starting at a specifc post
+	 * 
+	 * @uses BU_Hierarchical_Permissions_Editor or BU_Flat_Permissions_Editor depending on post_type
+	 * 
 	 * @todo add nonce
-	 * @todo currently only supports HTML output, might decide to use json instead
-	 */
-	static function render_post_children() {
+	 */ 
+	static public function render_post_list() {
 
 		if( defined('DOING_AJAX') && DOING_AJAX ) {
 
-			$parent_id = trim($_REQUEST['parent_id'], 'p');
-			$group_id = $_REQUEST['group_id'];
-			$post_type = $_REQUEST['post_type'];
+			$group_id = intval(trim($_REQUEST['group_id']));
+			$post_type = trim($_REQUEST['post_type']);
+			$post_id = isset( $_REQUEST['post_id'] ) ? intval(trim($_REQUEST['post_id'], 'p')) : 0;
+			$count = isset($_REQUEST['count']) ? intval(trim($_REQUEST['count'])) : 0;
 
 			$post_type_obj = get_post_type_object( $post_type );
 
@@ -450,7 +458,7 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$perm_editor = null;
-
+			
 			if( $post_type_obj->hierarchical ) {
 
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
@@ -461,14 +469,13 @@ class BU_Groups_Admin_Ajax {
 
 			}
 
-			$perm_editor->render( $parent_id );
+			$perm_editor->render( $post_id );
 
 			die();
+
 		}
 
-
 	}
-
 
 	static public function can_edit() {
 

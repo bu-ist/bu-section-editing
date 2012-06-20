@@ -342,9 +342,6 @@ class BU_Edit_Groups {
 
 				if( ! empty( $allowed_ids ) ) {
 
-					/* 
-					Could cut down on update_post_meta calls by only allowing posts that weren't previously allowed:
-
 					$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
 						$wpdb->postmeta,
 						implode( ',', $allowed_ids ),
@@ -354,11 +351,11 @@ class BU_Edit_Groups {
 
 					$previously_allowed = $wpdb->get_col( $allowed_select );
 					$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
-					*/
 
-					foreach( $allowed_ids as $post_id ) {
-						error_log('Allowing post: ' . $post_id );
-						update_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id, $group_id );
+					foreach( $additions as $post_id ) {
+
+						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
+
 					}
 
 				}
@@ -391,7 +388,6 @@ class BU_Edit_Groups {
 
 						// Purge cache
 						foreach( $denied_meta_ids as $meta_id ) {
-							error_log('Puring post_meta cache for meta id: ' . $meta_id );
 							wp_cache_delete( $meta_id, 'post_meta' );
 						}
 
@@ -416,22 +412,19 @@ class BU_Edit_Groups {
 				$post_ids = array_merge( array_keys( $prev_perms ), array_keys( $new_perms ) );
 				$post_ids = array_unique( $post_ids );
 
-				// @todo clean this up so that we don't update post meta unnecessarily
 				foreach( $post_ids as $post_id ) {
 				
 					// Get new status, if there is one
 					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : 'denied';
 
 					// No new value = post is now denied, delete existing perms
-					if( $status == 'allowed' ) {
+					if( $status == 'allowed' && ! array_key_exists( $post_id, $prev_perms ) ) {
 
-							update_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-							error_log('Updating status for post: ' . $post_id );
+							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 
-					} else {
+					} else if( $status == 'denied' ) {
 
 							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-							error_log('Deleting existing statuses for post: ' . $post_id );
 
 					}
 
