@@ -14,6 +14,15 @@ require_once(dirname(__FILE__) . '/classes.permissions.php');
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
+// @see apply_filters('wp_insert_post_parent') which could be used to check whether a user is permitted to move a post
+
+// do_action("{$old_status}_to_{$new_status}", $post); internally WordPress uses 'new' status as the
+// previous status when creating a new post
+// the status could be used to propagate the ACL of the parent to the new draft if the user has placed
+// the draft in an editable location
+
+
+
 /**
  * Plugin entry point
  */
