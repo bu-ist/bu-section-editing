@@ -404,7 +404,11 @@ MSG;
 
 		foreach( $content_types as $pt ) {
 
-			$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
+			$count = 0;
+
+			if( $group->id > 0 )
+				$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
+
 			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
 
 			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\" data-label-singular=\"%s\" data-label-plural=\"%s\"><span id=\"%s-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",
