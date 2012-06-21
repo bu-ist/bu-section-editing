@@ -18,14 +18,20 @@ class BU_Groups_Admin {
 	 * Called from main plugin class during init
 	 */
 	public static function register_hooks() {
-
+		global $wp_version;
+		
 		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
 		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
 		// for filtering posts by editable status per user
-		add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
-		add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
-		add_action( 'pre_get_posts', array( __CLASS__, 'pre_get_posts' ) );
+		// parses query to add meta_query, which was a known
+		// bug pre-3.2 -- a workaround may exist, but i 
+		// haven't dug into it yet.
+		if( version_compare( $wp_version, '3.2', '>=' ) ) {
+			add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
+			add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
+			add_action( 'parse_query', array( __CLASS__, 'parse_query' ) );
+		} 
 
 	}
 
@@ -67,7 +73,7 @@ class BU_Groups_Admin {
 		$edit_link = admin_url( "edit.php?post_type=$post_type&editable_by=" . $user_id );
 		$count = $groups->get_allowed_post_count( array( 'user_id' => $user_id, 'post_type' => $post_type ) );
 
-		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable by Me <span class=\"count\">($count)</span></a>";
+		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
 
 		return $views;
 
@@ -84,11 +90,11 @@ class BU_Groups_Admin {
 	/**
 	 * Query logic for filtering posts by editable status for specific user
 	 */
-	public static function pre_get_posts( $wp_query ) {
+	public static function parse_query( $query ) {
 
-		if( isset( $wp_query->query_vars['editable_by'] ) ) {
+		if( isset( $query->query_vars['editable_by'] ) ) {
 
-			$user_id = $wp_query->query_vars['editable_by'];
+			$user_id = $query->query_vars['editable_by'];
 			$groups = BU_Edit_Groups::get_instance();
 			$section_groups = $groups->find_groups_for_user($user_id);
 
@@ -102,13 +108,14 @@ class BU_Groups_Admin {
 			foreach( $section_groups as $group ) {
 				$meta_query[] = array(
 					'key' => BU_Edit_Group::META_KEY,
-					'value' => $group->id 
+					'value' => $group->id,
+				    	'compare' => '='
 					);
 			}
 
-			$wp_query->set( 'meta_query', $meta_query );
+			$query->set( 'meta_query', $meta_query );
 		}
-
+	
 	}
 
 	/**
