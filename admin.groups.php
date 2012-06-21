@@ -34,10 +34,15 @@ class BU_Groups_Admin {
 	 * 
 	 */ 
 	public static function add_edit_views() {
-		$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
+
+		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
+
+			$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
+				
+			foreach( $supported_post_types as $post_type ) {
+				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
+			}
 			
-		foreach( $supported_post_types as $post_type ) {
-			add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
 		}
 
 	}
