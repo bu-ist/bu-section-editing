@@ -265,12 +265,11 @@ class BU_Edit_Groups {
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
 	 * 
-	 * @param $args array optional ar
+	 * @param $args array optional args
 	 * 
 	 * @return int allowed post count for the given post type 
 	 */ 
 	public function get_allowed_post_count( $args = array() ) {
-
 		global $wpdb;
 
 		$defaults = array(
@@ -303,7 +302,7 @@ class BU_Edit_Groups {
 			if( is_array( $group ) )
 				$group_ids = $group;
 
-			if( is_string( $group ) )
+			if( is_numeric( $group ) )
 				$group_ids = array($group);
 
 		}
