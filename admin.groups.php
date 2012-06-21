@@ -22,6 +22,88 @@ class BU_Groups_Admin {
 		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
 		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
+		// for filtering posts by editable status per user
+		add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
+		add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
+		add_action( 'pre_get_posts', array( __CLASS__, 'pre_get_posts' ) );
+
+	}
+
+	/**
+	 * Add custom edit post bucket for editable posts to views for each supported post type
+	 * 
+	 */ 
+	public static function add_edit_views() {
+		$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
+			
+		foreach( $supported_post_types as $post_type ) {
+			add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
+		}
+
+	}
+
+	/**
+	 * Custom bucket for filter posts table to display only posts editable by current user
+	 * 
+	 * @todo figure out "current" class
+	 * 
+	 */ 
+	public static function section_editing_views( $views ) {
+		global $post_type_object;
+
+		$groups = BU_Edit_Groups::get_instance();
+		$post_type = $post_type_object->name;
+		$user_id = get_current_user_id();
+
+		$class = '';
+		if( isset( $_REQUEST['editable_by'] ) )
+			$class = ' class="current"';
+
+		$edit_link = admin_url( "edit.php?post_type=$post_type&editable_by=" . $user_id );
+		$count = $groups->get_allowed_post_count( array( 'user_id' => $user_id, 'post_type' => $post_type ) );
+
+		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable by Me <span class=\"count\">($count)</span></a>";
+
+		return $views;
+
+	}
+
+	/**
+	 * Add custom query var for filtering posts by editable status
+	 */ 
+	public static function query_vars( $query_vars ) {
+		$query_vars[] = 'editable_by';
+		return $query_vars;
+	}
+
+	/**
+	 * Query logic for filtering posts by editable status for specific user
+	 */
+	public static function pre_get_posts( $wp_query ) {
+
+		if( isset( $wp_query->query_vars['editable_by'] ) ) {
+
+			$user_id = $wp_query->query_vars['editable_by'];
+			$groups = BU_Edit_Groups::get_instance();
+			$section_groups = $groups->find_groups_for_user($user_id);
+
+			if( empty($section_groups) )
+				return;
+
+			$meta_query = array(
+				'relation' => 'OR',
+				);
+
+			foreach( $section_groups as $group ) {
+				$meta_query[] = array(
+					'key' => BU_Edit_Group::META_KEY,
+					'value' => $group->id 
+					);
+			}
+
+			$wp_query->set( 'meta_query', $meta_query );
+		}
+
 	}
 
 	/**
@@ -309,9 +391,8 @@ MSG;
 	/**
 	 * Render group permissions string
 	 *
-	 * @todo should there be a BU_Group_Permissions object that handles all of this?
 	 */
-	static function group_permissions_string( $group, $post_type = null, $args = array(), $offset = 0 ) {
+	static function group_permissions_string( $group, $post_type = null ) {
 
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
 		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
@@ -319,10 +400,11 @@ MSG;
 		$output = '';
 		$counts = array();
 
+		$groups = BU_Edit_Groups::get_instance();
+
 		foreach( $content_types as $pt ) {
 
-			$count = $group->get_posts_count( $pt->name );
-			$count = $count + $offset;
+			$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
 			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
 
 			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\" data-label-singular=\"%s\" data-label-plural=\"%s\"><span id=\"%s-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",

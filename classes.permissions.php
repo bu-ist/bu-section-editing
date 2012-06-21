@@ -69,7 +69,8 @@ abstract class BU_Permissions_Editor {
 }
 
 /**
- * @todo implement flat permissions editor
+ * Permissions editor for non-hierarchical post types
+ * 
  */ 
 class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 

@@ -220,14 +220,19 @@ class BU_Edit_Groups {
 	 * @param int $user_id WordPress user id
 	 * @return array array of group ids for which the specified user belongs
 	 */ 
-	public function find_groups_for_user($user_id) {
+	public function find_groups_for_user($user_id, $output = 'objects' ) {
 		
 		$groups = array();
 		
 		foreach ($this->groups as $group) {
 			if($group->has_user($user_id)) {
-				array_push($groups, $group);
+
+				if( $output === 'objects' )
+					$groups[$group->id] = $group;
+				else if( $output === 'ids' )
+					array_push( $groups, $group->id );
 			}
+
 		}
 
 		return $groups;
@@ -255,6 +260,82 @@ class BU_Edit_Groups {
 			}
 
 			return false;
+	}
+
+	/**
+	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 * 
+	 * @param $args array optional ar
+	 * 
+	 * @return int allowed post count for the given post type 
+	 */ 
+	public function get_allowed_post_count( $args = array() ) {
+
+		global $wpdb;
+
+		$defaults = array(
+			'user_id' => null,
+			'group' => null,
+			'post_type' => null
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+		extract( $args );
+
+		$group_ids = array();
+
+		// If user_id is passed, populate group ID's from their memberships
+		if( $user_id ) {
+
+			if( is_null( get_userdata( $user_id ) ) ) {
+				error_log('No user found for ID: ' . $user_id );
+				return false;
+			}
+
+			// Get groups for users
+			$group_ids = $this->find_groups_for_user( $user_id, 'ids' );
+
+		}
+
+		// If no user ID is passed, but a group is, convert to array
+		if( is_null( $user_id ) && $group ) {
+
+			if( is_array( $group ) )
+				$group_ids = $group;
+
+			if( is_string( $group ) )
+				$group_ids = array($group);
+
+		}
+
+		// Bail if we don't have any valid groups by now
+		if( empty( $group_ids ) ) {
+			//error_log('Exiting allowed post count, no valid groups...');
+			return false;
+		}
+
+		$posts_join = $post_type_and = '';
+
+		// Maybe filter by post type
+		if( ! is_null( $post_type ) && ! is_null( get_post_type_object( $post_type ) ) ) {
+
+			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
+			$post_type_and = "AND p.post_type = '$post_type'";
+
+		}
+
+		$count_query = sprintf( "SELECT COUNT(*) FROM %s %sWHERE meta_key = '%s' AND meta_value IN (%s) %s",
+			$wpdb->postmeta,
+			$posts_join,
+			BU_Edit_Group::META_KEY,
+			implode( ',', $group_ids ),
+			$post_type_and
+			);
+
+		$count = $wpdb->get_var( $count_query );
+
+		return $count;
+
 	}
 
 	/**
@@ -659,35 +740,6 @@ class BU_Edit_Group {
 		$query = new WP_Query( $args );
 
 		return $query->posts;
-	}
-
-	/**
-	 * Get count for posts with permissions by post type
-	 * 
-	 * @return int allowed post count for the given post type 
-	 */ 
-	public function get_posts_count( $post_type = 'any' ) {
-		global $wpdb;
-
-		$posts_join = $post_type_and = '';
-
-		if( $post_type !== 'any' && ! is_null( get_post_type_object( $post_type ) ) ) {
-			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
-			$post_type_and = "AND p.post_type = '$post_type'";
-		}
-
-		$count_query = sprintf( "SELECT COUNT(*) FROM %s %sWHERE meta_key = '%s' AND meta_value = '%s' %s",
-			$wpdb->postmeta,
-			$posts_join,
-			BU_Edit_Group::META_KEY,
-			$this->id,
-			$post_type_and
-			);
-
-		$count = $wpdb->get_var( $count_query );
-
-		return $count;
-
 	}
 
 	/**
