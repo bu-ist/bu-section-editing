@@ -4,50 +4,54 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 	function setUp() {
 		parent::setUp();
+		$this->groups = array();
 		$pages = array(
-			'top-level1' => array(),
+			'top-level1' => array( 
+				'status' => 'publish'
+			),
 			'top-level2' => array(
-				'second-level1' => array(),
-				'second-level2' => array(
-					'third-level1' => array(),
-					'third-level2' => array()
+				'groups' => array('alpha'),
+				'status' => 'publish',
+				'children' => array(
+					'second-level1' => array(
+						'status' => 'publish'
+					),
+					'second-level2' => array(
+						'status' => 'publish',
+						'children' => array(
+							'third-level1' => array(
+								'status' => 'publish',
+								'groups' => array('alpha', 'beta')
+							),
+							'third-level2' => array(
+								'status' => 'publish'
+							)
+						)
+					),
+					'section_editor-draft' => array(
+						'status' => 'draft',
+						'author' => 'section_editor1'
+					)
 				)
 			),
-			'top-level3' => array()
+			'top-level3' => array(
+				'status' => 'publish'
+			)
 		);
+		$this->addUser('section_editor1');
+		$this->addUser('section_editor2');
+		$section_editor1 = get_user_by('login', 'section_editor1');
+		$section_editor2 = get_user_by('login', 'section_editor2');
 		$this->insertPages($pages);
-		$this->addUser();
-		$editor = get_user_by('login', 'section_editor');
-
-
-		$perms = array();
-
-		$parent = $this->pages['top-level2'];
-		$perms['pages'] = array($parent->ID =>"allowed");
-
-		$this->addGroup('test', array($editor->ID), $perms);
-
-		$post = array(
-			'post_author' => $editor->ID,
-			'post_status' => 'draft',
-			'post_title' => "section_editor-draft",
-			'post_content' => "section editor content",
-			'post_excerpt' => "section editor excerpt",
-			'post_type' => 'page',
-			'post_parent' => $parent->ID
-		);
-
-		$this->insertPage($post);
-
+		$perms = $this->getEditable('alpha');
+		$this->addGroup('alpha', array($section_editor1->ID), $perms);
+		$perms = $this->getEditable('beta');
+		$this->addGroup('beta', array($section_editor2->ID), $perms);
 	}
 
 	function tearDown() {
 		parent::tearDown();
 		$groups = BU_Edit_Groups::get_instance();
-		foreach($this->pages as $page) {
-			wp_delete_post($page->ID);
-		}
-
 		foreach($this->groups as $group) {
 			$this->deleteGroup($group->ID);
 		}
@@ -55,7 +59,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 	function test_edit() {
 
-		$editor = get_user_by('login', 'section_editor');
+		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
 
 		$post_id = $this->pages['section_editor-draft']->ID;
@@ -65,7 +69,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 	}
 
 	function test_delete() {
-		$editor = get_user_by('login', 'section_editor');
+		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
 
 		$post_id = $this->pages['section_editor-draft']->ID;
@@ -81,11 +85,10 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 	 * Testing the publish action is more complicated because there isn't a
 	 * publish_post meta cap.
 	 *
-	 * @todo finish this bit
 	 */
 	function test_publish() {
 
-		$editor = get_user_by('login', 'section_editor');
+		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
 
 		$this->assertFalse(current_user_can('publish_pages'));
@@ -129,6 +132,19 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->groups[] = $groups->add_group($args);
 		$groups->save();
 	}
+	
+	function getEditable($group_name) {
+		$perms = array();
+
+		if(is_array($this->pages)) {
+			foreach($this->pages as $page) {
+				if(isset($page->groups) && in_array($group_name, $page->groups)) {
+					$perms[$page->ID] = 'allowed';
+				}
+			}
+		}
+		return array('page' => $perms);
+	}
 
 	function deleteGroup($id) {
 		$groups = BU_Edit_Groups::get_instance();
@@ -139,39 +155,55 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$groups->save();
 	}
 
-	function insertPage($post) {
+	function insertPage($post, $groups = null) {
 		$result = wp_insert_post($post);
 		if(!is_wp_error($result)) {
 			$page = get_post($result);
+			if(isset($groups))  {
+				$page->groups = $groups;
+			}
 			$this->pages[$page->post_title] = $page;
 		}
+
 	}
 
-	function insertPages($pages) {
-		$author = get_user_by('login', 'admin');
-		$this->walkAndInsert($pages, $author->ID);
-	}
+	function insertPages($pages, $parent = 0) {
 
-	function walkAndInsert($pages, $author_id, $parent = 0) {
+		foreach($pages as $title => $properties) {
+			if(!isset($properties['status'])) {
+				$status = 'publish';
+			} else {
+				$status = $properties['status'];
+			}
 
-		foreach($pages as $title => $child_pages) {
+			if(!isset($properties['author'])) {
+				$author = get_user_by('login', 'admin');
+			} else {
+				$author = get_user_by('login', $properties['author']);
+			}
+
 			$post = array(
-				'post_author' => $author_id,
-				'post_status' => 'publish',
+				'post_author' => $author->ID,
+				'post_status' => $status,
 				'post_title' => $title,
 				'post_content' => "{$title} content",
 				'post_excerpt' => "{$title} excerpt",
 				'post_type' => 'page',
 				'post_parent' => $parent
+				
 			);
-
+			
 			$result = wp_insert_post($post);
 
 			if(!is_wp_error($result)) {
 				$page = get_post($result);
+				if(isset($properties['groups'])) {
+					$page->groups = $properties['groups'];
+				}
+
 				$this->pages[$page->post_title] = $page;
-				if(!empty($child_pages)) {
-					$this->walkAndInsert($child_pages, $author_id, $page->post_parent);
+				if(!empty($properties['children'])) {
+					$this->insertPages($properties['children'], $page->ID);
 				}
 			}
 
