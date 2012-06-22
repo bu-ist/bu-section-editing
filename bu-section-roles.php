@@ -83,9 +83,8 @@ class BU_Section_Editor {
 	 *
 	 * @param int $user_id
 	 * @param int $post_id
-	 * @param int $parent_id
 	 */
-	static function can_edit($user_id, $post_id, $parent_id = null)  {
+	static function can_edit($user_id, $post_id)  {
 
 		if($user_id == 0) return false;
 
@@ -94,12 +93,14 @@ class BU_Section_Editor {
 
 			// Get groups associated with post
 			$post_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
+			//error_log( "[BUSE] Checking if user $user_id can edit post $post_id" );
 
 			// Get all groups for this user
 			$edit_groups_o = BU_Edit_Groups::get_instance();
 			$groups = $edit_groups_o->find_groups_for_user( $user_id );
 
 			if(empty($groups)) {
+				//error_log('[BUSE] I am a section editor with no groups assigned, cant edit anything...' );
 				return false;
 			}
 
@@ -107,48 +108,14 @@ class BU_Section_Editor {
 
 				// This group is good, bail here
 				if( in_array( (string) $group->id, $post_groups ) ) {
+					//error_log( "[BUSE] My group is allowed for this post $post_id: " . $group->name );
 					return true;
 				}
 
 			}
 
-			// check a different ancestor tree from that of the existing post
-			if(isset($parent_id)) {
-				if($parent_id != 0) {
-					$post = get_post( $parent_id, OBJECT, null);
-					$ancestors = get_post_ancestors( $post );
-					array_unshift($ancestors, $post->ID);
-				} else {
-					return false;
-				}
-			} else {
-				// Note that get_post_ancestors only works if the post object is unfiltered
-				$post = get_post( $post_id, OBJECT, null );
-				$ancestors = get_post_ancestors( $post );
-			}
-
-
-			// Bubble up through ancestors, checking status along the way
-			foreach( $ancestors as $ancestor_id ) {
-
-				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
-
-				foreach( $groups as $key => $group ) {
-
-					if( in_array( (string) $group->id, $ancestor_groups ) ) {
-						return true;
-					}
-
-					unset($groups[$key]);
-
-				}
-
-				if( empty($groups) ) {
-					break;
-				}
-			}
-
 			// User is section editor, but not allowed for this section
+			//error_log('[BUSE] My group memberships do not allow me to edit post: ' . $post_id );
 			return false;
 		}
 
@@ -159,6 +126,8 @@ class BU_Section_Editor {
 
 	/**
 	 * Filter that modifies the caps based on the current state.
+	 * 
+	 * @todo clean up all of this logic, figure out best approach to drafts
 	 *
 	 * @param type $caps
 	 * @param type $cap
@@ -182,12 +151,22 @@ class BU_Section_Editor {
 			$parent_id = null;
 			$post = get_post($id);
 
+			// Post parent has switched
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) &&  $post->post_parent != $_POST['parent_id']) {
 				$parent_id = (int) $_POST['parent_id'];
+
+				if( $post->post_status == 'publish' && ! self::can_edit($user_id, $parent_id)) {
+					//error_log('[BUSE] edit_post meta_caps are forbidding user moving post under new parent: ' . $parent_id );
+					$caps = array('do_not_allow');
+				}
+
 			}
-			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id, $parent_id)) {
+
+			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
+				//error_log('[BUSE] edit_post meta_caps are forbidding user from editing post: ' . $id );
 				$caps = array('do_not_allow');
 			}
+
 			return $caps;
 		}
 
@@ -204,11 +183,32 @@ class BU_Section_Editor {
 			$parent_id = null;
 			$id = $post_ID;
 			$post = get_post($id);
+
+			// Post parent is attempting to switch
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
+				
 				$parent_id = (int) $_POST['parent_id'];
+
+				// Can't move published posts to a place they cannot edit
+				if( ! self::can_edit( $user_id, $parent_id ) ) {
+					$caps = array('do_not_allow');
+					//error_log('[BUSE] publish_posts is forbidding user from moving post under new parent: ' . $parent_id );
+				}
+
 			}
-			if (!isset($id) || !self::can_edit($user_id, $id, $parent_id)) {
+
+			// User can't edit the post being published
+			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
 				$caps = array('do_not_allow');
+				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
+
+			}
+
+			// Check if user can edit post parent before publishing
+			$post_parent = isset($post->post_parent) ? $post->post_parent : 0;
+			if (!isset($id) || !self::can_edit($user_id, $post_parent ) ) {
+				$caps = array('do_not_allow');
+				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing under post parent: ' . $post->post_parent );
 			}
 
 			return $caps;

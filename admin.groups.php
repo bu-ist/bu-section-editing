@@ -588,7 +588,7 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$post = get_post($post_id);
-			$answer = BU_Section_Editor::can_edit($user_id, $post_id, $parent_id);
+			$answer = BU_Section_Editor::can_edit($user_id, $parent_id);
 
 			$response = new stdClass();
 
