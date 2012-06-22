@@ -23,7 +23,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$perms = array();
 
 		$parent = $this->pages['top-level2'];
-		$perms['pages'] = array($parent->ID =>"allowed");
+		$perms['page'] = array($parent->ID =>"allowed");
 
 		$this->addGroup('test', array($editor->ID), $perms);
 

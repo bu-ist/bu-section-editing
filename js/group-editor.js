@@ -171,7 +171,7 @@ jQuery(document).ready(function($){
 
 		// Generate appropriate label
 		var state = $el.attr('rel');
-		var label = state == 'allowed' ? 'Deny Editing' : 'Allow Editing';
+		var label = state == 'allowed' || state == 'allowed-desc-denied' ? 'Deny Editing' : 'Allow Editing';
 
 		// Create actual state modifying link
 		var $overlayLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
@@ -211,15 +211,62 @@ jQuery(document).ready(function($){
 
 	}
 
+	/* Overlay removal on container click */
+	$('#perm-panel-container').click(function(e){
+
+		/* For hierarchical permission editors */
+		var $perms_hierarchical = $(this).find('.perm-panel.active > .perm-editor.hierarchical');
+
+		if( $perms_hierarchical.length > 0 ) {
+
+			/* 
+			Need to make sure we're not in the process of selecting a node,
+			as the jstree method select_node does not allows us to stop click
+			events from bubbling up on selection
+			*/
+			if( $(e.target).hasClass('jstree-clicked') )
+				return;
+
+			var $inst = $.jstree._reference($perms_hierarchical);
+
+			if( $inst ) {
+
+				var $selected = $inst.get_selected();
+
+				if( $selected.length > 0 ) 
+					$inst.deselect_all();
+
+			}
+
+		}
+
+		/* For flat permission editors */
+		var $perms_flat = $(this).find('.perm-panel.active > .perm-editor.flat');
+
+		if( $perms_flat.length > 0 ) {
+
+			var $selected_lis = $perms_flat.find('a.perm-item-clicked').parent('li');
+
+			$selected_lis.each(function(){
+				$(this).children('a').removeClass('perm-item-clicked');
+				removeOverlay( $(this) );
+			});
+
+		}
+
+	});
+
+
 	// _______________________ Flat Permissions Editor _______________________
 
-	$('.perm-list.flat').delegate( 'a', 'click', function(e) {
+	$('.perm-editor.flat').delegate( 'a', 'click', function(e) {
 
 		// Don't follow me
 		e.preventDefault();
 		e.stopPropagation();
 
 		// Keep track of current selection
+		var post_type = $(this).closest('.perm-editor.flat').data('post-type');
 		var $target_a = $(this);
 		var $target_li = $target_a.parent('li');
 
@@ -233,6 +280,11 @@ jQuery(document).ready(function($){
 			// Toggle checkbox
 			var $checkbox = $target_li.children('input').first();
 			$checkbox.attr('checked', ! $checkbox.attr('checked') );
+
+			if( $checkbox.attr('checked') )
+				updatePermStats( 1, post_type );
+			else
+				updatePermStats( -1, post_type );
 
 			// Remove selection
 			$target_a.removeClass('perm-item-clicked');
@@ -262,7 +314,7 @@ jQuery(document).ready(function($){
 
 	// _______________________ Hierarchical Permissions Editor _______________________
 	
-	// jstree configuration
+	// jstree global configuration
 	var options = {
 		plugins : [ 'themes', 'types', 'html_data', 'ui' ],
 		core : {
@@ -349,17 +401,19 @@ jQuery(document).ready(function($){
 	/**
 	 * Create a jstree instance for each hierarchical post type
 	 */ 
-	$('.perm-editor-hierarchical').each( function() {
-		var post_type = $(this).data('post-type');
+	var loadHierarchicalEditor = function( $editor ) {
+
+		var post_type = $editor.data('post-type');
 		
+		// Append global jstree options with configuration for this post type
 		options['html_data'] = {
 			ajax : {
 				url : ajaxurl,
 				type: 'GET',
 				data : function(n) {
-					return { 
-						parent_id : n.attr ? n.attr('id') : 0,
-						action : 'buse_fetch_children',
+					return {
+						post_id : n.attr ? n.attr('id') : 0,
+						action : 'buse_render_post_list',
 						post_type : post_type,
 						group_id : $('#group_id').val()
 					}
@@ -367,9 +421,16 @@ jQuery(document).ready(function($){
 			}
 		}
 
-		$(this).jstree( options )
+		$editor.jstree( options )
 			.bind('loaded.jstree', function( event, data ) {
 				/* no op, yet... */
+			})
+			.bind('load_node.jstree', function( event, data ) {
+				
+				// skips initial tree load
+				if( data.rslt.obj != '-1' )
+					adjustSectionPermissionIcons( data.rslt.obj );
+
 			})
 			.bind('select_node.jstree', function( event, data ) {
 
@@ -403,53 +464,71 @@ jQuery(document).ready(function($){
 				}
 
 			});
-	});
 
-	/* Overlay removal on container click */
-	$('#perm-panel-container').click(function(e){
+		$editor.addClass('loaded');
 
-		/* For hierarchical permission editors */
-		var $perms_hierarchical = $(this).find('.perm-panel.active > .perm-editor-hierarchical');
+	};
 
-		if( $perms_hierarchical.length > 0 ) {
+	var loadFlatEditor = function( $editor ) {
 
-			/* 
-			Need to make sure we're not in the process of selecting a node,
-			as the jstree method select_node does not allows us to stop click
-			events from bubbling up on selection
-			*/
-			if( $(e.target).hasClass('jstree-clicked') )
-				return;
+		var post_type = $editor.data('post-type');
 
-			var $inst = $.jstree._reference($perms_hierarchical);
+		// @todo throbber while loading
 
-			if( $inst ) {
+		var editorData = {
+			action : 'buse_render_post_list',
+			post_type : post_type,
+			group_id : $('#group_id').val(),
+			count : -1
+		}
 
-				var $selected = $inst.get_selected();
-
-				if( $selected.length > 0 ) 
-					$inst.deselect_all();
-
+		$.ajax({
+			url : ajaxurl,
+			type: 'GET',
+			data: editorData,
+			success: function(response) {
+				$editor.append(response);
+			},
+			error: function(response){
+				//console.log(response);
 			}
+		});
 
+		// Don't load twice
+		$editor.addClass('loaded');
+
+	}
+
+	/* Editor lazy-loading on tab click */
+
+	var loadPermissionsEditor = function( $editor ) {
+
+		if( $editor.hasClass('hierarchical') ) {
+			
+			loadHierarchicalEditor( $editor );
+
+		} else {
+
+			loadFlatEditor( $editor );
 		}
+	}
 
-		/* For flat permission editors */
-		var $perms_flat = $(this).find('.perm-panel.active > .perm-editor-flat');
+	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
 
-		if( $perms_flat.length > 0 ) {
-
-			var $selected_lis = $perms_flat.find('a.perm-item-clicked').parent('li');
-
-			$selected_lis.each(function(){
-				$(this).children('a').removeClass('perm-item-clicked');
-				removeOverlay( $(this) );
-			});
-
-		}
+		var $target = $($(this).attr('href'));
+		var $editor = $target.find('.perm-editor');
+		
+		if( ! $editor.hasClass('loaded') )
+			loadPermissionsEditor($editor);
 
 	});
+	
+	// Initial loading
+	var $initialEditor = $('#perm-panel-container').find('.perm-editor').first();
+	if( $initialEditor.length )
+		loadPermissionsEditor( $initialEditor );
 
+	
 	/**
 	 * The user has allowed/denied a specific node
 	 */
@@ -461,7 +540,7 @@ jQuery(document).ready(function($){
 		var post_type = inst.get_container().data('post-type');
 
 		// Possibly load tree
-		if( $node.parent().parent().hasClass('perm-editor-hierarchical') ) {
+		if( $node.parent().parent().hasClass('hierarchical') ) {
 
 			// Need to load node first
 			inst.open_node( $node, function() {
@@ -477,6 +556,7 @@ jQuery(document).ready(function($){
 			} );
 
 		} else {
+
 			// Reveal children
 			inst.open_all( $node );
 				
@@ -502,6 +582,7 @@ jQuery(document).ready(function($){
 
 			// Previously allowed: denied
 			case 'allowed':
+			case 'allowed-desc-denied':
 				$node.attr('rel', 'denied');
 				break;
 
@@ -530,29 +611,8 @@ jQuery(document).ready(function($){
 		var count = 0;
 
 		// Set our persistent data attr first
-		if( $node.parent().parent().hasClass('perm-editor-hierarchical') ) {
-
-			// For root nodes, only explicitly set allowed
-			if( status == 'allowed' )
-				edits[id] = status;
-			else
-				edits[id] = '';
-
-		} else {
-			
-			// For children, need to check for inheritance
-			var $parent = $node.parentsUntil('li').parent();
-			var parent_state = $parent.data('perm');
-
-			if( parent_state == status ) {
-				$node.data('perm','');
-				edits[id] = '';
-			} else {
-				$node.data('perm',status);
-				edits[id] = status;
-			}
-
-		}
+		$node.data('perm',status);
+		edits[id] = status;
 
 		if( status == 'allowed' ) count += 1;
 		else count -= 1;
@@ -560,66 +620,83 @@ jQuery(document).ready(function($){
 		// Fetch all children
 		var $children = $node.find('li');
 
-		// Propogate permissions (both visually and cleaning up redundant data attr)
+		// Propogate permissions to children
 		$children.each(function(index, child) {
 
 			var existing_perm = $(child).data('perm');
-			var current_rel = $(child).attr('rel');
 			var child_id = $(this).attr('id').substr(1);
 
-			if( existing_perm == status ) {
-				$(child).data('perm','');	// reset
-				edits[child_id] = '';
+			if( existing_perm != status ) {
+				$(child).data('perm', status);
+				$(child).attr('rel', status);
 
-			} else if( existing_perm == '' ) {	// this node is inheriting
+				edits[child_id] = status;
 
-				// Examine existing state, switch if necessary
-				if( current_rel != status ) {
+				if( status == 'allowed' ) count += 1;
+				else count -= 1;
 
-					$(child).attr('rel',status);
-					
-					if( status == 'allowed' ) count += 1;
-					else count -= 1;
-
-				}
 			}
 
 		});
-
-		/*
-
-		HOLDING OFF ON THIS PROBLEM FOR NOW
 
 		// Update ancestors visiual appearance to reflect allowed children where necessary
-
-		$node.parents('li').each( function( index, post ) {
-
-			var ancestor_status = $(post).attr('rel');
-			var ancestor_id = $(post).attr('id').substr(1);
-
-			if( ancestor_status == 'denied' ) {
-				if( $(post).find('li[rel="allowed"]').length ) {
-
-					$(post).attr('rel','denied-desc-allowed');
-
-				}
-			} else if ( ancestor_status == 'denied-desc-allowed' ) {
-				// Look for allowed descendents
-				if( $(post).find('li[rel="allowed"]').length == 0 ) {
-
-					$(post).attr('rel','denied' );
-
-				}
-			}
-
-		});
-		*/
+		adjustSectionPermissionIcons( $node )
 
 		// Save edits
 		commitEdits( edits, post_type );
 
 		// Update the stats widget counter
-		//updatePermStats( count, post_type );
+		updatePermStats( count, post_type );
+
+	}
+
+	var adjustSectionPermissionIcons = function( $node ) {
+
+		// Node is not a leaf, traverse down first
+		var $last_ul;
+
+		if( $node.children('ul').length ) {
+			$last_ul = $node.find('ul').last();
+		} else {
+			$last_ul = $node.parents('ul').first();
+		}
+
+		var $parent_uls = $last_ul.parentsUntil('.perm-editor', 'ul');
+		var $all_uls = $.merge( $last_ul, $parent_uls );
+
+		// Bubble up and maybe correct icons
+		$all_uls.each( function(){
+			
+			var $parent_li = $(this).parents('li').first();
+
+			if( $parent_li ) {
+
+				var has_allowed_children = $(this).children('li[rel^="allowed"], li[rel="denied-desc-allowed"]').length > 0 ? true : false;
+				var has_denied_children = $(this).children('li[rel^="denied"], li[rel="allowed-desc-denied"]').length > 0 ? true : false;
+
+				switch( $parent_li.attr('rel') ) {
+
+					case 'allowed':
+					case 'allowed-desc-denied':
+						if( has_denied_children )
+							$parent_li.attr('rel', 'allowed-desc-denied');
+						else
+							$parent_li.attr('rel', 'allowed' );
+						break;
+
+					case 'denied':
+					case 'denied-desc-allowed':
+						if( has_allowed_children )
+							$parent_li.attr('rel', 'denied-desc-allowed');
+						else
+							$parent_li.attr('rel', 'denied' );
+						break;
+
+				}
+				
+			}
+
+		});
 
 	}
 
@@ -637,15 +714,15 @@ jQuery(document).ready(function($){
 
 		var $edits_field = $('#buse-edits-' + post_type );
 
-		// console.log( '==== Incoming Edits ====' );
+		//console.log( '==== Incoming Edits ====' );
 		
 		for( id in edits ) {
 			title = $('#p' + id ).children('a').first().text();
 
-			// console.log( post_type + ': ' + title + ' (' + id + ') set to: ' + edits[id] );
+			//console.log( post_type + ': ' + title + ' (' + id + ') set to: ' + edits[id] );
 		}
 		
-		// console.log( '========================' );
+		//console.log( '========================' );
 			
 		// Update input
 		$edits_field.val( JSON.stringify(edits) );
@@ -660,38 +737,26 @@ jQuery(document).ready(function($){
 	var updatePermStats = function( count, post_type ) {
 
 		var $container = $('#group-stats-permissions');
-		var $existing = $('#' + post_type + '-stat-count');
+		var $count_span = $('#' + post_type + '-stat-count');
 		var start_count = 0;
 
-		if( $existing.length == 0 ) {
-			$container.append('<span id="' + post_type + '-stats" class="perm-stats"><span id="' + post_type + '-stat-count"></span> Pages</span>');
-			$existing = $('#' + post_type + '-stat-count' );
-		} else {
-			start_count = parseInt( $existing.text() );
-		}
+		// Grab existing count
+		start_count = parseInt( $count_span.text() );
 
+		// Check total count for post type with incoming edits
 		var total = start_count + count;
 
-		// We have an updated count fragment for this post type
-		if( total > 0 ) {
-
-			// check for existance of #add-permissions-link, remove if its there
-			$('#add-permissions-link').remove();
-
-			$existing.text(total);
-			
-		} else { // We no longer have any count for this post tpye
-			
-			$existing.parent().remove();
-
-			// Reset to 'Add Permissions' link if this was the last editable post
-			if( $container.children('.perm-stats').length == 0 ) {
-
-				$container.html('<a id="add-permissions-link" class="nav-link" href="#group-permissions-panel" title="Add permissions for this group">Add Permissions</a>');
-			
-			}
-
+		// Relabel based on new counts
+		if( total == 1 ) {
+			var label = $count_span.parent().data('label-singular');
+			$count_span.next('.perm-label').text(label);
+		} else {
+			var label = $count_span.parent().data('label-plural');
+			$count_span.next('.perm-label').text(label);
 		}
+
+		// Update total
+		$count_span.text(total);
 
 	}
 
