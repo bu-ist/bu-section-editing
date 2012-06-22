@@ -220,14 +220,19 @@ class BU_Edit_Groups {
 	 * @param int $user_id WordPress user id
 	 * @return array array of group ids for which the specified user belongs
 	 */ 
-	public function find_groups_for_user($user_id) {
+	public function find_groups_for_user($user_id, $output = 'objects' ) {
 		
 		$groups = array();
 		
 		foreach ($this->groups as $group) {
 			if($group->has_user($user_id)) {
-				array_push($groups, $group);
+
+				if( $output === 'objects' )
+					$groups[$group->id] = $group;
+				else if( $output === 'ids' )
+					array_push( $groups, $group->id );
 			}
+
 		}
 
 		return $groups;
@@ -255,6 +260,81 @@ class BU_Edit_Groups {
 			}
 
 			return false;
+	}
+
+	/**
+	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 * 
+	 * @param $args array optional args
+	 * 
+	 * @return int allowed post count for the given post type 
+	 */ 
+	public function get_allowed_post_count( $args = array() ) {
+		global $wpdb;
+
+		$defaults = array(
+			'user_id' => null,
+			'group' => null,
+			'post_type' => null
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+		extract( $args );
+
+		$group_ids = array();
+
+		// If user_id is passed, populate group ID's from their memberships
+		if( $user_id ) {
+
+			if( is_null( get_userdata( $user_id ) ) ) {
+				error_log('No user found for ID: ' . $user_id );
+				return false;
+			}
+
+			// Get groups for users
+			$group_ids = $this->find_groups_for_user( $user_id, 'ids' );
+
+		}
+
+		// If no user ID is passed, but a group is, convert to array
+		if( is_null( $user_id ) && $group ) {
+
+			if( is_array( $group ) )
+				$group_ids = $group;
+
+			if( is_numeric( $group ) )
+				$group_ids = array($group);
+
+		}
+
+		// Bail if we don't have any valid groups by now
+		if( empty( $group_ids ) ) {
+			//error_log('Exiting allowed post count, no valid groups...');
+			return false;
+		}
+
+		$posts_join = $post_type_and = '';
+
+		// Maybe filter by post type
+		if( ! is_null( $post_type ) && ! is_null( get_post_type_object( $post_type ) ) ) {
+
+			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
+			$post_type_and = "AND p.post_type = '$post_type'";
+
+		}
+
+		$count_query = sprintf( "SELECT COUNT(*) FROM %s %sWHERE meta_key = '%s' AND meta_value IN (%s) %s",
+			$wpdb->postmeta,
+			$posts_join,
+			BU_Edit_Group::META_KEY,
+			implode( ',', $group_ids ),
+			$post_type_and
+			);
+
+		$count = $wpdb->get_var( $count_query );
+
+		return $count;
+
 	}
 
 	/**
@@ -318,9 +398,6 @@ class BU_Edit_Groups {
 		if( ! is_array( $permissions ) )
 			return false;
 
-		$allowed_meta_value = $group_id . BU_Edit_Group::SUFFIX_ALLOWED;
-		$denied_meta_value = $group_id . BU_Edit_Group::SUFFIX_DENIED;
-
 		foreach( $permissions as $post_type => $new_perms ) {
 
 			// error_log('= Updating permissions for: ' . $post_type . '=' );
@@ -332,60 +409,76 @@ class BU_Edit_Groups {
 			// For later need to differentiate between flat/hierarchical post types
 			$post_type_obj = get_post_type_object( $post_type );
 
+			if( is_null( $post_type_obj ) ) {
+				error_log('Bad post type!');
+				continue;
+			}
+
 			// Hierarchical post types
 			if( $post_type_obj->hierarchical ) {
 
-				foreach( $permissions[$post_type] as $post_id => $status ) {
-					
-					/**
-					 * Adjust post meta values based on incoming status
-					 * 
-					 * Will need to adjust for hierarchical perms if we want the ancestor logic to be
-					 * replicated (expensively) server side
-					 */ 
-					switch( $status ) {
+				// Incoming allowed posts
+				$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
 
-						case 'allowed':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							
-							// Add new one
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							//error_log('Updating ' . $post_id . ': ' . $allowed_meta_value );
-							break;
+				if( ! empty( $allowed_ids ) ) {
 
-						case 'denied':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
+					$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+						$wpdb->postmeta,
+						implode( ',', $allowed_ids ),
+						BU_Edit_Group::META_KEY,
+						$group_id
+						);
 
-							// Add new one
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Updating ' . $post_id . ': ' . $denied_meta_value );
-							break;
+					$previously_allowed = $wpdb->get_col( $allowed_select );
+					$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
 
-						// not currently used
-						case 'inherit':
-							// Remove existing statuses
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Updating ' . $post_id . ': Now inheriting, removing existing settings' );
-							break;
+					foreach( $additions as $post_id ) {
 
-						default:
-							/* no op */
-							//error_log( 'No perm adjustments found for post ' . $post_id . ', leaving it alone...' );
-							break;
+						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 
 					}
-					
+
+				}
+
+				// Incoming restricted posts
+				$denied_ids = array_keys( $permissions[$post_type], 'denied' );
+
+				if( ! empty( $denied_ids ) ) {
+
+					// Select meta_id's for removal based on incoming posts
+					$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+						$wpdb->postmeta,
+						implode( ',', $denied_ids ),
+						BU_Edit_Group::META_KEY,
+						$group_id
+						);
+
+					$denied_meta_ids = $wpdb->get_col( $denied_select );
+
+					// Bulk deletion
+					if( ! empty( $denied_meta_ids ) ) {
+
+						$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
+							$wpdb->postmeta,
+							implode(',', $denied_meta_ids )
+							);
+
+						// Remove allowed status in one query
+						$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
+
+						// Purge cache
+						foreach( $denied_meta_ids as $meta_id ) {
+							wp_cache_delete( $meta_id, 'post_meta' );
+						}
+
+					}
+
 				}
 
 			} else {
 
-				// Fetch all existing permissions for this post type
-				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value LIKE '%s:%%' AND p.post_type = '%s'", 
+				// Fetch all existing permissions for this post type for possible removal
+				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value = '%s' AND p.post_type = '%s'", 
 					$wpdb->postmeta,
 					$wpdb->posts, 
 					BU_Edit_Group::META_KEY, 
@@ -402,28 +495,16 @@ class BU_Edit_Groups {
 				foreach( $post_ids as $post_id ) {
 				
 					// Get new status, if there is one
-					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : '';
+					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : 'denied';
 
 					// No new value = post is now denied, delete existing perms
-					if( empty( $status ) ) {
+					if( $status == 'allowed' && ! array_key_exists( $post_id, $prev_perms ) ) {
 
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $denied_meta_value );
-							//error_log('Deleting existing statuses for post: ' . $post_id );
+							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 
-					} else {
+					} else if( $status == 'denied' ) {
 
-						// Don't add meta data redundantly -- check for existing first
-						if( ! array_key_exists( $post_id, $prev_perms ) || $prev_perms[$post_id]->meta_value == $allowed_meta_value ) {
-							
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $allowed_meta_value );
-							//error_log('Setting status for post: ' . $post_id );
-
-						} else {
-
-							//error_log('I should not be here...');
-
-						}
+							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 
 					}
 
@@ -441,7 +522,7 @@ class BU_Edit_Groups {
 
 		$meta_query = array(
 			'key' => BU_Edit_Group::META_KEY,
-			'value' => $group_id . ':',
+			'value' => $group_id,
 			'compare' => 'LIKE'
 			);
 
@@ -455,8 +536,7 @@ class BU_Edit_Groups {
 		$query = new WP_Query( $args );
 
 		foreach( $query->posts as $post_id ) {
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_ALLOWED );
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id . BU_Edit_Group::SUFFIX_DENIED );
+			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 		}
 
 	}
@@ -537,9 +617,6 @@ class BU_Edit_Group {
 	private $modified = null;
 
 	const META_KEY = '_bu_section_group';
-	const SUFFIX_ALLOWED = ':allowed';
-	const SUFFIX_DENIED = ':denied';
-
 
 	/**
 	 * Instantiate new edit group
@@ -628,6 +705,18 @@ class BU_Edit_Group {
 
 	}
 
+
+	/**
+	 * Can this group edit a particular post
+	 * 
+	 */ 
+	public function can_edit( $post_id ) {
+		
+		$allowed_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
+		return in_array( $this->id, $allowed_groups ) ? true : false;
+	
+	}
+
 	/**
 	 * Query for all posts that have section editing permissions assigned for this group
 	 * 
@@ -650,94 +739,6 @@ class BU_Edit_Group {
 		$query = new WP_Query( $args );
 
 		return $query->posts;
-	}
-
-	/**
-	 * Get count for posts with permissions by post type
-	 * 
-	 * @todo Fix this, it's broken :(
-	 * @uses WP_Query
-	 *
-	 * @param array $args an optional array of WP_Query arguments, will override defaults
-	 * @return array an array of posts that have section editing permissions for this group
-	 */ 
-	public function get_posts_count( $args = array() ) {
-
-		$defaults = array(
-			'post_type' => 'page',
-			'meta_key' => self::META_KEY,
-			'meta_value' => $this->id,
-			'posts_per_page' => -1,
-			'fields' => 'ids'
-			);
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$allowed_query = new WP_Query( $args );
-
-		$count = count( $allowed_query->posts );
-
-		add_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
-		add_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
-
-		foreach( $allowed_query->posts as  $allowed_id ) {
-
-			$sections = bu_navigation_gather_sections( $allowed_id, array( 'post_type' => $args['post_type'], 'direction' => 'down' ) );
-
-			if( count( $sections ) > 0 ) {
-
-				$page_args = array(
-					'sections' => $sections,
-					'post_types' => $args['post_type'],
-					'suppress_urls' => true
-					);
-
-
-				$root_pages = bu_navigation_get_pages( $page_args );
-				
-				$count += count($root_pages);
-
-			}
-
-		}
-		
-		remove_filter( 'bu_navigation_filter_pages', array(&$this, 'post_count_filter' ) );
-		remove_filter( 'bu_navigation_filter_fields', array(&$this, 'post_count_fields' ) );
-
-		return $count;
-
-	}
-
-	/**
-	 * @todo Fix this 
-	 */ 
-	public function post_count_filter( $posts ) {
-		global $wpdb;
-
-		/* Groups */
-		$ids = array_keys($posts);
-		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value LIKE '%%%s%%'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->id );
-		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
-		
-		if (!is_array($group_meta)) $group_meta = array();
-
-		//$pages_by_parent = bu_navigation_pages_by_parent( $posts );
-		// Need to count recursively, stopping if a node with children has any status set
-
-		foreach( $posts as $post ) {
-
-			if( array_key_exists( $post->ID, $group_meta ) ) {
-
-				unset( $posts[$post->ID] );
-
-			}
-		}
-
-		return $posts;
-	}
-
-	public function post_count_fields( $fields ) {
-		return array('ID','post_type', 'post_parent');
 	}
 
 	/**
