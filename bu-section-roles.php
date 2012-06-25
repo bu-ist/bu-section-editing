@@ -86,7 +86,7 @@ class BU_Section_Editor {
 	 */
 	static function can_edit($user_id, $post_id)  {
 
-		if($user_id == 0) return false;
+		if($user_id == 0 || $post_id == 0) return false;
 
 		// Extra checks for any "allowed" users
 		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
@@ -201,10 +201,10 @@ class BU_Section_Editor {
 			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
 				$caps = array('do_not_allow');
 				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
-
 			}
 
 			// Check if user can edit post parent before publishing
+			// Prevents users from transitioning post status from draft/pending -> published within a non-editable section
 			$post_parent = isset($post->post_parent) ? $post->post_parent : 0;
 			if (!isset($id) || !self::can_edit($user_id, $post_parent ) ) {
 				$caps = array('do_not_allow');
