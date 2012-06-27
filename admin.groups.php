@@ -23,6 +23,8 @@ class BU_Groups_Admin {
 		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
 		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
+		add_action('transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
+
 		// for filtering posts by editable status per user
 		// parses query to add meta_query, which was a known
 		// bug pre-3.2 -- a workaround may exist, but i 
@@ -116,6 +118,60 @@ class BU_Groups_Admin {
 			$query->set( 'meta_query', $meta_query );
 		}
 	
+	}
+
+	/**
+	 * Runs when a post is updated and the status has changed
+	 * 
+	 * Currently, we are looking for any transition to and from 'publish', and
+	 * updating the groups post meta accordingly
+	 * 
+	 * Once we decide how to handle drafts, we will want to switch this logic to
+	 * add group post meta to any 'new' post if it is saved in an editable location
+	 */
+	public static function transition_post_status( $new_status, $old_status, $post ) {
+
+		// From draft|pending -> publish
+		if( in_array( $old_status, array( 'draft', 'pending' ) ) && $new_status == 'publish' ) {
+
+			$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+
+			// Inherit allowed groups from parent
+			if( $post->post_parent ) {
+
+				$parent_groups = get_post_meta( $post->post_parent, BU_Edit_Group::META_KEY );
+
+				$group_controller = BU_Edit_Groups::get_instance();
+				$groups = $group_controller->get_groups();
+
+				// Add and remove groups as necessary
+				foreach( $groups as $group ) {
+
+					// Add newly valid groups
+					if( in_array( $group->id, $parent_groups ) && ! in_array( $group->id, $existing_groups ) ) {
+						add_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
+					}
+
+					// Remove no longer valid groups
+					if( ! in_array( $group->id, $parent_groups ) && in_array( $group->id, $existing_groups ) ) {
+						delete_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
+					}
+				}
+			}
+
+		}
+
+		// From publish -> draft|pending
+		if( in_array( $new_status, array( 'draft', 'pending' ) ) && $old_status == 'publish' ) {
+
+			// @todo determine the best way to handle drafts -- currently, they are ignored
+			// by the group editors
+
+			// Remove all existing edit groups for this post
+			delete_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+
+		}
+
 	}
 
 	/**
