@@ -127,6 +127,64 @@ class BU_Section_Editor {
 	}
 
 	/**
+	 * Checks whether or not a specific user can publish a post
+	 * 
+	 * First checks if a user can edit the post, if not, bubbles up
+	 * ancestor tree to determine based on inheritance.
+	 *
+	 * @param int $user_id
+	 * @param int $post_id
+	 */
+	static function can_publish($user_id, $post_id)  {
+
+		if($user_id == 0) return false;
+
+		// Extra checks for any "allowed" users
+		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
+			
+			if( $post_id == 0 ) return false;
+
+			// If current post is already editable, we can publish
+			if( self::can_edit( $user_id, $post_id ) )
+				return true;
+
+			// Otherwise, check ancestors too
+			$edit_groups_o = BU_Edit_Groups::get_instance();
+			$groups = $edit_groups_o->find_groups_for_user( $user_id );
+
+			// Note that get_post_ancestors only works if the post object is unfiltered
+			$post = get_post( $post_id, OBJECT, null );
+			$ancestors = get_post_ancestors( $post );
+
+			// Bubble up through ancestors, checking status along the way
+			foreach( $ancestors as $ancestor_id ) {
+
+				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
+
+				foreach( $groups as $key => $group ) {
+
+					if( in_array( (string) $group->id, $ancestor_groups ) ) {
+						return true;
+					}
+
+				}
+
+				if( empty($groups) ) {
+					break;
+				}
+			}
+
+			// User is section editor, but not allowed to publish in this section
+			//error_log('[BUSE] My group memberships do not allow me to publish post: ' . $post_id );
+			return false;
+		}
+
+		// User is not restricted by plugin, normal meta_caps apply
+		return true;
+
+	}
+
+	/**
 	 * Filter that modifies the caps based on the current state.
 	 * 
 	 * @todo clean up all of this logic, figure out best approach to drafts
@@ -181,17 +239,20 @@ class BU_Section_Editor {
 			return $caps;
 		}
 
+		// As publish_posts does not come tied to a post ID, relying on the global $post_ID is fragile
+		// For instance, the "Quick Edit" interface of the edit posts page does not populate this
+		// global, and therefore the "Published" status is unavailable with this meta_cap check in place
 		if( in_array( $cap, self::get_caps_for_post_types( 'publish_posts', $post_types ) ) ) {
 			$parent_id = null;
 			$id = $post_ID;
 			$post = get_post($id);
 
-			// Post parent is attempting to switch
+			// User is attempting to switch post parent while publishing
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
 				
 				$parent_id = (int) $_POST['parent_id'];
 
-				// Can't move published posts to a place they cannot edit
+				// Can't move published posts under sections they can't edit
 				if( ! self::can_edit( $user_id, $parent_id ) ) {
 					$caps = array('do_not_allow');
 					//error_log('[BUSE] publish_posts is forbidding user from moving post under new parent: ' . $parent_id );
@@ -199,19 +260,10 @@ class BU_Section_Editor {
 
 			}
 
-			// User can't edit the post being published
-			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
+			// User is attempting to publish a post
+			if (!isset($id) || !self::can_publish($user_id, $id ) ) {
 				$caps = array('do_not_allow');
 				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
-			}
-
-			// Check if user can edit post parent before publishing
-			// Prevents users from transitioning post status from draft/pending -> published within a non-editable section
-			$post_parent = isset($post->post_parent) ? $post->post_parent : 0;
-			
-			if (!isset($id) || !self::can_edit($user_id, $post_parent ) ) {
-				$caps = array('do_not_allow');
-				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing under post parent: ' . $post->post_parent );
 			}
 
 			return $caps;
