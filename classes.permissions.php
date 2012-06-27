@@ -59,7 +59,18 @@ abstract class BU_Permissions_Editor {
 
 		foreach( $post_types as $post_type ) {
 			if( post_type_supports( $post_type->name, 'section-editing' ) && $post_type->hierarchical )
-				$supported_post_types[] = ( $output == 'objects' ) ? $post_type : $post_type->name;
+
+				switch( $output ) {
+
+					case 'names':
+						$supported_post_types[] = $post_type->name;
+						break;
+
+					case 'objects': default:
+						$supported_post_types[] = $post_type;
+						break;
+				}
+				
 		}
 
 		return $supported_post_types;
