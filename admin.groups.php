@@ -134,17 +134,15 @@ class BU_Groups_Admin {
 		// From draft|pending -> publish
 		if( in_array( $old_status, array( 'draft', 'pending' ) ) && $new_status == 'publish' ) {
 
-			$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
-
-			// Inherit allowed groups from parent
+			// Inherit allowed groups from parent if post has no allowed groups
 			if( $post->post_parent ) {
-
-				$parent_groups = get_post_meta( $post->post_parent, BU_Edit_Group::META_KEY );
 
 				$group_controller = BU_Edit_Groups::get_instance();
 				$groups = $group_controller->get_groups();
+				
+				$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+				$parent_groups = get_post_meta( $post->post_parent, BU_Edit_Group::META_KEY );
 
-				// Add and remove groups as necessary
 				foreach( $groups as $group ) {
 
 					// Add newly valid groups
@@ -152,23 +150,9 @@ class BU_Groups_Admin {
 						add_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
 					}
 
-					// Remove no longer valid groups
-					if( ! in_array( $group->id, $parent_groups ) && in_array( $group->id, $existing_groups ) ) {
-						delete_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
-					}
 				}
+				
 			}
-
-		}
-
-		// From publish -> draft|pending
-		if( in_array( $new_status, array( 'draft', 'pending' ) ) && $old_status == 'publish' ) {
-
-			// @todo determine the best way to handle drafts -- currently, they are ignored
-			// by the group editors
-
-			// Remove all existing edit groups for this post
-			delete_post_meta( $post->ID, BU_Edit_Group::META_KEY );
 
 		}
 
