@@ -22,7 +22,9 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 // the status could be used to propagate the ACL of the parent to the new draft if the user has placed
 // the draft in an editable location
 
-
+// @todo look for navigation library within the plugin if BU_INCLUDES_PATH is 
+// undefined. We should also try to come up with a way of supporting 
+// bu-includes that makes use of submodules or some sort of simple build script
 
 /**
  * Plugin entry point

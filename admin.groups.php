@@ -1,7 +1,9 @@
 <?php
 
 /*
-@todo Need to add an edit lock to editing groups (look at navman)
+@todo 
+- Need to add an edit lock to editing groups (look at navman)
+- Keep tab selected when saving
 */
 
 class BU_Groups_Admin {
@@ -196,12 +198,13 @@ class BU_Groups_Admin {
 	public static function admin_scripts( $hook ) {
 
 		if( $hook == self::$manage_groups_hook ) {
-			// @todo we should use the same handle as the other places we use jstree
-			wp_enqueue_script( 'jstree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery') );
-			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery') );
+			wp_enqueue_script('json2');
+			//@todo do we need jquery-cookie?
+			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery'), '1.0-rc3' );
+			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery'), '0.3' );
 
-			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ) );
-			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ) );
+			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
+			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
 
 			$buse_config = array(
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
