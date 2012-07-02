@@ -337,7 +337,7 @@ class BU_Groups_Admin {
 
 		$group_id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : -1;
 		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
-		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'name';
+		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
 
 		$template_path = 'interface/groups.php';
 

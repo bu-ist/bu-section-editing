@@ -4,10 +4,10 @@
 	</div>
 	<div class="buse-widget-body">
 		<div id="members-message" ></div>
-		<div class="form-row">
+		<div class="form-field">
 			<label for="user_login">Enter the email address of an existing user on this network to add them to this Editor Group.</label>
 			<input id="user_login" type="text" class="regular-text" name="user_login" value="" />
-			<button id="add_member" class="button-secondary">Add</button>
+			<button id="add_member" class="button-secondary">Add User</button>
 		</div>
 		<!--<div class="form-row">
 			<button id="find_user" class="button-secondary">Find User</button>

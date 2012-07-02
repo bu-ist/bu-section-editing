@@ -7,6 +7,7 @@
 		<thead>
 			<tr>
 				<th>Name</th>
+				<th>Description</th>
 				<th>Members</th>
 				<th>Remove</th>
 			</tr>
@@ -14,6 +15,7 @@
 		<tfoot>
 			<tr>
 				<th>Name</th>
+				<th>Description</th>
 				<th>Members</th>
 				<th>Remove</th>
 			</tr>
@@ -21,9 +23,13 @@
 		<tbody>
 		<?php if($group_list->have_groups()): ?>
 			<?php while($group_list->have_groups()): $group = $group_list->the_group(); ?>
-			<?php $edit_url = BU_Groups_Admin::manage_groups_url( 'edit', array( 'id' => $group->id ) ); ?>
+			<?php
+			$edit_url = BU_Groups_Admin::manage_groups_url( 'edit', array( 'id' => $group->id ) ); 
+			$description = (strlen($group->description) > 60) ? substr($group->description, 0, 60) . ' [...]' : $group->description;
+			?>
 			<tr>
 				<td><a href="<?php echo $edit_url ?>"><?php echo $group->name; ?></a></td>
+				<td><?php echo $description; ?></td>
 				<td><?php echo count( $group->users ); ?></td>
 				<td>
 					<a class="submitdelete" href="<?php echo BU_Groups_Admin::manage_groups_url( 'delete', array( 'id' => $group->id ) ); ?>">
