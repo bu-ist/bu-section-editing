@@ -1,6 +1,7 @@
 <div id="group-permission-editor" class="buse-widget">
-	<div class="buse-widget-header"><h4>Assign Permissions to:</h4></div>
+	<div class="buse-widget-header"><h4>Content Types</h4></div>
 	<div class="buse-widget-body">
+	<!--<p><em>Allow/disallow members of this groups from editing/publishing content</em></p>-->
 	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
 	<?php if( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
