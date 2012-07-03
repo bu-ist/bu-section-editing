@@ -58,7 +58,7 @@ abstract class BU_Permissions_Editor {
 		$supported_post_types = array();
 
 		foreach( $post_types as $post_type ) {
-			if( post_type_supports( $post_type->name, 'section-editing' ) && $post_type->hierarchical )
+			if( post_type_supports( $post_type->name, 'section-editing' ) ) {
 
 				switch( $output ) {
 
@@ -70,6 +70,7 @@ abstract class BU_Permissions_Editor {
 						$supported_post_types[] = $post_type;
 						break;
 				}
+			}
 				
 		}
 
@@ -91,7 +92,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$query_args = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',		// true?
-			'posts_per_page' => -1, 	// for now, eventually we'll make the river flow
+			'posts_per_page' => 10, 	// for now, eventually we'll make the river flow
 			'orderby' => 'modified',
 			'order' => 'DESC'
 			);

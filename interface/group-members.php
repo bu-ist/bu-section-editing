@@ -6,7 +6,7 @@
 		<div id="members-message" ></div>
 		<div class="form-field">
 			<label for="user_login">Enter the email address of an existing user on this network to add them to this Editor Group.</label>
-			<input id="user_login" type="text" name="user_login" value="" />
+			<input id="user_login" type="text" class="with-button" name="user_login" value="" />
 			<button id="add_member" class="button-secondary">Add</button>
 		</div>
 		<!--<div class="form-row">

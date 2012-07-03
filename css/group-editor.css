@@ -154,6 +154,9 @@
 	border-bottom-left-radius: 5px;
 	border-bottom-right-radius: 5px;
 	clear: both;
+}
+
+#perm-panel-container .perm-scroll-area {
 	overflow-x: scroll;
 	overflow-y: visible;
 }
@@ -209,12 +212,15 @@
 .perm-editor.flat {
 	overflow: scroll;
 	min-width: 500px;
-	max-height: 550px;
 }
 
 .perm-editor.flat a {
 	color: inherit;
 	text-decoration: none;
+}
+
+.perm-editor.flat ul {
+
 }
 
 .perm-editor.flat li[rel="allowed"] > .flat-perm-icon {
@@ -246,10 +252,38 @@
 	padding: 10px;
 	margin: 0;
 	position: relative;
+	border-top: 1px solid #dfdfdf;
+}
+
+.perm-list.flat li:first-child {
+	border-top: none;
 }
 
 .perm-list.flat li.odd {
-	background-color: #ECECEC;
+	background-color: #f9f9f9;
+}
+
+#perm-panel-container .perm-list input[type="checkbox"] {
+	display: inline;
+	width: auto;
+	float: left;
+	margin-right: 10px;
+}
+
+.perm-toolbar {
+	padding: 10px 7px;
+}
+
+.perm-toolbar.top {
+	border-bottom: 2px solid #aaa;
+}
+
+.perm-toolbar.bottom {
+	border-top: 2px solid #aaa;
+}
+
+.perm-toolbar p {
+	font-style: normal;
 }
 
 /* Overlay */
@@ -455,7 +489,7 @@
 	text-align: left;
 }
 
-#section-group-editor .buse-widget-body input {
+#section-group-editor input.with-button {
 	width: 80%;
 }
 
@@ -471,7 +505,8 @@
 /* Clearing */
 #panel-container:after,
 #group-stats-widget .actions:after,
-#perm-tab-container:after {
+#perm-tab-container:after,
+.perm-toolbar:after {
 	display: block;
 	clear: both;
 	content: " ";

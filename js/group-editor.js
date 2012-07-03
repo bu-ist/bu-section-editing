@@ -260,7 +260,7 @@ jQuery(document).ready(function($){
 		}
 
 		/* For flat permission editors */
-		var $perms_flat = $(this).find('.perm-panel.active > .perm-editor.flat');
+		var $perms_flat = $(this).children('.perm-panel.active').find('.perm-editor.flat');
 
 		if( $perms_flat.length > 0 ) {
 
