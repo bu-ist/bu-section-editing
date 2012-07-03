@@ -167,10 +167,19 @@ jQuery(document).ready(function($){
 
 	/* Overlay UI */
 
+	// @todo
+	// - test browser compatibility for position js
+	// - clean up / refactor in to "class"
+	// - with positioning handled in Javascript we don't need to create the overlay everytime
+	// - handle re-positioning on window resize
+
 	var createOverlay = function( $el, callbck ) {
 
 		// Generate appropriate label
 		var state = $el.attr('rel');
+		var $a = $el.children('a:first').first();
+		var $container = $('#perm-panel-container');
+
 		var label = state == 'allowed' || state == 'allowed-desc-denied' ? 'Deny Editing' : 'Allow Editing';
 
 		// Create actual state modifying link
@@ -187,21 +196,31 @@ jQuery(document).ready(function($){
 
 		});
 
-		// Create overlay
-		var $overlay = $('<span class="edit-node"></span>').append($overlayLink).hide();
+		$('<span class="edit-node"></span>').append($overlayLink).hide( 0, function(){
 
-		// Append and fade in
-		$el.children('a:first').after($overlay);
-		$overlay.fadeIn();
+			// Append to container
+			$el.closest('.perm-panel.active').append($(this));
+
+			$(this).position({
+				of: $a,
+				my: 'left center',
+				at: 'right center',
+				within: $container,
+				offset: '15 0',
+				collision: 'fit none'
+			}).show();
+
+		});
+
 	}
 
 	var removeOverlay = function( $el, callbck ) {
 
-		var $overlay = $el.children('.edit-node').first();
+		var $overlay = $el.closest('.perm-panel.active').children('.edit-node').first();
 
 		if( $overlay.length ) {
 			
-			$overlay.fadeOut( function(){ 
+			$overlay.hide( 0, function(){ 
 
 				$(this).remove();
 
@@ -295,12 +314,11 @@ jQuery(document).ready(function($){
 		}
 
 		// Remove any previously active overlays
-		$.each( $target_li.siblings('li').children('.edit-node'), function(index, el) {
+		$target_li.siblings('li').children('.perm-item-clicked').each( function() {
 
-			var $parent_li = $(el).parent('li');
-			var $item = $parent_li.children('a').first();
+			var $parent_li = $(this).parents('li').first();
 
-			$item.removeClass('perm-item-clicked');
+			$(this).removeClass('perm-item-clicked');
 			removeOverlay( $parent_li );
 
 		});

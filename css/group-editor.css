@@ -153,9 +153,9 @@
 	margin: 0 5px 5px 1px;
 	border-bottom-left-radius: 5px;
 	border-bottom-right-radius: 5px;
-	overflow: scroll;
-	height: 450px;
 	clear: both;
+	overflow-x: scroll;
+	overflow-y: visible;
 }
 
 #perm-tab-container .nav-tab {
@@ -205,6 +205,13 @@
 }
 
 /* Flat Permissions */
+
+.perm-editor.flat {
+	overflow: scroll;
+	min-width: 500px;
+	max-height: 550px;
+}
+
 .perm-editor.flat a {
 	color: inherit;
 	text-decoration: none;
@@ -279,6 +286,8 @@
 	background-image: linear-gradient(top,#6699CC,#1C729E);
 	padding: 10px 8px;
 	border-radius: 3px;
+	text-decoration: none;
+	width: 105px;
 
 }
 
@@ -420,7 +429,9 @@
 }
 
 .perm-panel.active { 
-	position: static; 
+	position: relative; 
+	top: auto;
+	left: auto;
 }
 
 /* Form elements */

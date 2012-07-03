@@ -201,6 +201,12 @@ class BU_Groups_Admin {
 			wp_enqueue_script('json2');
 			//@todo do we need jquery-cookie?
 			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery'), '1.0-rc3' );
+
+			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
+			// @see https://github.com/jquery/jquery-ui/pull/254 
+			// @see http://bugs.jqueryui.com/ticket/5645
+			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position.js' ), array('jquery') );
+
 			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery'), '0.3' );
 
 			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
