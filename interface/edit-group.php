@@ -12,6 +12,9 @@
 			<input type="hidden" name="action" value="update"/>
 			<input id="group_id" type="hidden" name="id" value="<?php echo $group_id; ?>" />
 			<?php wp_nonce_field( 'update_section_editing_group' ); ?>
+			<div id="stats-container">
+				<?php include "group-stats.php"; ?>
+			</div>
 			<div id="panel-container">
 				<div id="group-properties-panel" class="edit-group-panel<?php if($tab == 'properties') echo ' active'; ?>">
 					<a name="group-properties-panel"></a>
@@ -25,9 +28,6 @@
 					<a name="group-permissions-panel"></a>
 					<?php include 'group-permissions.php'; ?>	
 				</div>
-				<div id="stats-container">
-					<?php include "group-stats.php"; ?>
-				</div><!-- /#stats-container -->
 			</div><!-- /#panel-container -->
 		</form>
 	</div><!-- /.form-wrap -->

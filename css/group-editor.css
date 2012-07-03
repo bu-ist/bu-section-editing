@@ -60,26 +60,27 @@
 	margin-bottom: 0;
 }
 
-#panel-container {
-	width: 100%;
-	min-width: 750px;
-	height: auto;
-}
-
 #stats-container {
-	width: 40%;
+	width: 350px;
 	padding-top: 2em;
 	padding-left: 25px;
+	float: right;
+	clear: right;
+}
+
+#panel-container {
+	width: 100%;
+	height: auto;
 	float: left;
+	clear: left;
+	margin-right: -375px;
+	position: relative;
 }
 
 .edit-group-panel {
-	float: left;
 	min-height: 400px;
-	width: 50%;
 	padding-top: 2em;
-	padding-right: 25px;
-	border-right: 1px solid #CCC;
+	margin-right: 375px;
 }
 
 /* Panel containers */
@@ -410,13 +411,12 @@
 
 .edit-group-panel.active { 
 	position: static; 
-	float: left;
 }
 
 .js .perm-panel { 
 	position: absolute;
 	top: -9999px;
-	left:-9999px;
+	left: -9999px;
 }
 
 .perm-panel.active { 
@@ -444,7 +444,7 @@
 	text-align: left;
 }
 
-#section-group-editor .buse-widget-body input[type="text"] {
+#section-group-editor .buse-widget-body input {
 	width: 80%;
 }
 
