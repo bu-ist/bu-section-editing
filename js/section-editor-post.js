@@ -1,11 +1,7 @@
 jQuery(function($) {
-	var current_parent = $('#post [name="parent_id"]').val();
 	$('#bu-page-parent').bind('nodeSelected', function(e){
 		var scrollingTree = $(e.target).data('scrollingTree');
 		var parent_id = scrollingTree.getSelection();
-		if(current_parent == parent_id) {
-			return;
-		}
 
 		var data = {
 			action: 'buse_can_move',
