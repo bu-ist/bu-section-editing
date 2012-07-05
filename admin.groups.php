@@ -507,6 +507,7 @@ class BU_Groups_Admin_Ajax {
 		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
 		add_action('wp_ajax_buse_update_permissions_count', array( __CLASS__, 'update_permissions_count' ) );
 		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
+		add_action('wp_ajax_buse_can_move', array( __CLASS__, 'can_move'));
 	}
 
 	/**
@@ -624,12 +625,11 @@ class BU_Groups_Admin_Ajax {
 
 	}
 
-	static public function can_edit() {
 
+	static public function can_move() {
 			$user_id = get_current_user_id();
 			$post_id = (int) trim($_POST['post_id']);
 			$parent_id = (int) trim($_POST['parent_id']);
-
 
 			if(!isset($post_id) || !isset($parent_id)) {
 				echo '-1';
@@ -645,6 +645,36 @@ class BU_Groups_Admin_Ajax {
 			$response->parent_id = $parent_id;
 			$response->can_edit = $answer;
 			$response->original_parent = $post->post_parent;
+			$response->status = $post->post_status;
+
+			header("Content-type: application/json");
+			echo json_encode( $response );
+			die();
+	}
+
+	static public function can_edit() {
+
+			$user_id = get_current_user_id();
+			$post_id = (int) trim($_POST['post_id']);
+
+
+			if(!isset($post_id)) {
+				echo '-1';
+				die();
+			}
+
+			$post = get_post($post_id);
+			if($post->post_status != 'publish')  {
+				$answer = BU_Section_Editor::can_edit($user_id, $post->post_parent);
+			} else {
+				$answer = BU_Section_Editor::can_edit($user_id, $post_id);
+			}
+
+			$response = new stdClass();
+
+			$response->post_id = $post_id;
+			$response->parent_id = $post->post_parent;
+			$response->can_edit = $answer;
 			$response->status = $post->post_status;
 
 			header("Content-type: application/json");

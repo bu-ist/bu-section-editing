@@ -250,9 +250,7 @@ class BU_Section_Editor {
 			$parent_id = null;
 			if(isset($post_ID)) {
 				$id = $post_ID;
-			} else {
-				$id = $GLOBALS['post']->ID; // this may be too heavy handed.
-			}
+			} 
 			$post = get_post($id);
 
 			// User is attempting to switch post parent while publishing
@@ -269,7 +267,7 @@ class BU_Section_Editor {
 			}
 
 			// User is attempting to publish a post
-			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
+			if (!isset($id) || !self::can_publish($user_id, $id ) ) {
 				$caps = array('do_not_allow');
 				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
 			}
