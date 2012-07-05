@@ -226,8 +226,7 @@
 
 
 #perm-panel-container .perm-scroll-area {
-	overflow-x: scroll;
-	overflow-y: visible;
+	overflow-x: auto;
 }
 
 .perm-editor.hierarchical {
@@ -255,8 +254,7 @@
 /* Flat Permissions */
 
 .perm-editor.flat {
-	overflow: scroll;
-	min-width: 500px;
+
 }
 
 .perm-editor.flat a {
@@ -502,6 +500,10 @@
 
 #section-group-editor label {
 	margin-bottom: 0.5em;
+}
+
+#section-group-editor label.inline {
+	display: inline;
 }
 
 #section-group-editor label.topaligned {

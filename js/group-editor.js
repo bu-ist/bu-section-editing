@@ -431,10 +431,12 @@ jQuery(document).ready(function($){
 				type: 'GET',
 				data : function(n) {
 					return {
-						post_id : n.attr ? n.attr('id') : 0,
 						action : 'buse_render_post_list',
+						group_id : $('#group_id').val(),
 						post_type : post_type,
-						group_id : $('#group_id').val()
+						query: {
+							child_of : n.attr ? n.attr('id').substr(1) : 0
+						}
 					}
 				}
 			}
@@ -487,29 +489,10 @@ jQuery(document).ready(function($){
 	};
 
 	var loadFlatEditor = function( $editor ) {
+		
+		var pt = $editor.data('post-type');
 
-		var post_type = $editor.data('post-type');
-
-		// @todo throbber while loading
-
-		var editorData = {
-			action : 'buse_render_post_list',
-			post_type : post_type,
-			group_id : $('#group_id').val(),
-			count : -1
-		}
-
-		$.ajax({
-			url : ajaxurl,
-			type: 'GET',
-			data: editorData,
-			success: function(response) {
-				$editor.append(response);
-			},
-			error: function(response){
-				//console.log(response);
-			}
-		});
+		displayPosts( $editor, { post_type: pt });
 
 	}
 
@@ -519,20 +502,108 @@ jQuery(document).ready(function($){
 	var loadToolbar = function( $panel, $editor ) {
 
 		// Search
-		$panel.find('input.perm-search').bind( 'blur', function(e){
+		$panel.delegate( 'button.perm-search', 'click', function(e){
+			e.preventDefault();
+			var term = $(this).siblings('input').first().val();
+			var args = {
+				'post_type': $editor.data('post-type'),
+				'query': {
+					s: term
+				}
+			};
+
+			displayPosts( $editor, args );
+
+		});
+
+		// Sort
+		$panel.delegate( 'select.perm-sort', 'change', function(e){
+			e.preventDefault();
+
+			var sort = $(this).val().split(':'),
+				orderby = sort[0],
+				order = sort[1] || 'DESC';
+
+			var args = {
+				'post_type': $editor.data('post-type'),
+				'query': {
+					orderby: orderby,
+					order: order
+				}
+			};
+
+			displayPosts( $editor, args );
+
+		});
+
+		// Load more
+		$panel.delegate('a.load-more', 'click', function(e) {
+			e.preventDefault();
+			var args = {
+				'post_type': $editor.data('post-type'),
+				'query': {
+					offset: $editor.data('posts-loaded')
+				}
+			};
+
+			displayPosts( $editor, args );
+
+		});
+
+		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
+			if( e.keyCode == 13 ) {
+				e.preventDefault();
+				$(this).siblings('button').first().click();
+			}
 		});
 
 		// Expand all
-		$panel.find('a.perm-tree-expand').bind( 'click', function(e) {
+		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
 			e.preventDefault();
 			$.jstree._reference($editor).open_all();
 		});
 		
 		// Collapse all
-		$panel.find('a.perm-tree-collapse').bind( 'click', function(e) {
+		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
 			e.preventDefault();
 			$.jstree._reference($editor).close_all();
 		});
+
+	}
+
+	var displayPosts = function( $editor, query ) {
+
+		var editorData = {
+			action : 'buse_render_post_list',
+			group_id : $('#group_id').val(),
+			query : {}
+		}
+
+		if( typeof query !== undefined )
+			$.extend( editorData, query );
+
+		$.ajax({
+			url : ajaxurl,
+			type: 'GET',
+			data: editorData,
+			success: function(response) {
+
+				if( editorData.query.offset ) {
+					$editor.append(response);
+				} else {
+					$editor.html(response);
+				}
+
+				// @todo send out notifcation of posts loaded
+
+				$editor.data('posts-loaded', $editor.find('li').length );
+
+			},
+			error: function(response){
+				//console.log(response);
+			}
+		});
+
 
 	}
 

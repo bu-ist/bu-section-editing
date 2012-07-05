@@ -46,8 +46,32 @@ abstract class BU_Permissions_Editor {
 	}
 
 	abstract protected function load();
+	abstract public function filter_posts( $posts );
 
-	abstract public function render();
+	public function query_posts( $args = array() ) {
+
+		// Setup posts to render
+		$defaults = array(
+			'post_type' => $this->post_type,
+			'post_status' => 'any',
+			'posts_per_page' => get_option('posts_per_page'),
+			'orderby' => 'modified',
+			'order' => 'DESC',
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		error_log('Query args: ' . print_r($args,true) );
+
+		$query = new WP_Query( $args );
+
+		$this->posts = $query->posts;
+
+		wp_reset_postdata();
+
+	}
+
+	abstract public function display_posts_list();
 
 	/**
 	 * Allows developers to opt-out for section editing feature
@@ -88,24 +112,11 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
 
-		// Setup posts to render
-		$query_args = array(
-			'post_type' => $this->post_type,
-			'post_status' => 'any',		// true?
-			'posts_per_page' => 10, 	// for now, eventually we'll make the river flow
-			'orderby' => 'modified',
-			'order' => 'DESC'
-			);
-
-		$query = new WP_Query( $query_args );
-
-		$this->posts = $query->posts;
-
-		wp_reset_postdata();
+		add_filter( 'the_posts', array( &$this, 'filter_posts' ) );
 
 	}
 
-	public function render() {
+	public function display_posts_list() {
 
 		$count = 0;
 
@@ -115,10 +126,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 			foreach( $this->posts as $id => $post ) {
 
-				$is_allowed = $this->group->can_edit( $post->ID );
-
 				// HTML checkbox
-				$is_checked = ( $is_allowed ) ? 'checked="checked"' : '';
+				$is_checked = ( $post->perm === 'allowed' ) ? 'checked="checked"' : '';
 				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms][%s][%s]\" value=\"allowed\" %s/>",
 					$this->post_type,
 					$post->ID,
@@ -139,13 +148,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				$odd_even = $count % 2;
 				$li_class = $odd_even ? 'odd' : 'even';
 
-				// Allowed / denied status
-				$status = ( $is_allowed ) ? 'allowed' : 'denied';
-
 				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s <a href=\"#\">%s %s %s</a></li>\n", 
 					$post->ID,
 					$li_class,
-					$status,
+					$post->perm,
 					$input,
 					$icon,
 					$post->post_title,
@@ -164,84 +170,95 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		
 	}
 
+	public function filter_posts( $posts ) {
+
+		foreach( $posts as $post ) {
+
+			$post->perm = ( $this->group->can_edit( $post->ID ) ) ? 'allowed' : 'denied';
+
+		}
+
+		return $posts;
+	}
+
 }
 
 /**
  * Isolates functionality related to generating group permission editor
  * 
- * @todo bu-navigation should not be required ... need to investigate alternatives
  */ 
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
-	protected function load() {
+	private $start_post = 0;
+	private $current_post = 0;
 
-		
-
-	}
+	protected function load() { }
 
 	// ____________________INTERFACE_________________________
 
-	/**
-	 * For investigation of sans bu-navigation approach to hierarchical post display
-	 */ 
-	public function render_alternate( $child_of = 0 ) {
+	public function query_posts( $args = array() ) {
 
-		$args = array(
+		$defaults = array(
+			'child_of' => 0,
 			'post_type' => $this->post_type,
-			'post_parent' => $child_of,
-			'posts_per_page' => -1,
-			'fields' => 'id=>parent'
 			);
 
-		$query = new WP_Query( $args );
+		$r = wp_parse_args( $args, $defaults );
 
-	}
+		// Search term
+		// @todo not yet implemented
+		if( !empty($r['s']) ) {
+			if(isset($r['child_of'])) unset($r['child_of']);
+			parent::query_posts( $args );
+			return;
+		}
 
-	public function render( $child_of = 0 ) {
+		$this->start_post = $this->current_post = $r['child_of'];
 
-		// Navigation filters
+		// We don't need these
 		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_exclude' );
 
+		// But we definitely need these
 		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
 		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
 		
-		$section_args = array( 'direction' => 'down', 'post_types' => $this->post_type );
+		$section_args = array( 'direction' => 'down', 'post_types' => $r['post_type'] );
 
-		// If we're looking for the first level, limit to 
-		if( $child_of == 0 ) $section_args['depth'] = 1;
-		else $section_args['depth'] = 0; // fetch all levels otherwise
+		// Don't load the whole tree at once
+		if( $this->start_post == 0 ) $section_args['depth'] = 1;
+		else $section_args['depth'] = 0;
 
-		// Get root pages
-		$sections = bu_navigation_gather_sections( $child_of, $section_args);
+		error_log(print_r($section_args,true));
 
+		// Get post IDs for this section
+		$sections = bu_navigation_gather_sections( $this->start_post, $section_args);
+
+		// Fetch posts
 		$page_args = array(
 			'sections' => $sections,
-			'post_types' => $this->post_type,
+			'post_types' => $r['post_type'],
 			'suppress_urls' => true
 			);
 
 		$root_pages = bu_navigation_get_pages( $page_args );
-		$pages_by_parent = bu_navigation_pages_by_parent($root_pages);
-
-		// Display posts (recursively)
-		$this->display_posts( $child_of, $pages_by_parent );
+		$this->posts = bu_navigation_pages_by_parent($root_pages);
 	
-		// Navigation filters 
+		// Remove our custom filters 
 		remove_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
 		remove_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
 	
 	}
 
-	public function display_posts( $parent_id, $pages_by_parent ) {
+	public function display_posts_list() {
 
-		if( array_key_exists( $parent_id, $pages_by_parent ) && ( count( $pages_by_parent[$parent_id] ) > 0 ) )
-			$posts = $pages_by_parent[$parent_id];
+		if( array_key_exists( $this->current_post, $this->posts ) && ( count( $this->posts[$this->current_post] ) > 0 ) )
+			$posts = $this->posts[$this->current_post];
 		else
 			$posts = array();
 
 		foreach( $posts as $post ) {
 
-			$has_children = array_key_exists( $post->ID, $pages_by_parent );
+			$has_children = array_key_exists( $post->ID, $this->posts );
 			$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
 			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
 			$rel = $post->perm;
@@ -249,9 +266,12 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 ?>
 	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" data-perm="<?php echo $post->perm; ?>" rel="<?php echo $rel; ?>">
 		<a href="#"><?php echo $title; ?></a>
-		<?php if( $has_children && $parent_id != 0 ): ?>
+		<?php 
+		if( $has_children && $this->start_post != 0 ): 
+			$this->current_post = $post->ID;
+		?>
 		<ul>
-			<?php $this->display_posts( $post->ID, $pages_by_parent ); ?>
+			<?php $this->display_posts_list(); ?>
 		</ul>
 	<?php endif; ?>
 	</li>

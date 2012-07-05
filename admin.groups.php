@@ -133,6 +133,10 @@ class BU_Groups_Admin {
 	 */
 	public static function transition_post_status( $new_status, $old_status, $post ) {
 
+		// Blacklist
+			// publish -> publish
+			// trash -> publish
+
 		// From draft|pending -> publish
 		if( in_array( $old_status, array( 'draft', 'pending' ) ) && $new_status == 'publish' ) {
 
@@ -157,6 +161,8 @@ class BU_Groups_Admin {
 			}
 
 		}
+
+		// Add reverse -- delete post meta on transition from publish
 
 	}
 
@@ -503,10 +509,10 @@ class BU_Groups_Admin_Ajax {
 
 		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
 		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
-		add_action('wp_ajax_buse_load_editor', array( __CLASS__, 'load_permissions_editor' ) );
+		add_action('wp_ajax_buse_search_posts', array( __CLASS__, 'search_posts' ) );
 		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
-		add_action('wp_ajax_buse_update_permissions_count', array( __CLASS__, 'update_permissions_count' ) );
 		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
+
 	}
 
 	/**
@@ -594,8 +600,7 @@ class BU_Groups_Admin_Ajax {
 
 			$group_id = intval(trim($_REQUEST['group_id']));
 			$post_type = trim($_REQUEST['post_type']);
-			$post_id = isset( $_REQUEST['post_id'] ) ? intval(trim($_REQUEST['post_id'], 'p')) : 0;
-			$count = isset($_REQUEST['count']) ? intval(trim($_REQUEST['count'])) : 0;
+			$query_vars = isset($_REQUEST['query']) ? $_REQUEST['query'] : array();
 
 			$post_type_obj = get_post_type_object( $post_type );
 
@@ -607,16 +612,40 @@ class BU_Groups_Admin_Ajax {
 			$perm_editor = null;
 			
 			if( $post_type_obj->hierarchical ) {
-
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
-
 			} else {
-
 				$perm_editor = new BU_Flat_Permissions_Editor( $group_id, $post_type_obj->name );
 
 			}
 
-			$perm_editor->render( $post_id );
+			$perm_editor->query_posts( $query_vars );
+			$perm_editor->display_posts_list();
+
+			die();
+
+		}
+
+	}
+
+	/**
+	 * Not yet in use
+	 * 
+	 * @todo implement
+	 */ 
+	static public function search_posts() { 
+
+		if( defined('DOING_AJAX') && DOING_AJAX ) {
+
+			$group_id = intval(trim($_REQUEST['group_id']));
+			$post_type = trim($_REQUEST['post_type']);
+			$search_term = trim($_REQUEST['search']) ? $_REQUEST['search'] : '';
+
+			$post_type_obj = get_post_type_object( $post_type );
+
+			if( is_null( $post_type_obj ) ) {
+				error_log('Bad post type: ' . $post_type );
+				die();
+			}
 
 			die();
 

@@ -16,11 +16,24 @@
 			?>
 			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>">
 				<div id="perm-toolbar-<?php echo $pt->name; ?>-top" class="perm-toolbar top">
-					<p class="alignleft"><input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo $hiearchical_class; ?>" > <button class="button-secondary">Search <?php echo $pt->label; ?></button></p>
 					<?php if( $hierarchical ): ?>
 					<p class="alignright">
-						<a href="" class="perm-tree-expand" data-target="perm-editor-<?php echo $pt->name; ?>">Expand All</a> | 
-						<a href="" class="perm-tree-collapse" data-target="perm-editor-<?php echo $pt->name; ?>">Collapse All</a>
+						<a href="#" class="perm-tree-expand" data-target="perm-editor-<?php echo $pt->name; ?>">Expand All</a> | 
+						<a href="#" class="perm-tree-collapse" data-target="perm-editor-<?php echo $pt->name; ?>">Collapse All</a>
+					</p>
+					<?php else: ?>
+					<p class="alignleft">
+						<input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo $hiearchical_class; ?>" > 
+						<button class="perm-search flat button-secondary">Search <?php echo $pt->label; ?></button>
+					</p>
+					<p class="alignright">
+						<label for="perm-sort-<?php echo $pt->name; ?>" class="inline">Sort by: </label>
+						<select id="perm-sort-<?php echo $pt->name; ?>" name="perm-action[<?php echo $pt->name; ?>][sort]" class="perm-sort">
+							<option value="modified">Last Modified</option>
+							<option value="date">Publish Date</option>
+							<option value="title:ASC">Title (Ascending)</option>
+							<option value="title:DESC">Title (Descending)</option>
+						</select>
 					</p>
 					<?php endif; ?>
 				</div>
@@ -33,7 +46,7 @@
 				</div>
 				<?php if( ! $hierarchical ): ?>
 				<div id="perm-toolbar-<?php echo $pt->name; ?>-bottom" class="perm-toolbar bottom">
-					<p class="alignleft"><a href="">Load More <?php echo $pt->label; ?>...</a></p>
+					<p class="alignleft"><a href="#" class="load-more">Load More <?php echo $pt->label; ?>...</a></p>
 				</div>
 				<?php endif; ?>
 			</div><!-- perm-panel-<?php echo $pt->name; ?> -->
