@@ -142,7 +142,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				// Allowed / denied status
 				$status = ( $is_allowed ) ? 'allowed' : 'denied';
 
-				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s %s <a href=\"#\">%s %s</a></li>\n", 
+				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s <a href=\"#\">%s %s %s</a></li>\n", 
 					$post->ID,
 					$li_class,
 					$status,
