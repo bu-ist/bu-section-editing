@@ -45,6 +45,9 @@ jQuery(function($) {
 	//bulk-edit
 	$('#bulk-edit #post_parent').bind('change', function(e) {
 		var parent_id = $('#post_parent option:selected').val();
+		if(parent_id == -1) {
+			return;
+		}
 
 		var data = {
 			action: 'buse_can_edit',
