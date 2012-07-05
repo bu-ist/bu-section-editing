@@ -42,6 +42,29 @@ jQuery(function($) {
 		});
 	});
 
+	//bulk-edit
+	$('#bulk-edit #post_parent').bind('change', function(e) {
+		var parent_id = $('#post_parent option:selected').val();
+
+		var data = {
+			action: 'buse_can_edit',
+			post_id: parent_id
+		}
+
+		$.ajax({
+			url: ajaxurl,
+			data: data,
+			type: 'POST',
+			success: function(response) {
+				if(response.can_edit == false) {
+					alert("You are not able to edit the parent.");
+					$('#bulk-edit #post_parent [value="-1"]').attr('selected', 'selected');
+				}
+			},
+			error: function(response) {
+			}
+		});
+	});
 
 	//inline-edit
 	$('#inline-edit #post_parent').bind('change', function(e) {
