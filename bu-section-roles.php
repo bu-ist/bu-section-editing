@@ -90,7 +90,7 @@ class BU_Section_Editor {
 
 		// Extra checks for any "allowed" users
 		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
-			
+
 			if( $post_id == 0 ) return false;
 
 			// Get groups associated with post
@@ -128,7 +128,7 @@ class BU_Section_Editor {
 
 	/**
 	 * Checks whether or not a specific user can publish a post
-	 * 
+	 *
 	 * First checks if a user can edit the post, if not, bubbles up
 	 * ancestor tree to determine based on inheritance.
 	 *
@@ -141,7 +141,7 @@ class BU_Section_Editor {
 
 		// Extra checks for any "allowed" users
 		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
-			
+
 			if( $post_id == 0 ) return false;
 
 			// If current post is already editable, we can publish
@@ -186,7 +186,7 @@ class BU_Section_Editor {
 
 	/**
 	 * Filter that modifies the caps based on the current state.
-	 * 
+	 *
 	 * @todo clean up all of this logic, figure out best approach to drafts
 	 *
 	 * @param type $caps
@@ -198,6 +198,10 @@ class BU_Section_Editor {
 	static function map_meta_cap($caps, $cap, $user_id, $args) {
 		global $post_ID;
 
+		// only add custom mapping to Section Editors
+		if( ! BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
+			return $caps;
+		}
 		// edit_page and delete_page get a post ID passed, but publish does not
 		if( isset( $args[0] ) ) {
 			$id = $args[0];
@@ -244,12 +248,16 @@ class BU_Section_Editor {
 		// global, and therefore the "Published" status is unavailable with this meta_cap check in place
 		if( in_array( $cap, self::get_caps_for_post_types( 'publish_posts', $post_types ) ) ) {
 			$parent_id = null;
-			$id = $post_ID;
+			if(isset($post_ID)) {
+				$id = $post_ID;
+			} else {
+				$id = $GLOBALS['post']->ID; // this may be too heavy handed.
+			}
 			$post = get_post($id);
 
 			// User is attempting to switch post parent while publishing
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
-				
+
 				$parent_id = (int) $_POST['parent_id'];
 
 				// Can't move published posts under sections they can't edit
@@ -261,7 +269,7 @@ class BU_Section_Editor {
 			}
 
 			// User is attempting to publish a post
-			if (!isset($id) || !self::can_publish($user_id, $id ) ) {
+			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
 				$caps = array('do_not_allow');
 				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
 			}
