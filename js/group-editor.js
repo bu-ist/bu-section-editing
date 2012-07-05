@@ -483,8 +483,6 @@ jQuery(document).ready(function($){
 
 			});
 
-		$editor.addClass('loaded');
-
 	};
 
 	var loadFlatEditor = function( $editor ) {
@@ -512,14 +510,35 @@ jQuery(document).ready(function($){
 			}
 		});
 
-		// Don't load twice
-		$editor.addClass('loaded');
+	}
+
+	// @todo
+	// create an object around the editor instances with a consistent
+	// API for these actions
+	var loadToolbar = function( $panel, $editor ) {
+
+		// Search
+		$panel.find('input.perm-search').bind( 'blur', function(e){
+		});
+
+		// Expand/collapse all
+		$panel.find('a.perm-tree-expand').bind( 'click', function(e) {
+			e.preventDefault();
+			$.jstree._reference($editor).open_all();
+		});
+				// Expand/collapse all
+		$panel.find('a.perm-tree-collapse').bind( 'click', function(e) {
+			e.preventDefault();
+			$.jstree._reference($editor).close_all();
+		});
 
 	}
 
 	/* Editor lazy-loading on tab click */
 
-	var loadPermissionsEditor = function( $editor ) {
+	var loadPermissionsPanel = function( $panel ) {
+
+		var $editor = $panel.find('.perm-editor').first();
 
 		if( $editor.hasClass('hierarchical') ) {
 			
@@ -529,22 +548,25 @@ jQuery(document).ready(function($){
 
 			loadFlatEditor( $editor );
 		}
+
+		loadToolbar( $panel, $editor );
+
+		$panel.addClass('loaded');
 	}
 
 	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
 
-		var $target = $($(this).attr('href'));
-		var $editor = $target.find('.perm-editor');
+		var $panel = $($(this).attr('href'));
 		
-		if( ! $editor.hasClass('loaded') )
-			loadPermissionsEditor($editor);
+		if( ! $panel.hasClass('loaded') )
+			loadPermissionsPanel( $panel );
 
 	});
 	
 	// Initial loading
-	var $initialEditor = $('#perm-panel-container').find('.perm-editor').first();
-	if( $initialEditor.length )
-		loadPermissionsEditor( $initialEditor );
+	var $initialPanel = $('#perm-panel-container').find('.perm-panel').first();
+	if( $initialPanel.length )
+		loadPermissionsPanel( $initialPanel );
 
 	
 	/**

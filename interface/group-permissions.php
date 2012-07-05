@@ -1,7 +1,4 @@
-<div id="group-permission-editor" class="buse-widget">
-	<div class="buse-widget-header"><h4>Content Types</h4></div>
-	<div class="buse-widget-body">
-	<!--<p><em>Allow/disallow members of this groups from editing/publishing content</em></p>-->
+<div id="group-permission-editor">
 	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
 	<?php if( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
@@ -12,26 +9,33 @@
 		</div>
 		<div id="perm-panel-container">
 			<?php foreach( $content_types as $index => $pt ): ?>
-			<?php $active = $index == 0 ? ' active' : ''; ?>
+			<?php 
+			$active = $index == 0 ? ' active' : ''; 
+			$hierarchical = $pt->hierarchical ? true : false;
+			$hiearchical_class = $hierarchical ? 'hierarchical' : 'flat';
+			?>
 			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>">
 				<div id="perm-toolbar-<?php echo $pt->name; ?>" class="perm-toolbar top">
-					<p class="alignleft"><select name="action"><option val="">Bulk Actions</option></select><input type="submit" class="button-secondary action"></p>
-					<p class="alignright"><input type="text" name="search" > <button class="button-secondary">Search <?php echo $pt->label; ?></button></p>
-				</div>
-				<div class="perm-scroll-area">
-					<?php if( $pt->hierarchical ): ?>
-					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
-					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor hierarchical" data-post-type="<?php echo $pt->name; ?>" >
-					</div>
-					<?php else: ?>
-					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor flat" data-post-type="<?php echo $pt->name; ?>">
-					</div>
+					<p class="alignleft"><input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]"class="perm-search <?php echo $hiearchical_class; ?>" > <button class="button-secondary">Search <?php echo $pt->label; ?></button></p>
+					<?php if( $hierarchical ): ?>
+					<p class="alignright">
+						<a href="" class="perm-tree-expand" data-target="perm-editor-<?php echo $pt->name; ?>">Expand All</a> | 
+						<a href="" class="perm-tree-collapse" data-target="perm-editor-<?php echo $pt->name; ?>">Collapse All</a>
+					</p>
 					<?php endif; ?>
 				</div>
+				<div class="perm-scroll-area">
+					<?php if( $hierarchical ): ?>
+					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
+					<?php endif; ?>
+					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>">
+					</div>
+				</div>
+				<?php if( ! $hierarchical ): ?>
 				<div id="perm-toolbar-<?php echo $pt->name; ?>" class="perm-toolbar bottom">
 					<p class="alignleft"><a href="">Load More <?php echo $pt->label; ?>...</a></p>
-					<p class="alignright"><a href="">Select All</a> | <a href="">Deselect All</a></p>
 				</div>
+				<?php endif; ?>
 			</div>
 			<?php endforeach; ?>
 		</div>

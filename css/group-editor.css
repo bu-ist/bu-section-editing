@@ -148,29 +148,14 @@
 	margin-bottom: 0;
 }
 
-#perm-panel-container {
-	border: 3px solid #A9AAA9;
-	margin: 0 5px 5px 1px;
-	border-bottom-left-radius: 5px;
-	border-bottom-right-radius: 5px;
-	clear: both;
-}
-
-#perm-panel-container .perm-scroll-area {
-	overflow-x: scroll;
-	overflow-y: visible;
-}
-
 #perm-tab-container .nav-tab {
-	color: #777;
-	font-weight: bold;
+	color: #21759B;
 	text-shadow: none;
 	padding: 4px 10px;
-	border-top-left-radius: 5px;
-	border-top-right-radius: 0;
 	margin-right: 3px;
-	border: 1px solid #bbb;
+	border: none;
 	margin-left:1px;
+	color: 
 }
 
 #perm-tab-container .nav-tab.inline {
@@ -178,11 +163,69 @@
 }
 
 #perm-tab-container .nav-tab-active {
-	background-color: #A9AAA9;
-	color: #fff;
-	border: none;
-	padding: 5px 10px;
-	margin-left: 1px;
+	font-weight: bold;
+	margin-bottom:-2px;
+	border: 1px solid #D3D3D3;
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	background-color: #ECECEC;
+}
+
+#perm-tab-container .nav-tab-active {
+		color: #464646;
+}
+
+#perm-panel-container {
+	border: 1px solid #D3D3D3;
+	background-color: white;
+	margin: 0 5px 5px 1px;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	border-top-right-radius: 5px;
+	clear: both;
+}
+
+.perm-toolbar {
+	padding: 17px 15px 14px 15px;
+	background-color: #DFDFDF;
+	background-image: -ms-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -moz-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -o-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#ECECEC),to(#DFDFDF));
+	background-image: -webkit-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: linear-gradient(top,#ECECEC,#ECECEC);
+}
+
+.perm-toolbar.top {
+	border-bottom: 1px solid #D3D3D3;
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+
+.perm-toolbar.bottom {
+	border-top: 1px solid #D3D3D3;
+	-webkit-border-bottom-left-radius: 3px;
+	-webkit-border-bottom-right-radius: 3px;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+
+.perm-toolbar input[type="text"] {
+	border-color: #999999;
+}
+
+.perm-toolbar p {
+	font-style: normal;
+}
+
+
+#perm-panel-container .perm-scroll-area {
+	overflow-x: scroll;
+	overflow-y: visible;
 }
 
 .perm-editor.hierarchical {
@@ -249,7 +292,7 @@
 }
 
 .perm-list.flat li {
-	padding: 10px;
+	padding: 10px 15px;
 	margin: 0;
 	position: relative;
 	border-top: 1px solid #dfdfdf;
@@ -264,26 +307,7 @@
 }
 
 #perm-panel-container .perm-list input[type="checkbox"] {
-	display: inline;
-	width: auto;
-	float: left;
 	margin-right: 10px;
-}
-
-.perm-toolbar {
-	padding: 10px 7px;
-}
-
-.perm-toolbar.top {
-	border-bottom: 2px solid #aaa;
-}
-
-.perm-toolbar.bottom {
-	border-top: 2px solid #aaa;
-}
-
-.perm-toolbar p {
-	font-style: normal;
 }
 
 /* Overlay */
