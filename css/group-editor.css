@@ -527,6 +527,8 @@
 }
 
 /* Clearing */
+#section-group-editor:after,
+#section-group-editor .form-wrap:after,
 #panel-container:after,
 #group-stats-widget .actions:after,
 #perm-tab-container:after,
