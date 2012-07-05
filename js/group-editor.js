@@ -234,7 +234,7 @@ jQuery(document).ready(function($){
 	$('#perm-panel-container').click(function(e){
 
 		/* For hierarchical permission editors */
-		var $perms_hierarchical = $(this).find('.perm-panel.active > .perm-editor.hierarchical');
+		var $perms_hierarchical = $(this).find('.perm-panel.active .perm-editor.hierarchical');
 
 		if( $perms_hierarchical.length > 0 ) {
 
@@ -243,7 +243,8 @@ jQuery(document).ready(function($){
 			as the jstree method select_node does not allows us to stop click
 			events from bubbling up on selection
 			*/
-			if( $(e.target).hasClass('jstree-clicked') )
+
+			if( $(e.target).hasClass('jstree-clicked') || $(e.target).parents('.jstree-clicked').length )
 				return;
 
 			var $inst = $.jstree._reference($perms_hierarchical);
@@ -521,12 +522,13 @@ jQuery(document).ready(function($){
 		$panel.find('input.perm-search').bind( 'blur', function(e){
 		});
 
-		// Expand/collapse all
+		// Expand all
 		$panel.find('a.perm-tree-expand').bind( 'click', function(e) {
 			e.preventDefault();
 			$.jstree._reference($editor).open_all();
 		});
-				// Expand/collapse all
+		
+		// Collapse all
 		$panel.find('a.perm-tree-collapse').bind( 'click', function(e) {
 			e.preventDefault();
 			$.jstree._reference($editor).close_all();
@@ -573,7 +575,7 @@ jQuery(document).ready(function($){
 	 * The user has allowed/denied a specific node
 	 */
 	var updateTreePermissions = function( $node, inst ) {
-	
+
 		// When button is clicked, deselect parent li
 		inst.deselect_node($node);
 

@@ -61,11 +61,13 @@
 }
 
 #stats-container {
+	position: relative;
 	width: 350px;
 	padding-top: 2em;
 	padding-left: 25px;
 	float: right;
 	clear: right;
+	z-index: 20;
 }
 
 #panel-container {
