@@ -1,7 +1,7 @@
 <?php
 
 /*
-@todo 
+@todo
 - Need to add an edit lock to editing groups (look at navman)
 - Keep tab selected when saving
 */
@@ -21,7 +21,7 @@ class BU_Groups_Admin {
 	 */
 	public static function register_hooks() {
 		global $wp_version;
-		
+
 		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
 		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
@@ -29,40 +29,40 @@ class BU_Groups_Admin {
 
 		// for filtering posts by editable status per user
 		// parses query to add meta_query, which was a known
-		// bug pre-3.2 -- a workaround may exist, but i 
+		// bug pre-3.2 -- a workaround may exist, but i
 		// haven't dug into it yet.
 		if( version_compare( $wp_version, '3.2', '>=' ) ) {
 			add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
 			add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
 			add_action( 'parse_query', array( __CLASS__, 'parse_query' ) );
-		} 
+		}
 
 	}
 
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
-	 * 
-	 */ 
+	 *
+	 */
 	public static function add_edit_views() {
 
 		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
 
 			$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
-				
+
 			foreach( $supported_post_types as $post_type ) {
 				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
 			}
-			
+
 		}
 
 	}
 
 	/**
 	 * Custom bucket for filter posts table to display only posts editable by current user
-	 * 
+	 *
 	 * @todo figure out "current" class
-	 * 
-	 */ 
+	 *
+	 */
 	public static function section_editing_views( $views ) {
 		global $post_type_object;
 
@@ -85,7 +85,7 @@ class BU_Groups_Admin {
 
 	/**
 	 * Add custom query var for filtering posts by editable status
-	 */ 
+	 */
 	public static function query_vars( $query_vars ) {
 		$query_vars[] = 'editable_by';
 		return $query_vars;
@@ -119,15 +119,15 @@ class BU_Groups_Admin {
 
 			$query->set( 'meta_query', $meta_query );
 		}
-	
+
 	}
 
 	/**
 	 * Runs when a post is updated and the status has changed
-	 * 
+	 *
 	 * Currently, we are looking for any transition to and from 'publish', and
 	 * updating the groups post meta accordingly
-	 * 
+	 *
 	 * Once we decide how to handle drafts, we will want to switch this logic to
 	 * add group post meta to any 'new' post if it is saved in an editable location
 	 */
@@ -141,7 +141,7 @@ class BU_Groups_Admin {
 
 				$group_controller = BU_Edit_Groups::get_instance();
 				$groups = $group_controller->get_groups();
-				
+
 				$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
 				$parent_groups = get_post_meta( $post->post_parent, BU_Edit_Group::META_KEY );
 
@@ -153,7 +153,7 @@ class BU_Groups_Admin {
 					}
 
 				}
-				
+
 			}
 
 		}
@@ -203,7 +203,7 @@ class BU_Groups_Admin {
 			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery'), '1.0-rc3' );
 
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
-			// @see https://github.com/jquery/jquery-ui/pull/254 
+			// @see https://github.com/jquery/jquery-ui/pull/254
 			// @see http://bugs.jqueryui.com/ticket/5645
 			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position.js' ), array('jquery') );
 
@@ -221,7 +221,7 @@ class BU_Groups_Admin {
 
 		}
 
-		if( in_array($hook, array('post.php', 'post-new.php') ) ) {
+		if( in_array($hook, array('post.php', 'post-new.php', 'edit.php') ) ) {
 			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post.js', __FILE__), array('jquery'), '1.0', true);
 		}
 
@@ -277,7 +277,7 @@ class BU_Groups_Admin {
 							$group_data['perms'][$post_type] = array();
 
 						$data = $group_data['perms'][$post_type];
-						
+
 						// Convert JSON string to array for hierarchical post types
 						if( is_string( $data ) ) {
 							$post_ids = json_decode( stripslashes( $data ), true );
@@ -583,11 +583,11 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Renders an unordered list of posts for specified post type, optionally starting at a specifc post
-	 * 
+	 *
 	 * @uses BU_Hierarchical_Permissions_Editor or BU_Flat_Permissions_Editor depending on post_type
-	 * 
+	 *
 	 * @todo add nonce
-	 */ 
+	 */
 	static public function render_post_list() {
 
 		if( defined('DOING_AJAX') && DOING_AJAX ) {
@@ -605,7 +605,7 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$perm_editor = null;
-			
+
 			if( $post_type_obj->hierarchical ) {
 
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );

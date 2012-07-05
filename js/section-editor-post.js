@@ -41,6 +41,39 @@ jQuery(function($) {
 			}
 		});
 	});
+
+
+
+	// need to manipulate the post_status select box
+
+	//inline-edit
+	$('#inline-edit #post_parent').bind('change', function(e) {
+		var parent_id = $('#post_parent option:selected').val();
+		var id = $(this).closest('tr').attr('id');
+		var parts = id.split('-');
+		var post_id =  parts[parts.length - 1];
+
+		var data = {
+			action: 'buse_can_edit',
+			post_id: post_id,
+			parent_id: parent_id
+		}
+
+		$.ajax({
+			url: ajaxurl,
+			data: data,
+			type: 'POST',
+			success: function(response) {
+				if(response.can_edit == false) {
+					alert("You are not able to edit the parent, so you cannot place this page under the parent.");
+					$('#post_parent [value="' + response.original_parent + '"]').attr('selected', 'selected');
+				}
+			},
+			error: function(response) {
+			}
+		});
+	});
+
 });
 
 
