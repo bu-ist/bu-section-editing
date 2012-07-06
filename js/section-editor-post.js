@@ -113,12 +113,15 @@ jQuery(function($) {
 			id: id,
 			success: function(response) {
 				inlineEditPost.post_edit(this.id);
+				var edit = '#edit-' + response.post_id;
 				if(response.can_edit == true) {
-					$('#edit-' + response.post_id + ' [name="_status"]').prepend('<option value="publish">Published</option>');
+					if($(edit + ' [name="_status"] [value="publish"]').length == 0) {
+						$(edit + ' [name="_status"]').prepend('<option value="publish">Published</option>');
+					}
 				} else {
-					$('#edit-' + response.post_id +  ' [name="_status"] [value="publish"]').remove();
+					$(edit + ' [name="_status"] [value="publish"]').remove();
 				}
-				$('#edit-' + response.post_id + ' [name="_status"] [value="' + response.status + '"]').attr('selected', 'selected');
+				$(edit + ' [name="_status"] [value="' + response.status + '"]').attr('selected', 'selected');
 			},
 			error: function(response) {
 			}
