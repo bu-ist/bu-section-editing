@@ -44,11 +44,6 @@
 					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>">
 					</div><!-- perm-editor-<?php echo $pt->name; ?> -->
 				</div>
-				<?php if( ! $hierarchical ): ?>
-				<div id="perm-toolbar-<?php echo $pt->name; ?>-bottom" class="perm-toolbar bottom">
-					<p class="alignleft"><a href="#" class="load-more">Load More <?php echo $pt->label; ?>...</a></p>
-				</div>
-				<?php endif; ?>
 			</div><!-- perm-panel-<?php echo $pt->name; ?> -->
 			<?php endforeach; ?>
 		</div><!-- perm-panel-container -->

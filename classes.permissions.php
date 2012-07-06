@@ -54,7 +54,7 @@ abstract class BU_Permissions_Editor {
 		$defaults = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',
-			'posts_per_page' => get_option('posts_per_page'),
+			'posts_per_page' => -1, // will be get_option('posts_per_page') when pagination is implemented
 			'orderby' => 'modified',
 			'order' => 'DESC',
 			);

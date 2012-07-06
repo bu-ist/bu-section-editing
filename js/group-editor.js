@@ -536,20 +536,6 @@ jQuery(document).ready(function($){
 
 		});
 
-		// Load more
-		$panel.delegate('a.load-more', 'click', function(e) {
-			e.preventDefault();
-			var args = {
-				'post_type': $editor.data('post-type'),
-				'query': {
-					offset: $editor.data('posts-loaded')
-				}
-			};
-
-			displayPosts( $editor, args );
-
-		});
-
 		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
 			if( e.keyCode == 13 ) {
 				e.preventDefault();
