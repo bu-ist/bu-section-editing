@@ -6,12 +6,47 @@
  Author: Boston University (IS&T)
 */
 
+/**
+Copyright 2012 by Boston University
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+**/
+
+/*
+@author Gregory Cornelius <gcorne@bu.edu>
+@author Mike Burns <mgburns@bu.edu>
+*/
+
 require_once(dirname(__FILE__) . '/bu-section-roles.php');
 // @todo only load admin code when is_admin()
 require_once(dirname(__FILE__) . '/admin.groups.php');
 require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
 require_once(dirname(__FILE__) . '/classes.upgrade.php');
+
+if(!defined('BU_INCLUDES_PATH')) {
+	// @todo We should try to come up with a way of supporting 
+	// bu-includes that makes use of submodules or some sort of simple build script
+	if(!defined('BU_NAVIGATION_LIB_LOADED') || BU_NAVIGATION_LIB_LOADED != true ) {
+		require_once(dirname(__FILE__) . '/lib/bu-navigation/bu-navigation.php');
+    }
+} else {
+	require_once(BU_INCLUDES_PATH . '/bu-navigation/bu-navigation.php');
+}
+
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
@@ -22,9 +57,6 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 // the status could be used to propagate the ACL of the parent to the new draft if the user has placed
 // the draft in an editable location
 
-// @todo look for navigation library within the plugin if BU_INCLUDES_PATH is 
-// undefined. We should also try to come up with a way of supporting 
-// bu-includes that makes use of submodules or some sort of simple build script
 
 /**
  * Plugin entry point
