@@ -38,6 +38,35 @@ jQuery(function($) {
 		});
 	});
 
+	$('#pageparentdiv #parent_id').bind('change', function(e) {
+		var parent_id = $('#parent_id option:selected').val();
+		var post_id = $('[name="post_ID"]').val();
+
+		var data = {
+			action: 'buse_can_move',
+			post_id: post_id,
+			parent_id: parent_id
+		}
+
+		$.ajax({
+			url: ajaxurl,
+			data: data,
+			type: 'POST',
+			success: function(response) {
+				if(response.can_edit == false) {
+					alert("You are not able to edit the parent, so you cannot place this page under the parent.");
+					var original_parent = response.original_parent;
+					if(original_parent == 0) {
+						original_parent = '';
+					} 
+					$('#pageparentdiv #parent_id [value="' + original_parent + '"]').attr('selected', 'selected');
+				}
+			},
+			error: function(response) {
+			}
+		});
+	});
+
 	//bulk-edit
 	$('#bulk-edit #post_parent').bind('change', function(e) {
 		var parent_id = $('#post_parent option:selected').val();
@@ -92,6 +121,8 @@ jQuery(function($) {
 			}
 		});
 	});
+
+
 	if(window.inlineEditPost === undefined) {
 		return;
 	}
