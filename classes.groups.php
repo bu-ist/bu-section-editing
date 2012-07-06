@@ -94,7 +94,7 @@ class BU_Edit_Groups {
 
 		// Process input
 		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-		$args['description'] = sanitize_text_field( stripslashes( $args['description'] ) );
+		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
 		foreach( $args['perms'] as $post_type => $post_statuses ) {
@@ -149,7 +149,7 @@ class BU_Edit_Groups {
 
 			// Process input
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-			$args['description'] = sanitize_text_field( stripslashes( $args['description'] ) );
+			$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
 			foreach( $args['perms'] as $post_type => $post_statuses ) {
