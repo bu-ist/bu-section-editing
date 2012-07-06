@@ -38,9 +38,7 @@
 					<?php endif; ?>
 				</div>
 				<div class="perm-scroll-area">
-					<?php if( $hierarchical ): ?>
 					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
-					<?php endif; ?>
 					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>">
 					</div><!-- perm-editor-<?php echo $pt->name; ?> -->
 				</div>

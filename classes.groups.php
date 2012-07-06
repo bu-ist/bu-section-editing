@@ -391,6 +391,8 @@ class BU_Edit_Groups {
 	/**
 	 * Update permissions for a group
 	 * 
+	 * @todo move this to a BU_Group_Permissions class
+	 * 
 	 * @param int $group_id ID of group to modify ACL for
 	 * @param array $permissions Permissions, as an associative array indexed by post type
 	 */ 
@@ -402,118 +404,69 @@ class BU_Edit_Groups {
 
 		foreach( $permissions as $post_type => $new_perms ) {
 
-			// error_log('= Updating permissions for: ' . $post_type . '=' );
 			if( ! is_array( $new_perms ) ) {
 				error_log( "Unexpected value found while updating permissions: $new_perms" );
 				continue;
 			}
 
-			// For later need to differentiate between flat/hierarchical post types
-			$post_type_obj = get_post_type_object( $post_type );
+			// Incoming allowed posts
+			$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
 
-			if( is_null( $post_type_obj ) ) {
-				error_log('Bad post type!');
-				continue;
-			}
+			if( ! empty( $allowed_ids ) ) {
 
-			// Hierarchical post types
-			if( $post_type_obj->hierarchical ) {
-
-				// Incoming allowed posts
-				$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
-
-				if( ! empty( $allowed_ids ) ) {
-
-					$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
-						$wpdb->postmeta,
-						implode( ',', $allowed_ids ),
-						BU_Edit_Group::META_KEY,
-						$group_id
-						);
-
-					$previously_allowed = $wpdb->get_col( $allowed_select );
-					$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
-
-					foreach( $additions as $post_id ) {
-
-						add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-
-					}
-
-				}
-
-				// Incoming restricted posts
-				$denied_ids = array_keys( $permissions[$post_type], 'denied' );
-
-				if( ! empty( $denied_ids ) ) {
-
-					// Select meta_id's for removal based on incoming posts
-					$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
-						$wpdb->postmeta,
-						implode( ',', $denied_ids ),
-						BU_Edit_Group::META_KEY,
-						$group_id
-						);
-
-					$denied_meta_ids = $wpdb->get_col( $denied_select );
-
-					// Bulk deletion
-					if( ! empty( $denied_meta_ids ) ) {
-
-						$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
-							$wpdb->postmeta,
-							implode(',', $denied_meta_ids )
-							);
-
-						// Remove allowed status in one query
-						$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
-
-						// Purge cache
-						foreach( $denied_meta_ids as $meta_id ) {
-							wp_cache_delete( $meta_id, 'post_meta' );
-						}
-
-					}
-
-				}
-
-			} else {
-
-				// Fetch all existing permissions for this post type for possible removal
-				$prev_perm_query = sprintf("SELECT post_id, post_type, meta_value FROM %s INNER JOIN %s AS p ON p.ID = post_id WHERE meta_key = '%s' AND meta_value = '%s' AND p.post_type = '%s'", 
+				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
 					$wpdb->postmeta,
-					$wpdb->posts, 
-					BU_Edit_Group::META_KEY, 
-					$group_id,
-					$post_type
+					implode( ',', $allowed_ids ),
+					BU_Edit_Group::META_KEY,
+					$group_id
 					);
 
-				$prev_perms = $wpdb->get_results( $prev_perm_query, OBJECT_K );
+				$previously_allowed = $wpdb->get_col( $allowed_select );
+				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
 
-				// Create list of all unique post ID's with permissions assigned, new or existing
-				$post_ids = array_merge( array_keys( $prev_perms ), array_keys( $new_perms ) );
-				$post_ids = array_unique( $post_ids );
+				foreach( $additions as $post_id ) {
 
-				foreach( $post_ids as $post_id ) {
-				
-					// Get new status, if there is one
-					$status = array_key_exists( $post_id, $new_perms ) ? $new_perms[$post_id] : 'denied';
-
-					// No new value = post is now denied, delete existing perms
-					if( $status == 'allowed' && ! array_key_exists( $post_id, $prev_perms ) ) {
-
-							add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-
-					} else if( $status == 'denied' ) {
-
-							delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-
-					}
+					add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 
 				}
 
 			}
 
+			// Incoming restricted posts
+			$denied_ids = array_keys( $permissions[$post_type], 'denied' );
+
+			if( ! empty( $denied_ids ) ) {
+
+				// Select meta_id's for removal based on incoming posts
+				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+					$wpdb->postmeta,
+					implode( ',', $denied_ids ),
+					BU_Edit_Group::META_KEY,
+					$group_id
+					);
+
+				$denied_meta_ids = $wpdb->get_col( $denied_select );
+
+				// Bulk deletion
+				if( ! empty( $denied_meta_ids ) ) {
+
+					$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
+						$wpdb->postmeta,
+						implode(',', $denied_meta_ids )
+						);
+
+					// Remove allowed status in one query
+					$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
+
+					// Purge cache
+					foreach( $denied_ids as $post_id ) {
+						wp_cache_delete( $post_id, 'post_meta' );
+					}
+
+				}
+
+			}
+			
 		}
 
 	}

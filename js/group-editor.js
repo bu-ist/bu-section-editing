@@ -286,36 +286,30 @@ jQuery(document).ready(function($){
 		e.stopPropagation();
 
 		// Keep track of current selection
-		var post_type = $(this).closest('.perm-editor.flat').data('post-type');
+		var $editor = $(this).closest('.perm-editor.flat');
+		var post_type = $editor.data('post-type');
 		var $target_a = $(this);
-		var $target_li = $target_a.parent('li');
+		var $post = $target_a.parent('li');
 
 		$target_a.addClass('perm-item-clicked')
 
 		var callbck = function(e) {
 
 			// Remove the overlay
-			removeOverlay($target_li);
-
-			// Toggle checkbox
-			var $checkbox = $target_li.children('input').first();
-			$checkbox.attr('checked', ! $checkbox.attr('checked') );
-
-			if( $checkbox.attr('checked') )
-				updatePermStats( 1, post_type );
-			else
-				updatePermStats( -1, post_type );
+			removeOverlay($post);
 
 			// Remove selection
 			$target_a.removeClass('perm-item-clicked');
 
 			// Toggle state
-			toggleState( $target_li );
+			toggleState( $post );
+			
+			processUpdatesForPost( $post, $editor );
 
 		}
 
 		// Remove any previously active overlays
-		$target_li.siblings('li').children('.perm-item-clicked').each( function() {
+		$post.siblings('li').children('.perm-item-clicked').each( function() {
 
 			var $parent_li = $(this).parents('li').first();
 
@@ -325,8 +319,8 @@ jQuery(document).ready(function($){
 		});
 
 		// Create a new one for the current selection if none existed
-		if( $target_li.children('.edit-node').length == 0 )
-			createOverlay( $target_li, callbck );
+		if( $post.children('.edit-node').length == 0 )
+			createOverlay( $post, callbck );
 		
 	});
 
@@ -457,8 +451,13 @@ jQuery(document).ready(function($){
 
 				// Event handler for permissions update
 				var actionCallback = function( e ) {
-					var $el = $(this);
-					updateTreePermissions( $el, data.inst );
+
+					var $post = $(this);
+
+					data.inst.deselect_node( $post );
+					
+					updatePostPermissions( $post, data.inst.get_container() );
+					
 				}
 
 				if( data.inst.is_selected( data.rslt.obj ) ) {
@@ -491,6 +490,31 @@ jQuery(document).ready(function($){
 	var loadFlatEditor = function( $editor ) {
 		
 		var pt = $editor.data('post-type');
+
+		$editor.bind( 'posts-loaded', function(e, data ) {
+			console.log('Posts loaded!');
+
+			// Merge incoming server state with pending edits
+			var $pending = $(this).siblings('input.buse-edits').first();
+			console.log('Pending edits: ' );
+			console.log( $pending );
+
+			if( $pending.val().length === 0 )
+				return;
+
+			var edits = JSON.parse($pending.val());
+
+			for( post_id in edits ) {
+				var $p = $editor.find('#p' + post_id );
+
+				if( $p.length ) {
+					console.log('Switching state for post ID: ' + post_id + ' to ' + edits[post_id] );	
+					console.log($p);
+					$p.attr( 'rel', edits[post_id] );
+				}
+			}
+
+		});
 
 		displayPosts( $editor, { post_type: pt });
 
@@ -580,6 +604,9 @@ jQuery(document).ready(function($){
 					$editor.html(response);
 				}
 
+				// Modify icons looking for edits
+				$editor.trigger( 'posts-loaded', { posts : response } );
+
 				// @todo send out notifcation of posts loaded
 
 				$editor.data('posts-loaded', $editor.find('li').length );
@@ -590,8 +617,9 @@ jQuery(document).ready(function($){
 			}
 		});
 
-
 	}
+
+	$('#group-stats-widget')
 
 	/* Editor lazy-loading on tab click */
 
@@ -630,41 +658,48 @@ jQuery(document).ready(function($){
 	
 	/**
 	 * The user has allowed/denied a specific node
+	 *
+	 * @todo make this work for both hierarchical and flat post types
 	 */
-	var updateTreePermissions = function( $node, inst ) {
+	var updatePostPermissions = function( $post, $editor ) {
 
-		// When button is clicked, deselect parent li
-		inst.deselect_node($node);
+		if( $editor.hasClass('hierarchical') ) {
 
-		var post_type = inst.get_container().data('post-type');
+			var $jstree = $.jstree._reference( $editor );
 
-		// Possibly load tree
-		if( $node.parent().parent().hasClass('hierarchical') ) {
+			if( $post.hasClass('jstree-closed') ) {
 
-			// Need to load node first
-			inst.open_node( $node, function() {
+				// Need to load node first
+				$jstree.open_node( $post, function() {
 
-				inst.open_all( $node );
+					$jstree.open_all( $post );
 
-				// Toggle state
-				toggleState( $node );
+					// Toggle state
+					toggleState( $post );
 
-				// Diff the changes
-				processUpdatesForNode( $node, post_type );
+					// Diff the changes
+					processUpdatesForPost( $post, $editor );
 
-			} );
+				} );
 
-		} else {
+			} else {
 
-			// Reveal children
-			inst.open_all( $node );
-				
+					$jstree.open_all( $post );
+
+					// Toggle state
+					toggleState( $post );
+
+					// Diff the changes
+					processUpdatesForPost( $post, $editor );
+			}
+
+		} else { // Flat editor
+			
 			// Toggle state
-			toggleState( $node );
-
-			// Diff the changes
-			processUpdatesForNode( $node, post_type );
-
+			toggleState( $post );
+			
+			processUpdatesForPost( $post, $editor );
+		
 		}
 
 	}
@@ -696,50 +731,54 @@ jQuery(document).ready(function($){
 	}
 
 	/**
-	 * Process changes to hierarchical permissions
-	 * 
-	 * Run whenever a node state is toggled
-	 */ 
-	var processUpdatesForNode = function( $node, post_type ) {
+	 * @todo Combine this with processUpdatesForNode
+	 */
+	var processUpdatesForPost = function( $post, $editor ) {
 
-		var id = $node.attr('id').substr(1);
-		var status = $node.attr('rel');
+		var id = $post.attr('id').substr(1);
+		var status = $post.attr('rel');
+		var post_type = $editor.data('post-type');
 
 		// Track changes
-		var edits = getExistingEdits(post_type);
+		var edits = getExistingEdits( post_type );
 		var count = 0;
 
 		// Set our persistent data attr first
-		$node.data('perm',status);
+		$post.data('perm',status);
 		edits[id] = status;
 
 		if( status == 'allowed' ) count += 1;
 		else count -= 1;
 
-		// Fetch all children
-		var $children = $node.find('li');
+		// @todo If post_type is hierarchical, process updates for children
+		if( $editor.hasClass('hierarchical') ) {
 
-		// Propogate permissions to children
-		$children.each(function(index, child) {
+			// Fetch all children
+			var $children = $post.find('li');
 
-			var existing_perm = $(child).data('perm');
-			var child_id = $(this).attr('id').substr(1);
+			// Propogate permissions to children
+			$children.each(function(index, child) {
 
-			if( existing_perm != status ) {
-				$(child).data('perm', status);
-				$(child).attr('rel', status);
+				var existing_perm = $(child).data('perm');
+				var child_id = $(this).attr('id').substr(1);
 
-				edits[child_id] = status;
+				if( existing_perm != status ) {
+					$(child).data('perm', status);
+					$(child).attr('rel', status);
 
-				if( status == 'allowed' ) count += 1;
-				else count -= 1;
+					edits[child_id] = status;
 
-			}
+					if( status == 'allowed' ) count += 1;
+					else count -= 1;
 
-		});
+				}
 
-		// Update ancestors visiual appearance to reflect allowed children where necessary
-		adjustSectionPermissionIcons( $node )
+			});
+
+			// Update ancestors visiual appearance to reflect allowed children where necessary
+			adjustSectionPermissionIcons( $post );
+
+		}
 
 		// Save edits
 		commitEdits( edits, post_type );
@@ -831,7 +870,9 @@ jQuery(document).ready(function($){
 	/* Perm Stats */
 
 	/**
-	 * Stats widget -- permissions count 
+	 * Stats widget -- permissions count
+	 *
+	 * @todo redo this logic
 	 */
 	var updatePermStats = function( count, post_type ) {
 

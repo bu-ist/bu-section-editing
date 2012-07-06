@@ -45,16 +45,12 @@ abstract class BU_Permissions_Editor {
 
 	}
 
-	abstract protected function load();
-
-	abstract public function filter_posts( $posts );
-
 	public function query( $args = array() ) {
 
 		$defaults = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',
-			'posts_per_page' => -1, // will be get_option('posts_per_page') when pagination is implemented
+			'posts_per_page' => -1, // @todo get_option('posts_per_page') when pagination is implemented
 			'orderby' => 'modified',
 			'order' => 'DESC',
 			);
@@ -69,10 +65,18 @@ abstract class BU_Permissions_Editor {
 
 	}
 
+	abstract public function get_posts( $post_id = 0 );
+	abstract public function filter_posts( $posts );
 	abstract public function display();
+
+	abstract protected function load();
+	abstract protected function format_post( $post, $has_children = false );
+	abstract protected function get_post_markup( $p );
 
 	/**
 	 * Allows developers to opt-out for section editing feature
+	 * 
+	 * @todo move this to a BU_Group_Permissions class
 	 */ 
 	public static function get_supported_post_types( $output = 'objects') {
 
@@ -114,77 +118,168 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	}
 
 	/**
-	 * @todo rewrite to allow for multiple output formats
+	 * Display posts using designated output format
 	 */ 
 	public function display() {
 
-		$count = 0;
+		switch( $this->format ) {
+
+			case 'json':
+				$output = $this->get_posts();
+				echo json_encode( $output );
+				break;
+
+			case 'html':default:
+				echo $this->get_posts();
+				break;
+		}
+
+	}
+
+	/**
+	 * Get posts intended for display by permissions editors
+	 */ 
+	public function get_posts( $post_id = 0 ) {
+
+		$posts = array();
 
 		if( ! empty( $this->posts ) ) {
 
-			echo "<ul id=\"{$this->post_type}-perm-list\" class=\"perm-list flat\">\n";
+			$count = 0;
+
+			if( $this->format == 'html' )
+				$posts = '<ul class="perm-list flat">';
 
 			foreach( $this->posts as $id => $post ) {
 
-				// HTML checkbox
-				$is_checked = ( $post->perm === 'allowed' ) ? 'checked="checked"' : '';
-				$input = sprintf( "<input type=\"checkbox\" name=\"group[perms][%s][%s]\" value=\"allowed\" %s/>",
-					$this->post_type,
-					$post->ID,
-					$is_checked
-					 );
+				// Format post data for permissions editor display
+				$p = $this->format_post( $post );
 
-				// Permission status
-				$icon = "<ins class=\"flat-perm-icon\"> </ins>\n";
+				// Alternating table rows for prettiness
+				$alt_class = $count % 2 ? 'odd' : 'even';
+				$p['attr']['class'] = $alt_class;
 
-				// Date info
-				if( $post->post_status == 'publish' )
-					$post_status = " - Published " . $post->post_date;
-				else if( $post->post_status == 'draft' )
-					$post_status = " - <em>Draft</em>";
+				// Add this post with the specified format
+				switch( $this->format ) {
 
+					case 'json':
+						array_push( $posts, $p );
+						break;
 
-				// Alternating backgrounds
-				$odd_even = $count % 2;
-				$li_class = $odd_even ? 'odd' : 'even';
-
-				$li = sprintf( "<li id=\"p%s\" class=\"%s\" rel=\"%s\">%s <a href=\"#\">%s %s %s</a></li>\n", 
-					$post->ID,
-					$li_class,
-					$post->perm,
-					$input,
-					$icon,
-					$post->post_title,
-					$post_status
-					);
-
-				echo $li;
+					case 'html': default:
+						$posts .= $this->get_post_markup( $p );
+						break;
+				}
 
 				$count++;
 
 			}
+
+			if( $this->format == 'html' )
+				$posts .= "</ul>";
 			
-			echo "</ul>\n";
-
-		}
-		
-	}
-
-	public function filter_posts( $posts ) {
-
-		foreach( $posts as $post ) {
-
-			$post->perm = ( $this->group->can_edit( $post->ID ) ) ? 'allowed' : 'denied';
-
 		}
 
 		return $posts;
+		
+	}
+
+	/**
+	 * Takes an array of post data formatted for permissions editor output,
+	 * converts to HTML markup
+	 * 
+	 * The format of this markup lines up with default jstree markup
+	 */ 
+	public function get_post_markup( $p ) {
+
+		// Permission status
+		$icon = "<ins class=\"{$p['data']['icon']}\"> </ins>\n";
+
+		// Publish information
+		$meta = '';
+
+		switch( $p['metadata']['post_status'] ) {
+
+			case 'publish':
+				$meta = ' &mdash; Published on ' . $p['metadata']['post_date'];
+				break;
+
+			case 'draft':
+				$meta = ' &mdash; <em>Draft</em>';
+				break;
+
+		}
+
+		// Anchor
+		$a = sprintf( "<a href=\"#\">%s %s%s</a>",
+			$icon,
+			$p['data']['title'],
+			$meta
+		 );
+
+		// Post list item
+		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\">%s</li>\n", 
+			$p['attr']['id'],
+			$p['attr']['class'],
+			$p['attr']['rel'],
+			$a
+			);
+
+		return $li;
+
+	}
+
+	/**
+	 * Format a single post for display by the permissions editor
+	 * 
+	 * Data structure is jstree-friendly
+	 * 
+	 * @todo merge with hierarchical format_post logic
+	 */ 
+	public function format_post( $post, $has_children = false ) {
+
+		$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
+
+		$p = array(
+			'attr' => array( 
+				'id' => esc_attr( 'p' . $post->ID ), 
+				'rel' => esc_attr( $post->perm ),
+				'data-perm' => esc_attr( $post->perm )
+			),
+			'data' => array(
+				'title' => esc_html( $title ),
+				'icon' => 'flat-perm-icon'
+			),
+			'metadata' => array(
+				'post_id' => $post->ID,
+				'post_date' => date( get_option('date_format'), strtotime( $post->post_date ) ),
+				'post_status' => $post->post_status
+				)
+			);
+
+		return $p;
+
+	}
+
+	/**
+	 * Add permissions fields to post object
+	 */ 
+	public function filter_posts( $posts ) {
+
+		foreach( $posts as $post ) {
+			$post->perm = ( $this->group->can_edit( $post->ID ) ) ? 'allowed' : 'denied';
+		}
+
+		return $posts;
+
 	}
 
 }
 
 /**
  * Permissions editor for hierarchical post types 
+ * 
+ * @uses (depends on) BU Navigation library
  */ 
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
@@ -203,6 +298,11 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	// ____________________INTERFACE_________________________
 
+	/**
+	 * Custom query for hierarchical posts
+	 * 
+	 * @uses BU Navigation library
+	 */ 
 	public function query( $args = array() ) {
 
 		$defaults = array(
@@ -244,31 +344,32 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	}
 
 	/**
-	 * Render posts with permissions data
-	 * 
-	 * @todo implement different output formats depending on the $format property
+	 * Display posts using designated output format
 	 */ 
 	public function display() {
 
 		switch( $this->format ) {
 			
 			case 'json':
-				$children = $this->get_children( $this->child_of );
-				echo json_encode( $children );
+				$posts = $this->get_posts( $this->child_of );
+				echo json_encode( $posts );
 				break;
 
 			case 'html': default:
-				echo $this->get_children( $this->child_of );
+				echo $this->get_posts( $this->child_of );
 				break;
 		
 		}
 
 	}
 
-	public function get_children( $parent_id ) {
+	/**
+	 * Get posts intended for display by permissions editors
+	 */ 
+	public function get_posts( $post_id = 0 ) {
 
-		if( array_key_exists( $parent_id, $this->posts ) && ( count( $this->posts[$parent_id] ) > 0 ) )
-			$posts = $this->posts[$parent_id];
+		if( array_key_exists( $post_id, $this->posts ) && ( count( $this->posts[$post_id] ) > 0 ) )
+			$posts = $this->posts[$post_id];
 		else
 			$posts = array();
 
@@ -292,13 +393,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$has_children = array_key_exists( $post->ID, $this->posts );
 
 			// Format post data
-			$p = $this->formatPost( $post, $has_children );
+			$p = $this->format_post( $post, $has_children );
 
 			// Maybe fetch descendents
 			if( $has_children && $this->child_of != 0 ) {
 
-				$parent_id = $post->ID;
-				$descendents = $this->get_children( $parent_id );
+				$post_id = $post->ID;
+				$descendents = $this->get_posts( $post_id );
 		
 				if( !empty( $descendents ) ) {	
 					$p['state'] = 'closed';
@@ -315,15 +416,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 					break;
 
 				case 'html': default:
-					if( $p['children'] )
-						$p['children'] = sprintf('<ul>%s</ul>', $p['children'] );
-
-					$output .= <<<"HTML"
-<li id="{$p['attr']['id']}" class="{$p['attr']['class']}" data-perm="{$p['attr']['data-perm']}" rel="{$p['attr']['rel']}">
-	<a href="#">{$p['data']}</a>
-	{$p['children']}
-</li>
-HTML;
+					$output .= get_post_markup( $p );
 					break;
 
 			}
@@ -335,9 +428,37 @@ HTML;
 	}
 
 	/**
-	 * @todo move this to base class sans hierarchical logic
+	 * Takes an array of post data formatted for permissions editor output,
+	 * converts to HTML markup
+	 * 
+	 * The format of this markup lines up with default jstree markup
 	 */ 
-	private function formatPost( $post, $has_children = false ) {
+	protected function get_post_markup( $p ) {
+
+		$a = sprintf('<a href="#">%s</a>', $p['data'] );
+
+		$descendents = !empty($p['children']) ? sprintf("<ul>%s</ul>\n", $p['children'] ) : '';
+
+		$markup = sprintf("<li id=\"%s\" class=\"%s\" rel=\"%s\" data-perm=\"%s\">%s %s</li>\n",
+			$p['attr']['id'],
+			$p['attr']['class'],
+			$p['attr']['rel'],
+			$p['attr']['data-perm'],
+			$a,
+			$descendents
+			);
+
+		return $markup;
+	}
+
+	/**
+	 * Format a single post for display by the permissions editor
+	 * 
+	 * Data structure is jstree-friendly
+	 * 
+	 * @todo merge with flat format_post logic
+	 */ 
+	protected function format_post( $post, $has_children = false ) {
 
 		$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
 		$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
@@ -354,6 +475,7 @@ HTML;
 			);
 
 		return $p;
+
 	}
 
 

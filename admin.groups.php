@@ -284,7 +284,7 @@ class BU_Groups_Admin {
 
 						$data = $group_data['perms'][$post_type];
 
-						// Convert JSON string to array for hierarchical post types
+						// Convert JSON strings to arrays
 						if( is_string( $data ) ) {
 							$post_ids = json_decode( stripslashes( $data ), true );
 
@@ -624,6 +624,8 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$perm_editor->query( $query_vars );
+
+
 			$perm_editor->display();
 			die();
 
