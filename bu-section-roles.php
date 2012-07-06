@@ -127,64 +127,6 @@ class BU_Section_Editor {
 	}
 
 	/**
-	 * Checks whether or not a specific user can publish a post
-	 *
-	 * First checks if a user can edit the post, if not, bubbles up
-	 * ancestor tree to determine based on inheritance.
-	 *
-	 * @param int $user_id
-	 * @param int $post_id
-	 */
-	static function can_publish($user_id, $post_id)  {
-
-		if($user_id == 0) return false;
-
-		// Extra checks for any "allowed" users
-		if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) ) {
-
-			if( $post_id == 0 ) return false;
-
-			// If current post is already editable, we can publish
-			if( self::can_edit( $user_id, $post_id ) )
-				return true;
-
-			// Otherwise, check ancestors too
-			$edit_groups_o = BU_Edit_Groups::get_instance();
-			$groups = $edit_groups_o->find_groups_for_user( $user_id );
-
-			// Note that get_post_ancestors only works if the post object is unfiltered
-			$post = get_post( $post_id, OBJECT, null );
-			$ancestors = get_post_ancestors( $post );
-
-			// Bubble up through ancestors, checking status along the way
-			foreach( $ancestors as $ancestor_id ) {
-
-				$ancestor_groups = get_post_meta( $ancestor_id, BU_Edit_Group::META_KEY );
-
-				foreach( $groups as $key => $group ) {
-
-					if( in_array( (string) $group->id, $ancestor_groups ) ) {
-						return true;
-					}
-
-				}
-
-				if( empty($groups) ) {
-					break;
-				}
-			}
-
-			// User is section editor, but not allowed to publish in this section
-			//error_log('[BUSE] My group memberships do not allow me to publish post: ' . $post_id );
-			return false;
-		}
-
-		// User is not restricted by plugin, normal meta_caps apply
-		return true;
-
-	}
-
-	/**
 	 * Filter that modifies the caps based on the current state.
 	 *
 	 * @todo clean up all of this logic, figure out best approach to drafts
@@ -250,8 +192,6 @@ class BU_Section_Editor {
 			$parent_id = null;
 			if(isset($post_ID)) {
 				$id = $post_ID;
-			} else {
-				$id = $GLOBALS['post']->ID; // this may be too heavy handed.
 			}
 			$post = get_post($id);
 
@@ -268,8 +208,7 @@ class BU_Section_Editor {
 
 			}
 
-			// User is attempting to publish a post
-			if (!isset($id) || !self::can_edit($user_id, $id ) ) {
+			if (!isset($id) || !self::can_edit($user_id, $post->post_parent ) ) {
 				$caps = array('do_not_allow');
 				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
 			}

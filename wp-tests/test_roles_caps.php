@@ -6,7 +6,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		parent::setUp();
 		$this->groups = array();
 		$pages = array(
-			'top-level1' => array( 
+			'top-level1' => array(
 				'status' => 'publish'
 			),
 			'top-level2' => array(
@@ -128,11 +128,11 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$args['perms'] = $perms;
 		$args['name'] = $name;
 		$args['users'] = $user_ids;
-
+		$args['description'] = 'lorem ipsum.';
 		$this->groups[] = $groups->add_group($args);
 		$groups->save();
 	}
-	
+
 	function getEditable($group_name) {
 		$perms = array();
 
@@ -190,9 +190,9 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 				'post_excerpt' => "{$title} excerpt",
 				'post_type' => 'page',
 				'post_parent' => $parent
-				
+
 			);
-			
+
 			$result = wp_insert_post($post);
 
 			if(!is_wp_error($result)) {
