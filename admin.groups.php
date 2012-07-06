@@ -612,15 +612,19 @@ class BU_Groups_Admin_Ajax {
 			$perm_editor = null;
 			
 			if( $post_type_obj->hierarchical ) {
+
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
+				$perm_editor->format = 'json';
+				header("Content-type: application/json");
+
 			} else {
+
 				$perm_editor = new BU_Flat_Permissions_Editor( $group_id, $post_type_obj->name );
 
 			}
 
-			$perm_editor->query_posts( $query_vars );
-			$perm_editor->display_posts_list();
-
+			$perm_editor->query( $query_vars );
+			$perm_editor->display();
 			die();
 
 		}

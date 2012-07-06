@@ -335,7 +335,7 @@ jQuery(document).ready(function($){
 	
 	// jstree global configuration
 	var options = {
-		plugins : [ 'themes', 'types', 'html_data', 'ui' ],
+		plugins : [ 'themes', 'types', 'json_data', 'ui' ],
 		core : {
 			animation: 0,
 			html_titles : true
@@ -425,7 +425,7 @@ jQuery(document).ready(function($){
 		var post_type = $editor.data('post-type');
 		
 		// Append global jstree options with configuration for this post type
-		options['html_data'] = {
+		options['json_data'] = {
 			ajax : {
 				url : ajaxurl,
 				type: 'GET',

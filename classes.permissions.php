@@ -7,9 +7,9 @@ abstract class BU_Permissions_Editor {
 
 	protected $group;
 	protected $post_type;
-
-	protected $per_page;
 	protected $posts;
+
+	public $format = 'html';
 
 	/**
 	 * $group can be either a BU_Edit_Group object or a group ID
@@ -46,11 +46,11 @@ abstract class BU_Permissions_Editor {
 	}
 
 	abstract protected function load();
+
 	abstract public function filter_posts( $posts );
 
-	public function query_posts( $args = array() ) {
+	public function query( $args = array() ) {
 
-		// Setup posts to render
 		$defaults = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',
@@ -61,8 +61,6 @@ abstract class BU_Permissions_Editor {
 
 		$args = wp_parse_args( $args, $defaults );
 
-		error_log('Query args: ' . print_r($args,true) );
-
 		$query = new WP_Query( $args );
 
 		$this->posts = $query->posts;
@@ -71,7 +69,7 @@ abstract class BU_Permissions_Editor {
 
 	}
 
-	abstract public function display_posts_list();
+	abstract public function display();
 
 	/**
 	 * Allows developers to opt-out for section editing feature
@@ -105,8 +103,7 @@ abstract class BU_Permissions_Editor {
 }
 
 /**
- * Permissions editor for non-hierarchical post types
- * 
+ * Permissions editor for flat post types
  */ 
 class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
@@ -116,7 +113,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	}
 
-	public function display_posts_list() {
+	/**
+	 * @todo rewrite to allow for multiple output formats
+	 */ 
+	public function display() {
 
 		$count = 0;
 
@@ -184,19 +184,26 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 }
 
 /**
- * Isolates functionality related to generating group permission editor
- * 
+ * Permissions editor for hierarchical post types 
  */ 
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
-	private $start_post = 0;
-	private $current_post = 0;
+	private $child_of = 0;
 
-	protected function load() { }
+	protected function load() {
+
+		// We don't need these
+		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_exclude' );
+
+		// But we definitely need these
+		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
+		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
+
+	}
 
 	// ____________________INTERFACE_________________________
 
-	public function query_posts( $args = array() ) {
+	public function query( $args = array() ) {
 
 		$defaults = array(
 			'child_of' => 0,
@@ -209,29 +216,20 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		// @todo not yet implemented
 		if( !empty($r['s']) ) {
 			if(isset($r['child_of'])) unset($r['child_of']);
-			parent::query_posts( $args );
+			parent::query( $args );
 			return;
 		}
 
-		$this->start_post = $this->current_post = $r['child_of'];
+		$this->child_of = $r['child_of'];
 
-		// We don't need these
-		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_exclude' );
-
-		// But we definitely need these
-		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
-		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
-		
 		$section_args = array( 'direction' => 'down', 'post_types' => $r['post_type'] );
 
 		// Don't load the whole tree at once
-		if( $this->start_post == 0 ) $section_args['depth'] = 1;
+		if( $this->child_of == 0 ) $section_args['depth'] = 1;
 		else $section_args['depth'] = 0;
 
-		error_log(print_r($section_args,true));
-
 		// Get post IDs for this section
-		$sections = bu_navigation_gather_sections( $this->start_post, $section_args);
+		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);
 
 		// Fetch posts
 		$page_args = array(
@@ -243,40 +241,119 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		$root_pages = bu_navigation_get_pages( $page_args );
 		$this->posts = bu_navigation_pages_by_parent($root_pages);
 	
-		// Remove our custom filters 
-		remove_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
-		remove_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
-	
 	}
 
-	public function display_posts_list() {
+	/**
+	 * Render posts with permissions data
+	 * 
+	 * @todo implement different output formats depending on the $format property
+	 */ 
+	public function display() {
 
-		if( array_key_exists( $this->current_post, $this->posts ) && ( count( $this->posts[$this->current_post] ) > 0 ) )
-			$posts = $this->posts[$this->current_post];
+		switch( $this->format ) {
+			
+			case 'json':
+				$children = $this->get_children( $this->child_of );
+				echo json_encode( $children );
+				break;
+
+			case 'html': default:
+				echo $this->get_children( $this->child_of );
+				break;
+		
+		}
+
+	}
+
+	public function get_children( $parent_id ) {
+
+		if( array_key_exists( $parent_id, $this->posts ) && ( count( $this->posts[$parent_id] ) > 0 ) )
+			$posts = $this->posts[$parent_id];
 		else
 			$posts = array();
 
+		// Initialize output var depending on format
+		$output = null;
+
+		switch( $this->format ) {
+
+			case 'json':
+				$output = array();
+				break;
+
+			case 'html':default:
+				$output = '';
+				break;
+		}
+
+		// Loop through posts recursively
 		foreach( $posts as $post ) {
 
 			$has_children = array_key_exists( $post->ID, $this->posts );
-			$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
-			$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
-			$rel = $post->perm;
 
-?>
-	<li id="p<?php echo $post->ID; ?>" class="<?php echo $classes; ?>" data-perm="<?php echo $post->perm; ?>" rel="<?php echo $rel; ?>">
-		<a href="#"><?php echo $title; ?></a>
-		<?php 
-		if( $has_children && $this->start_post != 0 ): 
-			$this->current_post = $post->ID;
-		?>
-		<ul>
-			<?php $this->display_posts_list(); ?>
-		</ul>
-	<?php endif; ?>
-	</li>
-<?php
+			// Format post data
+			$p = $this->formatPost( $post, $has_children );
+
+			// Maybe fetch descendents
+			if( $has_children && $this->child_of != 0 ) {
+
+				$parent_id = $post->ID;
+				$descendents = $this->get_children( $parent_id );
+		
+				if( !empty( $descendents ) ) {	
+					$p['state'] = 'closed';
+					$p['children'] = $descendents;
+				}	
+
+			}
+
+			// Return post in correct format
+			switch( $this->format ) {
+
+				case 'json':
+					array_push( $output, $p );
+					break;
+
+				case 'html': default:
+					if( $p['children'] )
+						$p['children'] = sprintf('<ul>%s</ul>', $p['children'] );
+
+					$output .= <<<"HTML"
+<li id="{$p['attr']['id']}" class="{$p['attr']['class']}" data-perm="{$p['attr']['data-perm']}" rel="{$p['attr']['rel']}">
+	<a href="#">{$p['data']}</a>
+	{$p['children']}
+</li>
+HTML;
+					break;
+
+			}
+
 		}
+
+		return $output;
+
+	}
+
+	/**
+	 * @todo move this to base class sans hierarchical logic
+	 */ 
+	private function formatPost( $post, $has_children = false ) {
+
+		$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
+		$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
+
+		$p = array(
+			'attr' => array( 
+				'id' => esc_attr( 'p' . $post->ID ), 
+				'rel' => esc_attr( $post->perm ),
+				'class' => esc_attr( $classes ),
+				'data-perm' => esc_attr( $post->perm )
+			),
+			'data' => esc_html( $title ),
+			'children' => null
+			);
+
+		return $p;
 	}
 
 
@@ -322,7 +399,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 * Get only the post fields that we need
 	 */ 
 	public function filter_post_fields( $fields ) {
-		
+
 		$fields = array(
 			'ID',
 			'post_title',
@@ -331,6 +408,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			);
 
 		return $fields;
+
 	}
 
 }
