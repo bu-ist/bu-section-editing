@@ -438,13 +438,14 @@ jQuery(document).ready(function($){
 
 		$editor.jstree( options )
 			.bind('loaded.jstree', function( event, data ) {
-				/* no op, yet... */
-			})
-			.bind('load_node.jstree', function( event, data ) {
-				
-				// skips initial tree load
-				if( data.rslt.obj != '-1' )
-					adjustSectionPermissionIcons( data.rslt.obj );
+
+				// Start lazy loading
+				$(this).find('ul > .jstree-closed').each( function(){
+					var $post = $(this);
+					data.inst.load_node( $(this), function(){
+						detectOppositeChildren($post);
+					});
+				});
 
 			})
 			.bind('select_node.jstree', function( event, data ) {
@@ -471,6 +472,7 @@ jQuery(document).ready(function($){
 
 			})
 			.bind('deselect_node.jstree', function( event, data ) {
+
 				removeOverlay( data.rslt.obj );
 
 			})
@@ -492,12 +494,9 @@ jQuery(document).ready(function($){
 		var pt = $editor.data('post-type');
 
 		$editor.bind( 'posts-loaded', function(e, data ) {
-			console.log('Posts loaded!');
 
 			// Merge incoming server state with pending edits
 			var $pending = $(this).siblings('input.buse-edits').first();
-			console.log('Pending edits: ' );
-			console.log( $pending );
 
 			if( $pending.val().length === 0 )
 				return;
@@ -508,8 +507,6 @@ jQuery(document).ready(function($){
 				var $p = $editor.find('#p' + post_id );
 
 				if( $p.length ) {
-					console.log('Switching state for post ID: ' + post_id + ' to ' + edits[post_id] );	
-					console.log($p);
 					$p.attr( 'rel', edits[post_id] );
 				}
 			}
@@ -619,10 +616,9 @@ jQuery(document).ready(function($){
 
 	}
 
-	$('#group-stats-widget')
-
-	/* Editor lazy-loading on tab click */
-
+	/**
+	 * Load post type editors dynamically on click
+	 */
 	var loadPermissionsPanel = function( $panel ) {
 
 		var $editor = $panel.find('.perm-editor').first();
@@ -730,9 +726,6 @@ jQuery(document).ready(function($){
 
 	}
 
-	/**
-	 * @todo Combine this with processUpdatesForNode
-	 */
 	var processUpdatesForPost = function( $post, $editor ) {
 
 		var id = $post.attr('id').substr(1);
@@ -762,10 +755,10 @@ jQuery(document).ready(function($){
 				var existing_perm = $(child).data('perm');
 				var child_id = $(this).attr('id').substr(1);
 
+				// Note incoming edit if status changed
 				if( existing_perm != status ) {
-					$(child).data('perm', status);
-					$(child).attr('rel', status);
 
+					$(child).data('perm', status);
 					edits[child_id] = status;
 
 					if( status == 'allowed' ) count += 1;
@@ -773,10 +766,13 @@ jQuery(document).ready(function($){
 
 				}
 
+				// Change icon no matter what
+				$(child).attr('rel', status);
+
 			});
 
-			// Update ancestors visiual appearance to reflect allowed children where necessary
-			adjustSectionPermissionIcons( $post );
+			// Refresh section permissions to adjust icons as needed
+			propogatePermissions( $post, $editor );
 
 		}
 
@@ -788,46 +784,40 @@ jQuery(document).ready(function($){
 
 	}
 
-	var adjustSectionPermissionIcons = function( $node ) {
+	/**
+	 * Notify parents of a modified post that child statuses have changed
+	 */
+	var propogatePermissions = function( $post, $editor ) {
 
-		// Node is not a leaf, traverse down first
-		var $last_ul;
+		$parents = $post.parentsUntil($editor,'ul');
 
-		if( $node.children('ul').length ) {
-			$last_ul = $node.find('ul').last();
-		} else {
-			$last_ul = $node.parents('ul').first();
-		}
+		// Each ancestor list needs to re-evaluate status
+		$parents.each(function(){
 
-		var $parent_uls = $last_ul.parentsUntil('.perm-editor', 'ul');
-		var $all_uls = $.merge( $last_ul, $parent_uls );
-
-		// Bubble up and maybe correct icons
-		$all_uls.each( function(){
-			
 			var $parent_li = $(this).parents('li').first();
 
-			if( $parent_li ) {
+			if( $parent_li.length ) {
 
-				var has_allowed_children = $(this).children('li[rel^="allowed"], li[rel="denied-desc-allowed"]').length > 0 ? true : false;
-				var has_denied_children = $(this).children('li[rel^="denied"], li[rel="allowed-desc-denied"]').length > 0 ? true : false;
+				var state = $parent_li.attr('rel');
+				var mismatch = false;
 
-				switch( $parent_li.attr('rel') ) {
+				switch( state ) {
 
-					case 'allowed':
-					case 'allowed-desc-denied':
-						if( has_denied_children )
-							$parent_li.attr('rel', 'allowed-desc-denied');
-						else
-							$parent_li.attr('rel', 'allowed' );
+					case 'allowed': case 'allowed-desc-denied':
+						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"]').length > 0 );
+						
+						// Adjust state
+						if( mismatch ) $parent_li.attr('rel','allowed-desc-denied');
+						else $parent_li.attr('rel','allowed');
+
 						break;
 
-					case 'denied':
-					case 'denied-desc-allowed':
-						if( has_allowed_children )
-							$parent_li.attr('rel', 'denied-desc-allowed');
-						else
-							$parent_li.attr('rel', 'denied' );
+					case 'denied': case 'denied-desc-allowed':
+						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"]').length > 0 );
+						
+						// Adjust state
+						if( mismatch ) $parent_li.attr('rel','denied-desc-allowed');
+						else $parent_li.attr('rel','denied');
 						break;
 
 				}
@@ -835,6 +825,61 @@ jQuery(document).ready(function($){
 			}
 
 		});
+
+	}
+
+	/**
+	 * Traverse sections to correct icon state where needed
+	 */
+	var detectOppositeChildren = function( $node, parent_state ) {
+
+		var my_state = $node.attr('rel');
+		var $children = $node.children('ul');
+		var mismatch = false;
+
+		// Only interested in nodes with children
+		if( $children.length ) {
+
+			// Bubble up mismatches using recursion
+			$children.children('li').each( function() {
+
+				if( detectOppositeChildren( $(this), my_state ) )
+					mismatch = true;
+
+			});
+
+			// Mis-match found -- adjust our icon accordingly
+			if( mismatch === true ) {
+
+				switch( my_state ) {
+					case 'allowed':
+						$node.attr('rel','allowed-desc-denied');
+						break;
+					case 'denied':
+						$node.attr('rel','denied-desc-allowed');
+						break;
+				}
+
+				// Update current state
+				my_state = $node.attr('rel');
+
+			}
+
+			if( parent_state === undefined )
+				return;
+
+			// Report back if I don't match my parent
+			return my_state !== parent_state; 
+
+		} else { // I have no children
+
+			if( parent_state === undefined )
+				return;
+
+			// Report back if I don't match my parent
+			return my_state !== parent_state; 
+
+		}
 
 	}
 
