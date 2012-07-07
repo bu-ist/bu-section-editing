@@ -443,7 +443,7 @@ jQuery(document).ready(function($){
 				$(this).find('ul > .jstree-closed').each( function(){
 					var $post = $(this);
 					data.inst.load_node( $(this), function(){
-						detectOppositeChildren($post);
+						correctIconsForSection($post);
 					});
 				});
 
@@ -604,10 +604,6 @@ jQuery(document).ready(function($){
 				// Modify icons looking for edits
 				$editor.trigger( 'posts-loaded', { posts : response } );
 
-				// @todo send out notifcation of posts loaded
-
-				$editor.data('posts-loaded', $editor.find('li').length );
-
 			},
 			error: function(response){
 				//console.log(response);
@@ -654,11 +650,10 @@ jQuery(document).ready(function($){
 	
 	/**
 	 * The user has allowed/denied a specific node
-	 *
-	 * @todo make this work for both hierarchical and flat post types
 	 */
 	var updatePostPermissions = function( $post, $editor ) {
 
+		// Hierarchical post types
 		if( $editor.hasClass('hierarchical') ) {
 
 			var $jstree = $.jstree._reference( $editor );
@@ -668,6 +663,7 @@ jQuery(document).ready(function($){
 				// Need to load node first
 				$jstree.open_node( $post, function() {
 
+					// Open all children to expose permissions cascade
 					$jstree.open_all( $post );
 
 					// Toggle state
@@ -676,24 +672,27 @@ jQuery(document).ready(function($){
 					// Diff the changes
 					processUpdatesForPost( $post, $editor );
 
-				} );
+				});
 
 			} else {
 
-					$jstree.open_all( $post );
-
 					// Toggle state
 					toggleState( $post );
 
 					// Diff the changes
 					processUpdatesForPost( $post, $editor );
+
 			}
 
-		} else { // Flat editor
+		}
+
+ 		// Flat post types
+		if( $editor.hasClass('flat') ) { 
 			
 			// Toggle state
 			toggleState( $post );
 			
+			// Diff the changes
 			processUpdatesForPost( $post, $editor );
 		
 		}
@@ -726,6 +725,9 @@ jQuery(document).ready(function($){
 
 	}
 
+	/**
+	 * Update post permissions status and add to pending edits
+	 */
 	var processUpdatesForPost = function( $post, $editor ) {
 
 		var id = $post.attr('id').substr(1);
@@ -743,13 +745,13 @@ jQuery(document).ready(function($){
 		if( status == 'allowed' ) count += 1;
 		else count -= 1;
 
-		// @todo If post_type is hierarchical, process updates for children
+		// Hierarchical post types need extra love
 		if( $editor.hasClass('hierarchical') ) {
 
 			// Fetch all children
 			var $children = $post.find('li');
 
-			// Propogate permissions to children
+			// Cascade permissions
 			$children.each(function(index, child) {
 
 				var existing_perm = $(child).data('perm');
@@ -771,8 +773,11 @@ jQuery(document).ready(function($){
 
 			});
 
-			// Refresh section permissions to adjust icons as needed
-			propogatePermissions( $post, $editor );
+			// Find root node for update post
+			$root_post = $post.parentsUntil( $editor, 'li' ).last();
+
+			// Correct icons for ancestors affected by this change
+			correctIconsForSection( $root_post );
 
 		}
 
@@ -780,6 +785,7 @@ jQuery(document).ready(function($){
 		commitEdits( edits, post_type );
 
 		// Update the stats widget counter
+		// @todo make this happen through notifications
 		updatePermStats( count, post_type );
 
 	}
@@ -787,18 +793,18 @@ jQuery(document).ready(function($){
 	/**
 	 * Notify parents of a modified post that child statuses have changed
 	 */
-	var propogatePermissions = function( $post, $editor ) {
+	var correctIconsForSection = function( $section ) {
 
-		$parents = $post.parentsUntil($editor,'ul');
+		$sections = $section.find('ul');
 
-		// Each ancestor list needs to re-evaluate status
-		$parents.each(function(){
+		// Iterate over each section
+		$sections.each(function(){
 
-			var $parent_li = $(this).parents('li').first();
+			var $parent_post = $(this).parents('li').first();
 
-			if( $parent_li.length ) {
+			if( $parent_post.length ) {
 
-				var state = $parent_li.attr('rel');
+				var state = $parent_post.attr('rel');
 				var mismatch = false;
 
 				switch( state ) {
@@ -807,8 +813,8 @@ jQuery(document).ready(function($){
 						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"]').length > 0 );
 						
 						// Adjust state
-						if( mismatch ) $parent_li.attr('rel','allowed-desc-denied');
-						else $parent_li.attr('rel','allowed');
+						if( mismatch ) $parent_post.attr('rel','allowed-desc-denied');
+						else $parent_post.attr('rel','allowed');
 
 						break;
 
@@ -816,8 +822,8 @@ jQuery(document).ready(function($){
 						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"]').length > 0 );
 						
 						// Adjust state
-						if( mismatch ) $parent_li.attr('rel','denied-desc-allowed');
-						else $parent_li.attr('rel','denied');
+						if( mismatch ) $parent_post.attr('rel','denied-desc-allowed');
+						else $parent_post.attr('rel','denied');
 						break;
 
 				}
@@ -829,60 +835,8 @@ jQuery(document).ready(function($){
 	}
 
 	/**
-	 * Traverse sections to correct icon state where needed
+	 * Retrieve pending edits for the specified post type
 	 */
-	var detectOppositeChildren = function( $node, parent_state ) {
-
-		var my_state = $node.attr('rel');
-		var $children = $node.children('ul');
-		var mismatch = false;
-
-		// Only interested in nodes with children
-		if( $children.length ) {
-
-			// Bubble up mismatches using recursion
-			$children.children('li').each( function() {
-
-				if( detectOppositeChildren( $(this), my_state ) )
-					mismatch = true;
-
-			});
-
-			// Mis-match found -- adjust our icon accordingly
-			if( mismatch === true ) {
-
-				switch( my_state ) {
-					case 'allowed':
-						$node.attr('rel','allowed-desc-denied');
-						break;
-					case 'denied':
-						$node.attr('rel','denied-desc-allowed');
-						break;
-				}
-
-				// Update current state
-				my_state = $node.attr('rel');
-
-			}
-
-			if( parent_state === undefined )
-				return;
-
-			// Report back if I don't match my parent
-			return my_state !== parent_state; 
-
-		} else { // I have no children
-
-			if( parent_state === undefined )
-				return;
-
-			// Report back if I don't match my parent
-			return my_state !== parent_state; 
-
-		}
-
-	}
-
 	var getExistingEdits = function( post_type ) {
 
 		// fetch existing edits
@@ -893,20 +847,13 @@ jQuery(document).ready(function($){
 		return edits ? JSON.parse(edits) : {};
 	}
 
+	/**
+	 * Merge existing edits with new ones for the specified post type
+	 */
 	var commitEdits = function( edits, post_type ) {
 
 		var $edits_field = $('#buse-edits-' + post_type );
-
-		//console.log( '==== Incoming Edits ====' );
-		
-		for( id in edits ) {
-			title = $('#p' + id ).children('a').first().text();
-
-			//console.log( post_type + ': ' + title + ' (' + id + ') set to: ' + edits[id] );
-		}
-		
-		//console.log( '========================' );
-			
+					
 		// Update input
 		$edits_field.val( JSON.stringify(edits) );
 
@@ -1042,11 +989,8 @@ jQuery(document).ready(function($){
 			window.onbeforeunload = null;
 			window.location = $(this).attr('href');
 			
-			// delete the group...
-		} else {
-			// don't follow the link'
-			e.preventDefault();	
 		}
+				
 	});
 
 });
