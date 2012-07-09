@@ -774,10 +774,13 @@ jQuery(document).ready(function($){
 			});
 
 			// Find root node for update post
-			$root_post = $post.parentsUntil( $editor, 'li' ).last();
+			$root_post = $post.parentsUntil( '#' + $editor.attr('id'), 'li' ).last();
 
-			// Correct icons for ancestors affected by this change
-			correctIconsForSection( $root_post );
+			// Root post will be empty if we are a top-level post
+			if( $root_post.length ) {
+				// Correct icons for both descendents and ancestors affected by this change
+				correctIconsForSection( $root_post );
+			}
 
 		}
 
