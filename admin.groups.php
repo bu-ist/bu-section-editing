@@ -133,21 +133,32 @@ class BU_Groups_Admin {
 	 */
 	public static function transition_post_status( $new_status, $old_status, $post ) {
 
-		// Blacklist
-			// publish -> publish
-			// trash -> publish
+		$pto = get_post_type_object( $post->post_type );
 
-		// From draft|pending -> publish
-		if( in_array( $old_status, array( 'draft', 'pending' ) ) && $new_status == 'publish' ) {
+		// We only need special logic for hierarchical post types
+		if( ! $pto->hierarchical ) {
+			return;
+		}
 
-			// Inherit allowed groups from parent if post has no allowed groups
-			if( $post->post_parent ) {
+		$status_blacklist = array( 'publish', 'trash' );
+
+		// From draft|pending|etc -> publish
+		if( ! in_array( $old_status, $status_blacklist ) && $new_status == 'publish' ) {
+
+			// This prevents section editors from publishing top-level posts
+			if( empty( $post->post_parent ) )
+				return;
+
+			$parent = get_post( $post->post_parent );
+
+			// Copy post permissions from parent on publish
+			if( $parent && $parent->post_status == 'publish') {
 
 				$group_controller = BU_Edit_Groups::get_instance();
 				$groups = $group_controller->get_groups();
 
 				$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
-				$parent_groups = get_post_meta( $post->post_parent, BU_Edit_Group::META_KEY );
+				$parent_groups = get_post_meta( $parent->ID, BU_Edit_Group::META_KEY );
 
 				foreach( $groups as $group ) {
 
@@ -162,7 +173,22 @@ class BU_Groups_Admin {
 
 		}
 
-		// Add reverse -- delete post meta on transition from publish
+		// From publish -> draft|pending|etc 
+		if( $old_status == 'publish' && ! in_array( $new_status, $status_blacklist ) ) {
+
+			$group_controller = BU_Edit_Groups::get_instance();
+			$groups = $group_controller->get_groups();
+
+			$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+
+			foreach( $groups as $group ) {
+
+				// Remove all group permissions for non-published posts
+				delete_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
+
+			}
+
+		}
 
 	}
 

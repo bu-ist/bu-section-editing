@@ -863,8 +863,6 @@ jQuery(document).ready(function($){
 
 	/**
 	 * Stats widget -- permissions count
-	 *
-	 * @todo redo this logic
 	 */
 	var updatePermStats = function( count, post_type ) {
 
