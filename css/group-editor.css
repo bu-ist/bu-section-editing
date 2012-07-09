@@ -168,6 +168,7 @@
 	font-weight: bold;
 	margin-bottom:-2px;
 	border: 1px solid #D3D3D3;
+	border-bottom: none;
 	-webkit-border-top-left-radius: 3px;
 	-webkit-border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
@@ -190,8 +191,9 @@
 }
 
 .perm-toolbar {
+	min-height: 20px;
 	padding: 17px 15px 14px 15px;
-	background-color: #DFDFDF;
+	background-color: #ECECEC;
 	background-image: -ms-linear-gradient(top,#ECECEC,#DFDFDF);
 	background-image: -moz-linear-gradient(top,#ECECEC,#DFDFDF);
 	background-image: -o-linear-gradient(top,#ECECEC,#DFDFDF);

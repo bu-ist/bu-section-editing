@@ -36,6 +36,7 @@
 						</select>
 					</p>
 					<?php endif; ?>
+					<br class="clear">
 				</div>
 				<div class="perm-scroll-area">
 					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
