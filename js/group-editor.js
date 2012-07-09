@@ -61,6 +61,7 @@ jQuery(document).ready(function($){
 		$.ajax({
 			url: ajaxurl,
 			data: userData,
+			cache: false,
 			type: 'POST',
 			success: function(response) {
 				// console.log(response);
@@ -102,6 +103,7 @@ jQuery(document).ready(function($){
 		$.ajax({
 			url: ajaxurl,
 			data: userData,
+			cache: false,
 			type: 'POST',
 			success: function(response) {
 
@@ -423,6 +425,7 @@ jQuery(document).ready(function($){
 			ajax : {
 				url : ajaxurl,
 				type: 'GET',
+				cache: false,
 				data : function(n) {
 					return {
 						action : 'buse_render_post_list',
@@ -593,6 +596,7 @@ jQuery(document).ready(function($){
 			url : ajaxurl,
 			type: 'GET',
 			data: editorData,
+			cache: false,
 			success: function(response) {
 
 				if( editorData.query.offset ) {
