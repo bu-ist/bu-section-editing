@@ -478,13 +478,11 @@ MSG;
 
 			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
 
-			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\" data-label-singular=\"%s\" data-label-plural=\"%s\"><span id=\"%s-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",
-				$pt->name,
-				$pt->labels->singular_name,
-				$pt->label,
+			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"perm-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",
 				$pt->name,
 				$count,
-				$label );
+				$label 
+				);
 
 		}
 

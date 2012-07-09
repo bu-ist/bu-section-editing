@@ -425,6 +425,26 @@
 	color: #FFF;
 }
 
+/*
+#group-stats-permissions {
+	display: block;
+	margin-left: 1em;
+}
+
+#group-stats-permissions .perm-stats {
+	display: block;
+	margin-bottom: 5px;
+}
+*/
+
+.perm-stats-diff.positive {
+    color: #0CA02A;    
+}
+
+.perm-stats-diff.negative {
+    color: #E24740;
+}
+
 /* Widgets */
 
 .buse-widget {

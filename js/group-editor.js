@@ -868,27 +868,34 @@ jQuery(document).ready(function($){
 	 */
 	var updatePermStats = function( count, post_type ) {
 
-		var $container = $('#group-stats-permissions');
-		var $count_span = $('#' + post_type + '-stat-count');
-		var start_count = 0;
+		var $container = $('#group-stats-permissions'),
+			$stats_el = $('#' + post_type + '-stats'),
+			$diff_el = $('#' + post_type + '-pending-diff'),
+			start_count = 0;
+
+		if( $diff_el.length == 0 )
+			$diff_el = $('<span id="' + post_type + '-pending-diff" class="perm-stats-diff" data-count="0"></span>').appendTo($stats_el);
 
 		// Grab existing count
-		start_count = parseInt( $count_span.text() );
+		start_count = parseInt( $diff_el.data('count') );
 
 		// Check total count for post type with incoming edits
 		var total = start_count + count;
+		var count_str = '';
 
-		// Relabel based on new counts
-		if( total == 1 ) {
-			var label = $count_span.parent().data('label-singular');
-			$count_span.next('.perm-label').text(label);
+		// Generate diff string
+		if( total > 0 ) {
+			count_str = ' ( +' + total +' )';
+			$diff_el.addClass('positive');
+		} else if( total < 0 ) {
+			count_str = ' ( ' + total +' )';
+			$diff_el.addClass('negative');
 		} else {
-			var label = $count_span.parent().data('label-plural');
-			$count_span.next('.perm-label').text(label);
+			$diff_el.removeClass('positive negative');
 		}
 
-		// Update total
-		$count_span.text(total);
+		// Update diff count
+		$diff_el.data('count',total).text(count_str);
 
 	}
 
