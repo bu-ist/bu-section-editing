@@ -104,6 +104,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$_POST['parent_id'] = 0;
 		$this->assertFalse(current_user_can('publish_pages'));
 		unset($_POST['parent_id']);
+		unset($_POST['post_ID']);
 	}
 
 
