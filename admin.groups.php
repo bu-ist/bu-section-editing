@@ -173,7 +173,7 @@ class BU_Groups_Admin {
 
 		}
 
-		// From publish -> draft|pending|etc 
+		// From publish -> draft|pending|etc
 		if( $old_status == 'publish' && ! in_array( $new_status, $status_blacklist ) ) {
 
 			$group_controller = BU_Edit_Groups::get_instance();
@@ -507,7 +507,7 @@ MSG;
 			$counts[] = sprintf( "<span id=\"%s-stats\" class=\"perm-stats\"><span id=\"perm-stat-count\">%s</span> <span class=\"perm-label\">%s</span></span>\n",
 				$pt->name,
 				$count,
-				$label 
+				$label
 				);
 
 		}
@@ -659,10 +659,10 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Not yet in use
-	 * 
+	 *
 	 * @todo implement
-	 */ 
-	static public function search_posts() { 
+	 */
+	static public function search_posts() {
 
 		if( defined('DOING_AJAX') && DOING_AJAX ) {
 
@@ -695,7 +695,7 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$post = get_post($post_id);
-			$answer = BU_Section_Editor::can_edit($user_id, $parent_id);
+			$answer = BU_Section_Capabilities::can_edit($user_id, $parent_id);
 
 			$response = new stdClass();
 
@@ -723,9 +723,9 @@ class BU_Groups_Admin_Ajax {
 
 			$post = get_post($post_id);
 			if($post->post_status != 'publish')  {
-				$answer = BU_Section_Editor::can_edit($user_id, $post->post_parent);
+				$answer = BU_Section_Capabilities::can_edit($user_id, $post->post_parent);
 			} else {
-				$answer = BU_Section_Editor::can_edit($user_id, $post_id);
+				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
 			}
 
 			$response = new stdClass();

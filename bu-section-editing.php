@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 @author Mike Burns <mgburns@bu.edu>
 */
 
-require_once(dirname(__FILE__) . '/bu-section-roles.php');
+require_once(dirname(__FILE__) . '/classes.roles-capabilities.php');
 // @todo only load admin code when is_admin()
 require_once(dirname(__FILE__) . '/admin.groups.php');
 require_once(dirname(__FILE__) . '/classes.groups.php');
@@ -38,7 +38,7 @@ require_once(dirname(__FILE__) . '/classes.permissions.php');
 require_once(dirname(__FILE__) . '/classes.upgrade.php');
 
 if(!defined('BU_INCLUDES_PATH')) {
-	// @todo We should try to come up with a way of supporting 
+	// @todo We should try to come up with a way of supporting
 	// bu-includes that makes use of submodules or some sort of simple build script
 	if(!defined('BU_NAVIGATION_LIB_LOADED') || BU_NAVIGATION_LIB_LOADED != true ) {
 		require_once(dirname(__FILE__) . '/lib/bu-navigation/bu-navigation.php');
@@ -77,7 +77,7 @@ class BU_Section_Editing_Plugin {
 	public static function init() {
 
 		// Roles and capabilities
-		add_filter( 'map_meta_cap', array('BU_Section_Editor', 'map_meta_cap'), 10, 4);
+		add_filter( 'map_meta_cap', array('BU_Section_Capabilities', 'map_meta_cap'), 10, 4);
 		add_filter( 'bu_user_manager_allowed_roles', array( 'BU_Section_Editing_Roles', 'bu_allowed_roles' ) );
 		BU_Section_Editing_Roles::maybe_create();
 

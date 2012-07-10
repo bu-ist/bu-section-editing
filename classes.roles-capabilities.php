@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Temporary class until a good solution for creating roles / assigning
- * capabilities is arrived upon
- */
 class BU_Section_Editing_Roles {
 
 	// need to figure out the *best* way to create roles
@@ -23,24 +19,26 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('edit_pages');
 		$role->add_cap('edit_others_pages');
 
-
-		// the following roles are overriden by the section editor functionality
-		$role->add_cap('edit_published_pages');
-		$role->add_cap('publish_pages');
-		$role->add_cap('delete_others_pages');
-		$role->add_cap('delete_published_pages');
+		$role->add_cap('delete_posts');
 		$role->add_cap('delete_pages');
 
+
+//		$role->remove_cap('edit_published_pages');
+//		$role->remove_cap('publish_pages');
+//		$role->remove_cap('delete_others_pages');
+//		$role->remove_cap('delete_published_pages');
+
+		$role->add_cap('delete_published_in_section');
+		$role->add_cap('edit_published_in_section');
+		$role->add_cap('publish_in_section');
 
 		$role->add_cap('edit_posts');
 		$role->add_cap('edit_others_posts');
 
-		// the following roles are overriden by the section editor functionality
-		$role->add_cap('edit_published_posts');
-		$role->add_cap('publish_posts');
-		$role->add_cap('delete_posts');
-		$role->add_cap('delete_others_posts');
-		$role->add_cap('delete_published_posts');
+//		$role->remove_cap('edit_published_posts');
+//		$role->remove_cap('publish_posts');
+//		$role->remove_cap('delete_others_posts');
+//		$role->remove_cap('delete_published_posts');
 
 		$role->add_cap('level_1');
 		$role->add_cap('level_0');
@@ -73,10 +71,7 @@ class BU_Section_Editing_Roles {
 	}
 }
 
-/**
- * Section Editor
- */
-class BU_Section_Editor {
+class BU_Section_Capabilities {
 
 	/**
 	 * Checks whether or not a specific user can edit a post
@@ -131,11 +126,11 @@ class BU_Section_Editor {
 	 *
 	 * @todo clean up all of this logic, figure out best approach to drafts
 	 *
-	 * @param type $caps
-	 * @param type $cap
-	 * @param type $user_id
-	 * @param type $args
-	 * @return string
+	 * @param array $caps
+	 * @param string $cap
+	 * @param int $user_id
+	 * @param mixed $args
+	 * @return array
 	 */
 	static function map_meta_cap($caps, $cap, $user_id, $args) {
 		global $post_ID;
@@ -161,16 +156,16 @@ class BU_Section_Editor {
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) &&  $post->post_parent != $_POST['parent_id']) {
 				$parent_id = (int) $_POST['parent_id'];
 
-				if( $post->post_status == 'publish' && ! self::can_edit($user_id, $parent_id)) {
+				if( $post->post_status == 'publish' && self::can_edit($user_id, $parent_id)) {
 					//error_log('[BUSE] edit_post meta_caps are forbidding user moving post under new parent: ' . $parent_id );
-					$caps = array('do_not_allow');
+					$caps = array('edit_published_in_section');
 				}
 
 			}
 
-			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
+			if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
 				//error_log('[BUSE] edit_post meta_caps are forbidding user from editing post: ' . $id );
-				$caps = array('do_not_allow');
+				$caps = array('edit_published_in_section');
 			}
 
 			return $caps;
@@ -179,8 +174,8 @@ class BU_Section_Editor {
 		if( in_array( $cap, self::get_caps_for_post_types( 'delete_post', $post_types ) ) ) {
 			$post = get_post($id);
 
-			if($id && $post->post_status == 'publish' && ! self::can_edit($user_id, $id)) {
-				$caps = array('do_not_allow');
+			if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
+				$caps = array('delete_published_in_section');
 			}
 			return $caps;
 		}
@@ -194,28 +189,26 @@ class BU_Section_Editor {
 				$id = $post_ID;
 			}
 			$post = get_post($id);
-
 			// User is attempting to switch post parent while publishing
 			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
 
 				$parent_id = (int) $_POST['parent_id'];
 
 				// Can't move published posts under sections they can't edit
-				if( ! self::can_edit( $user_id, $parent_id ) ) {
-					$caps = array('do_not_allow');
+				if( self::can_edit( $user_id, $parent_id ) ) {
+					$caps = array('publish_in_section');
 					//error_log('[BUSE] publish_posts is forbidding user from moving post under new parent: ' . $parent_id );
 				}
 
-			}
+			} else {
 
-			if (!isset($id) || !self::can_edit($user_id, $post->post_parent ) ) {
-				$caps = array('do_not_allow');
-				//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
+				if ( isset($id) && self::can_edit($user_id, $post->post_parent ) ) {
+					$caps = array('publish_in_section');
+					//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
+				}
 			}
-
 			return $caps;
 		}
-
 		return $caps;
 
 	}
