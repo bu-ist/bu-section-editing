@@ -167,6 +167,89 @@ jQuery(document).ready(function($){
 
 	// ______________________ PERMISSIONS _____________________
 
+	/* BEGIN NEW LOGIC */
+
+	// @todo test
+	// @todo encapsulate in a class
+	
+	var overlayStates = {
+		allowed : {
+			label : 'Deny Editing',
+			class : 'allowed'
+		},
+		denied : {
+			label : 'Allow Editing',
+			class : 'denied'
+		}
+	}
+
+	var loadOverlay = function( $editor ) {
+
+		// Insert markup
+		var inner = '<a href="#" class="buse-action"><ins class="buse-icon">&nbsp;</ins></a>';
+		var outer = '<span class="buse-overlay inactive"></span>';
+
+		// Start hidden
+		var o = $(outer).html(inner).insertAfter($editor);
+
+		// Trigger event on click
+		o.delegate( '.buse-action', 'click', function(e){
+			console.log('Buse Action Clicked!');
+
+			e.stopPropagation();
+			e.preventDefault();
+
+			// Hide overlay by default
+			hideOverlay( $editor );
+
+			// Provide hook for handling click actions
+			$editor.trigger('overlay_clicked.buse');
+
+		});
+
+	}
+
+	var showOverlay = function( $el, $ed ) {
+
+		// Generate appropriate label
+		var status = $el.attr('rel');
+		var $a = $el.children('a:first').first();
+		var $container = $('#perm-panel-container');
+		var $o = $ed.siblings('.buse-overlay').first();
+
+		var st = overlayStates[status];
+
+		// Setup positioning
+		var pos = {
+			of: $a,
+			my: 'left center',
+			at: 'right center',
+			within: $container,
+			offset: '15 0',
+			collision: 'fit none'
+		};
+
+		// Switch label
+		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st.label );
+
+		// Display
+		$o.addClass(st.class)
+			.removeClass('inactive')
+			.position(pos);
+
+	}
+
+	var hideOverlay = function( $ed ) {
+
+		// Remove all classes on the link
+		$ed.siblings('.buse-overlay')
+			.removeClass('allowed denied')
+			.addClass('inactive')[0].removeAttribute('style');
+
+	}
+
+	/* END NEW LOGIC */
+
 	/* Overlay UI */
 
 	// @todo
@@ -174,7 +257,6 @@ jQuery(document).ready(function($){
 	// - clean up / refactor in to "class"
 	// - with positioning handled in Javascript we don't need to create the overlay everytime
 	// - handle re-positioning on window resize
-
 	var createOverlay = function( $el, callbck ) {
 
 		// Generate appropriate label
@@ -195,6 +277,7 @@ jQuery(document).ready(function($){
 
 			// And process the action
 			callbck.call( $el, e )
+			$(this).trigger('buse-overlay-clicked', [ e ] );
 
 		});
 
@@ -233,6 +316,7 @@ jQuery(document).ready(function($){
 	}
 
 	/* Overlay removal on container click */
+	// @todo this should be handled by the editor, attach the event at that level
 	$('#perm-panel-container').click(function(e){
 
 		/* For hierarchical permission editors */
@@ -262,69 +346,53 @@ jQuery(document).ready(function($){
 
 		}
 
-		/* For flat permission editors */
-		var $perms_flat = $(this).children('.perm-panel.active').find('.perm-editor.flat');
-
-		if( $perms_flat.length > 0 ) {
-
-			var $selected_lis = $perms_flat.find('a.perm-item-clicked').parent('li');
-
-			$selected_lis.each(function(){
-				$(this).children('a').removeClass('perm-item-clicked');
-				removeOverlay( $(this) );
-			});
-
-		}
-
 	});
 
 
 	// _______________________ Flat Permissions Editor _______________________
 
-	$('.perm-editor.flat').delegate( 'a', 'click', function(e) {
+	/**
+	 * Translates native events in to custom events for consumption
+	 */
+	var attachFlatEditorHandlers = function( $editor ) {
 
-		// Don't follow me
-		e.preventDefault();
-		e.stopPropagation();
+		// Post selection
+		$editor.delegate( 'a', 'click', function(e) {
 
-		// Keep track of current selection
-		var $editor = $(this).closest('.perm-editor.flat');
-		var post_type = $editor.data('post-type');
-		var $target_a = $(this);
-		var $post = $target_a.parent('li');
+			// Don't follow me
+			e.preventDefault()
+			e.stopPropagation();
 
-		$target_a.addClass('perm-item-clicked')
+			// Keep track of current selection
+			$post = $(this).parent('li').first();
 
-		var callbck = function(e) {
+			// Remove previous selections 
+			$post.siblings('li.perm-item-selected').each( function() {
 
-			// Remove the overlay
-			removeOverlay($post);
+				$(this).removeClass('perm-item-selected');
 
-			// Remove selection
-			$target_a.removeClass('perm-item-clicked');
+				console.log('Deselecting post: ' );
+				console.log( $(this) );
 
-			// Toggle state
-			toggleState( $post );
-			
-			processUpdatesForPost( $post, $editor );
+				$editor.trigger( 'deselect_post.buse', { post: $(this) } );
 
-		}
+			});
 
-		// Remove any previously active overlays
-		$post.siblings('li').children('.perm-item-clicked').each( function() {
+			$post.addClass('perm-item-selected');
 
-			var $parent_li = $(this).parents('li').first();
-
-			$(this).removeClass('perm-item-clicked');
-			removeOverlay( $parent_li );
+			// Trigger a post selection event
+			$editor.trigger( 'select_post.buse', { post: $post } );
 
 		});
 
-		// Create a new one for the current selection if none existed
-		if( $post.children('.edit-node').length == 0 )
-			createOverlay( $post, callbck );
-		
-	});
+		// Deselect all
+		$editor.click( function(e) {
+
+			$editor.trigger( 'deselect_all.buse' );
+
+		});
+
+	}
 
 
 	// _______________________ Hierarchical Permissions Editor _______________________
@@ -496,26 +564,65 @@ jQuery(document).ready(function($){
 		
 		var pt = $editor.data('post-type');
 
-		$editor.bind( 'posts-loaded', function(e, data ) {
+		// Attach event handlers
+		attachFlatEditorHandlers( $editor );
 
-			// Merge incoming server state with pending edits
-			var $pending = $(this).siblings('input.buse-edits').first();
+		// Event binding
+		$editor
+			.bind( 'posts_loaded.buse', function(e, data ) {
 
-			if( $pending.val().length === 0 )
-				return;
+				// Merge incoming server state with pending edits
+				var $pending = $(this).siblings('input.buse-edits').first();
 
-			var edits = JSON.parse($pending.val());
+				if( $pending.val().length === 0 )
+					return;
 
-			for( post_id in edits ) {
-				var $p = $editor.find('#p' + post_id );
+				var edits = JSON.parse($pending.val());
 
-				if( $p.length ) {
-					$p.attr( 'rel', edits[post_id] );
+				for( post_id in edits ) {
+					var $p = $editor.find('#p' + post_id );
+
+					if( $p.length ) {
+						$p.attr( 'rel', edits[post_id] );
+					}
 				}
-			}
 
-		});
+			})
+			.bind( 'select_post.buse', function(e, data) {
 
+				console.log('Post selected:' );
+				console.log(data.post);
+
+				showOverlay( data.post, $editor );
+				
+			})
+			.bind( 'deselect_all.buse', function(e, data) {
+
+				console.log('Deselecting all posts!');
+
+				hideOverlay( $editor );
+
+			})
+			.bind( 'overlay_clicked.buse', function(e) {
+				
+				console.log('Overlay clicked!');
+
+				$editor.find('.perm-item-selected').each(function(){
+
+					console.log('Selected item:');
+					console.log($(this));
+
+					// Update permissions
+					updatePostPermissions( $(this), $editor );
+
+					// Deselect
+					$(this).removeClass('perm-item-selected');
+
+				});
+
+			});
+
+		// Display initial posts
 		displayPosts( $editor, { post_type: pt });
 
 	}
@@ -606,7 +713,7 @@ jQuery(document).ready(function($){
 				}
 
 				// Modify icons looking for edits
-				$editor.trigger( 'posts-loaded', { posts : response } );
+				$editor.trigger( 'posts_loaded.buse', { posts : response } );
 
 			},
 			error: function(response){
@@ -623,6 +730,7 @@ jQuery(document).ready(function($){
 
 		var $editor = $panel.find('.perm-editor').first();
 
+		// Load appropriate editor
 		if( $editor.hasClass('hierarchical') ) {
 			
 			loadHierarchicalEditor( $editor );
@@ -632,17 +740,27 @@ jQuery(document).ready(function($){
 			loadFlatEditor( $editor );
 		}
 
+		// Load toolbar
 		loadToolbar( $panel, $editor );
+
+		// Load overlay
+		loadOverlay( $editor );
 
 		$panel.addClass('loaded');
 	}
 
+	/**
+	 * Permissions editor loading
+	 */
 	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
 
 		var $panel = $($(this).attr('href'));
 		
-		if( ! $panel.hasClass('loaded') )
+		if( ! $panel.hasClass('loaded') ) {
+	
 			loadPermissionsPanel( $panel );
+	
+		}
 
 	});
 	

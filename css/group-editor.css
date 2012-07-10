@@ -337,6 +337,66 @@
 	z-index: 10;
 }
 
+/* NEW IMPLEMENTATION */
+
+.buse-overlay:before {
+	position: absolute;
+	left: -10px;
+	top: 50%;
+	margin-top: -6px;
+	content: url('../images/left-arrow.png');
+	width: 10px;	
+}
+
+.buse-overlay {
+	background-color: #FFFFFF;
+	border-radius: 3px 3px 3px 3px;
+	border: 1px solid #CCCCCC;
+	box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+	margin-left: 20px;
+	margin-top: -20px;
+	padding: 10px;
+	position: absolute;
+	display: inline-block;
+	text-align: center;
+	z-index: 10;
+}
+
+.buse-overlay .buse-icon {
+	display: block;
+	float: left;
+	text-decoration: none;
+}
+
+.buse-overlay.allowed .buse-icon {
+	background: url('../images/group_perm_denied.png');
+	width: 15px;
+}
+
+.buse-overlay.denied .buse-icon {
+	background: url('../images/group_perm_allowed.png');
+	width: 15px;
+}
+
+.buse-overlay.inactive {
+	display: none;
+}
+
+.buse-action {
+	display: block;
+	float: left;
+	color: white;
+	background-color: #4790b4;
+	background-image: -webkit-linear-gradient(top,#6699CC,#1C729E);
+	background-image: linear-gradient(top,#6699CC,#1C729E);
+	padding: 10px 8px;
+	border-radius: 3px;
+	text-decoration: none;
+	width: 105px;
+}
+
+/* END NEW IMPLEMENTATION */
+
 #perm-panel-container .edit-node a {
 	display: block;
 	float: left;
@@ -348,7 +408,6 @@
 	border-radius: 3px;
 	text-decoration: none;
 	width: 105px;
-
 }
 
 .edit-node a.denied:before,
