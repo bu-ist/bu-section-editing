@@ -18,7 +18,12 @@ jQuery(function($) {
 					if(response.status == 'publish') {
 						alert("You cannot place this page there.");
 						$('#post [name="parent_id"]').val(response.original_parent);
-						scrollingTree.selectNode(response.original_parent, true);
+						if(response.original_parent != 0) {
+							scrollingTree.selectNode(response.original_parent, true);
+						} else {
+							scrollingTree.selectNode(response.original_parent, true);
+							$('#top_level_page').attr('checked', 'checked');
+						}
 					} else {
 						$('#post #publish').val('Submit for Review');
 						$('.misc-pub-section.curtime').hide();
@@ -58,7 +63,7 @@ jQuery(function($) {
 					var original_parent = response.original_parent;
 					if(original_parent == 0) {
 						original_parent = '';
-					} 
+					}
 					$('#pageparentdiv #parent_id [value="' + original_parent + '"]').attr('selected', 'selected');
 				}
 			},
@@ -165,7 +170,3 @@ jQuery(function($) {
 		inlineEditPost.pre_edit(id);
 	}
 });
-
-
-
-

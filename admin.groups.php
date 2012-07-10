@@ -695,8 +695,11 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$post = get_post($post_id);
-			$answer = BU_Section_Capabilities::can_edit($user_id, $parent_id);
-
+			if($parent_id == 0 && $post->post_parent == 0) {
+				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
+			} else {
+				$answer = BU_Section_Capabilities::can_edit($user_id, $parent_id);
+			}
 			$response = new stdClass();
 
 			$response->post_id = $post_id;
