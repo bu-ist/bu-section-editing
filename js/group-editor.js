@@ -218,6 +218,7 @@ jQuery(document).ready(function($){
 		// Search
 		$panel.delegate( 'button.perm-search', 'click', function(e){
 			e.preventDefault();
+
 			var term = $(this).siblings('input').first().val();
 			var args = {
 				'post_type': $editor.data('post-type'),
@@ -286,20 +287,20 @@ jQuery(document).ready(function($){
 	
 	var overlayStates = {
 		'allowed' : {
-			label : 'Deny Editing',
-			class : 'allowed'
+			'label' : 'Deny Editing',
+			'class' : 'allowed'
 		},
 		'allowed-desc-denied' : {
-			label : 'Deny Editing',
-			class : 'allowed'
+			'label' : 'Deny Editing',
+			'class' : 'allowed'
 		},
 		'denied' : {
-			label : 'Allow Editing',
-			class : 'denied'
+			'label' : 'Allow Editing',
+			'class' : 'denied'
 		},
 		'denied-desc-allowed' : {
-			label : 'Allow Editing',
-			class : 'denied'
+			'label' : 'Allow Editing',
+			'class' : 'denied'
 		}
 	}
 
@@ -350,12 +351,12 @@ jQuery(document).ready(function($){
 		};
 
 		// Switch label
-		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st.label );
+		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st['label'] );
 
 		// Display
 		$o.removeClass( 'inactive ' + state_classes )
-			.addClass(st.class)
-			.position(pos);
+			.addClass( st['class'] )
+			.position( pos );
 
 	}
 
@@ -498,16 +499,11 @@ jQuery(document).ready(function($){
 			}
 		}
 
-		// Attach jstree instance to our editor container
-		$editor.jstree(options);
-
-		// Event handlers
+		// Attach handlers and instantiate
 		$editor
 			.bind('loaded.jstree', function( event, data ) {
 
-				// @todo disable individual icon loaders in favor of global loading spinner
-
-				// Start lazy loading
+				// Start lazy loading once tree is fully loaded
 				$(this).find('ul > .jstree-closed').each( function(){
 					var $post = $(this);
 					data.inst.load_node( $(this), function(){
@@ -547,10 +543,12 @@ jQuery(document).ready(function($){
 
 				});
 
-			});
+			})
+			.jstree(options);	// create the tree
 
-		// Deselect all
-		$editor.click( function(e) {
+
+		// Deselect all on click within parent perm panel
+		$editor.closest('.perm-panel').bind( 'click', function(e) {
 
 			/* 
 			Need to make sure we're not in the process of selecting a node,
