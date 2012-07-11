@@ -353,8 +353,7 @@ jQuery(document).ready(function($){
 		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st.label );
 
 		// Display
-		$o
-			.removeClass( 'inactive ' + state_classes )
+		$o.removeClass( 'inactive ' + state_classes )
 			.addClass(st.class)
 			.position(pos);
 
@@ -405,12 +404,10 @@ jQuery(document).ready(function($){
 
 			})
 			.bind( 'select_post.buse', function(e, data) {
-
 				showOverlay( data.post, $editor );
 				
 			})
 			.bind( 'deselect_all.buse', function(e, data) {
-
 				hideOverlay( $editor );
 
 			})
@@ -441,8 +438,7 @@ jQuery(document).ready(function($){
 		// Post selection
 		$editor.delegate( 'a', 'click', function(e) {
 
-			// Don't follow me
-			e.preventDefault()
+			e.preventDefault();
 			e.stopPropagation();
 
 			// Keep track of current selection
@@ -464,8 +460,8 @@ jQuery(document).ready(function($){
 
 		});
 
-		// Deselect all
-		$editor.click( function(e) {
+		// Deselect all on click within parent perm panel
+		$editor.closest('.perm-panel').bind( 'click', function(e) {
 
 			$editor.trigger( 'deselect_all.buse' );
 
@@ -1081,8 +1077,9 @@ jQuery(document).ready(function($){
 
 	// Initial loading
 	var $initialPanel = $('#perm-panel-container').find('.perm-panel').first();
-	if( $initialPanel.length )
+	if( $initialPanel.length ) {
 		loadPermissionsPanel( $initialPanel );
+	}
 
 
 });
