@@ -503,8 +503,15 @@ MSG;
 	 * Render group permissions string
 	 *
 	 */
-	static function group_permissions_string( $group, $post_type = null ) {
+	static function group_permissions_string( $group, $args = array( ) ) {
 
+		$defaults = array(
+			'post_type' => null,
+			'sep' => ', '
+			);
+
+		extract( wp_parse_args( $args, $defaults ) );
+		
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
 		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
 
@@ -531,7 +538,7 @@ MSG;
 		}
 
 		if( ! empty( $counts ) ) {
-			$output = implode(', ', $counts );
+			$output = implode( $sep, $counts );
 		}
 
 		return $output;
