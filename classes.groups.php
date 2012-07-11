@@ -266,7 +266,9 @@ class BU_Edit_Groups {
 
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
-	 * 
+	 *
+	 * @todo cleanup this query
+	 *  
 	 * @param $args array optional args
 	 * 
 	 * @return int allowed post count for the given post type 
@@ -277,11 +279,11 @@ class BU_Edit_Groups {
 		$defaults = array(
 			'user_id' => null,
 			'group' => null,
-			'post_type' => null
+			'post_type' => null,
+			'include_unpublished' => false
 			);
 
-		$args = wp_parse_args( $args, $defaults );
-		extract( $args );
+		extract( wp_parse_args( $args, $defaults ) );
 
 		$group_ids = array();
 
@@ -315,25 +317,31 @@ class BU_Edit_Groups {
 			return false;
 		}
 
-		$posts_join = $post_type_and = '';
+		$posts_join = $post_type_clause = $post_status_or = '';
 
-		// Maybe filter by post type
-		if( ! is_null( $post_type ) && ! is_null( get_post_type_object( $post_type ) ) ) {
+		// Maybe filter by post type and status
+		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
 			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
-			$post_type_and = "AND p.post_type = '$post_type'";
+			$post_type_clause = "AND p.post_type = '$post_type' ";
 
 		}
 
-		$count_query = sprintf( "SELECT COUNT(*) FROM %s %sWHERE meta_key = '%s' AND meta_value IN (%s) %s",
+		if( $include_unpublished )
+			$post_status_or = "OR (p.post_status IN ('draft','pending') $post_type_clause)";
+
+		$count_query = sprintf( "SELECT DISTINCT(p.ID) FROM %s %s WHERE (meta_key = '%s' AND meta_value IN (%s) %s) %s GROUP BY p.ID",
 			$wpdb->postmeta,
 			$posts_join,
 			BU_Edit_Group::META_KEY,
 			implode( ',', $group_ids ),
-			$post_type_and
+			$post_type_clause,
+			$post_status_or
 			);
 
-		$count = $wpdb->get_var( $count_query );
+		$ids = $wpdb->get_col( $count_query );
+
+		$count = count($ids);
 
 		return $count;
 

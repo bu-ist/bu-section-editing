@@ -75,7 +75,8 @@ class BU_Groups_Admin {
 			$class = ' class="current"';
 
 		$edit_link = admin_url( "edit.php?post_type=$post_type&editable_by=" . $user_id );
-		$count = $groups->get_allowed_post_count( array( 'user_id' => $user_id, 'post_type' => $post_type ) );
+		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_unpublished' => true );
+		$count = $groups->get_allowed_post_count( $args );
 
 		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
 
@@ -118,8 +119,23 @@ class BU_Groups_Admin {
 			}
 
 			$query->set( 'meta_query', $meta_query );
+			$query->set( 'post_status', 'publish' );
+
+			// Include drafts and pending posts as well
+			add_filter( 'posts_where', array( __CLASS__, 'editable_where_clause' ) );
+
 		}
 
+	}
+
+	public static function editable_where_clause( $where ) {
+		global $wpdb;
+
+		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
+		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
+		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
+
+		return $where;
 	}
 
 	/**
