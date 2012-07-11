@@ -165,19 +165,139 @@ jQuery(document).ready(function($){
 		
 	}
 
-	// ______________________ PERMISSIONS _____________________
+	// ______________________ PERMISSIONS PANEL ______________________
 
-	/* BEGIN NEW LOGIC */
+	/**
+	 * Load post type editors dynamically on click
+	 */
+	var loadPermissionsPanel = function( $panel ) {
+
+		var $editor = $panel.find('.perm-editor').first();
+
+		// Load appropriate editor
+		if( $editor.hasClass('hierarchical') ) {
+			
+			loadHierarchicalEditor( $editor );
+
+		} else {
+
+			loadFlatEditor( $editor );
+		}
+
+		// Load toolbar
+		loadToolbar( $panel, $editor );
+
+		// Load overlay
+		loadOverlay( $editor );
+
+		$panel.addClass('loaded');
+	}
+
+	/**
+	 * Permissions editor loading on post type tab click
+	 */
+	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
+
+		var $panel = $($(this).attr('href'));
+		
+		if( ! $panel.hasClass('loaded') ) {
+	
+			loadPermissionsPanel( $panel );
+	
+		}
+
+	});
+
+// _____________________ PERM EDITOR TOOLBAR ____________________
+
+	// @todo
+	// create an object around the editor instances with a consistent
+	// API for these actions
+	var loadToolbar = function( $panel, $editor ) {
+
+		// Search
+		$panel.delegate( 'button.perm-search', 'click', function(e){
+			e.preventDefault();
+			var term = $(this).siblings('input').first().val();
+			var args = {
+				'post_type': $editor.data('post-type'),
+				'query': {
+					s: term
+				}
+			};
+
+			// Clear any selections
+			hideOverlay( $editor );
+
+			// Render post list
+			displayPosts( $editor, args );
+
+		});
+
+		// Sort
+		$panel.delegate( 'select.perm-sort', 'change', function(e){
+			e.preventDefault();
+
+			var sort = $(this).val().split(':'),
+				orderby = sort[0],
+				order = sort[1] || 'DESC';
+
+			var args = {
+				'post_type': $editor.data('post-type'),
+				'query': {
+					orderby: orderby,
+					order: order
+				}
+			};
+
+			// Clear any selections
+			hideOverlay( $editor );
+
+			// Render post list
+			displayPosts( $editor, args );
+
+		});
+
+		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
+			if( e.keyCode == 13 ) {
+				e.preventDefault();
+				$(this).siblings('button').first().click();
+			}
+		});
+
+		// Expand all
+		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
+			e.preventDefault();
+			$.jstree._reference($editor).open_all();
+		});
+		
+		// Collapse all
+		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
+			e.preventDefault();
+			$.jstree._reference($editor).close_all();
+		});
+
+	}
+
+	// _______________________ PERMISSIONS OVERLAY _______________________
 
 	// @todo test
 	// @todo encapsulate in a class
 	
 	var overlayStates = {
-		allowed : {
+		'allowed' : {
 			label : 'Deny Editing',
 			class : 'allowed'
 		},
-		denied : {
+		'allowed-desc-denied' : {
+			label : 'Deny Editing',
+			class : 'allowed'
+		},
+		'denied' : {
+			label : 'Allow Editing',
+			class : 'denied'
+		},
+		'denied-desc-allowed' : {
 			label : 'Allow Editing',
 			class : 'denied'
 		}
@@ -194,7 +314,6 @@ jQuery(document).ready(function($){
 
 		// Trigger event on click
 		o.delegate( '.buse-action', 'click', function(e){
-			console.log('Buse Action Clicked!');
 
 			e.stopPropagation();
 			e.preventDefault();
@@ -217,6 +336,7 @@ jQuery(document).ready(function($){
 		var $container = $('#perm-panel-container');
 		var $o = $ed.siblings('.buse-overlay').first();
 
+		var state_classes = Object.keys( overlayStates ).join(' ');
 		var st = overlayStates[status];
 
 		// Setup positioning
@@ -233,123 +353,85 @@ jQuery(document).ready(function($){
 		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st.label );
 
 		// Display
-		$o.addClass(st.class)
-			.removeClass('inactive')
+		$o
+			.removeClass( 'inactive ' + state_classes )
+			.addClass(st.class)
 			.position(pos);
 
 	}
 
 	var hideOverlay = function( $ed ) {
 
+		var state_classes = Object.keys( overlayStates ).join(' ');
+
 		// Remove all classes on the link
 		$ed.siblings('.buse-overlay')
-			.removeClass('allowed denied')
+			.removeClass( state_classes )
 			.addClass('inactive')[0].removeAttribute('style');
 
 	}
 
-	/* END NEW LOGIC */
+	// _______________________ Flat Permissions Editor _______________________
 
-	/* Overlay UI */
-
-	// @todo
-	// - test browser compatibility for position js
-	// - clean up / refactor in to "class"
-	// - with positioning handled in Javascript we don't need to create the overlay everytime
-	// - handle re-positioning on window resize
-	var createOverlay = function( $el, callbck ) {
-
-		// Generate appropriate label
-		var state = $el.attr('rel');
-		var $a = $el.children('a:first').first();
-		var $container = $('#perm-panel-container');
-
-		var label = state == 'allowed' || state == 'allowed-desc-denied' ? 'Deny Editing' : 'Allow Editing';
-
-		// Create actual state modifying link
-		var $overlayLink = $('<a href="#edit-node" class="' + state + '">' + label + '</a>');
+	/**
+	 * Creates a flat permissions editor
+	 */
+	var loadFlatEditor = function( $editor ) {
+		
+		var pt = $editor.data('post-type');
 
 		// Attach event handlers
-		$overlayLink.click(function(e){
+		attachFlatEditorHandlers( $editor );
 
-			e.stopPropagation();
-			e.preventDefault();
+		// Event binding
+		$editor
+			.bind( 'posts_loaded.buse', function(e, data ) {
 
-			// And process the action
-			callbck.call( $el, e )
-			$(this).trigger('buse-overlay-clicked', [ e ] );
+				// Merge incoming server state with pending edits
+				var $pending = $(this).siblings('input.buse-edits').first();
 
-		});
+				if( $pending.val().length === 0 )
+					return;
 
-		$('<span class="edit-node"></span>').append($overlayLink).hide( 0, function(){
+				var edits = JSON.parse($pending.val());
 
-			// Append to container
-			$el.closest('.perm-panel.active').append($(this));
+				for( post_id in edits ) {
+					var $p = $editor.find('#p' + post_id );
 
-			$(this).position({
-				of: $a,
-				my: 'left center',
-				at: 'right center',
-				within: $container,
-				offset: '15 0',
-				collision: 'fit none'
-			}).show();
+					if( $p.length ) {
+						$p.attr( 'rel', edits[post_id] );
+					}
+				}
 
-		});
+			})
+			.bind( 'select_post.buse', function(e, data) {
 
-	}
+				showOverlay( data.post, $editor );
+				
+			})
+			.bind( 'deselect_all.buse', function(e, data) {
 
-	var removeOverlay = function( $el, callbck ) {
+				hideOverlay( $editor );
 
-		var $overlay = $el.closest('.perm-panel.active').children('.edit-node').first();
+			})
+			.bind( 'overlay_clicked.buse', function(e) {
+				
+				$editor.find('.perm-item-selected').each(function(){
 
-		if( $overlay.length ) {
-			
-			$overlay.hide( 0, function(){ 
+					// Update permissions
+					updatePostPermissions( $(this), $editor );
 
-				$(this).remove();
+					// Deselect
+					$(this).removeClass('perm-item-selected');
+
+				});
 
 			});
 
-		}
+		// Display initial posts
+		displayPosts( $editor, { post_type: pt });
 
 	}
-
-	/* Overlay removal on container click */
-	// @todo this should be handled by the editor, attach the event at that level
-	$('#perm-panel-container').click(function(e){
-
-		/* For hierarchical permission editors */
-		var $perms_hierarchical = $(this).find('.perm-panel.active .perm-editor.hierarchical');
-
-		if( $perms_hierarchical.length > 0 ) {
-
-			/* 
-			Need to make sure we're not in the process of selecting a node,
-			as the jstree method select_node does not allows us to stop click
-			events from bubbling up on selection
-			*/
-
-			if( $(e.target).hasClass('jstree-clicked') || $(e.target).parents('.jstree-clicked').length )
-				return;
-
-			var $inst = $.jstree._reference($perms_hierarchical);
-
-			if( $inst ) {
-
-				var $selected = $inst.get_selected();
-
-				if( $selected.length > 0 ) 
-					$inst.deselect_all();
-
-			}
-
-		}
-
-	});
-
-
-	// _______________________ Flat Permissions Editor _______________________
 
 	/**
 	 * Translates native events in to custom events for consumption
@@ -370,9 +452,6 @@ jQuery(document).ready(function($){
 			$post.siblings('li.perm-item-selected').each( function() {
 
 				$(this).removeClass('perm-item-selected');
-
-				console.log('Deselecting post: ' );
-				console.log( $(this) );
 
 				$editor.trigger( 'deselect_post.buse', { post: $(this) } );
 
@@ -396,7 +475,101 @@ jQuery(document).ready(function($){
 
 
 	// _______________________ Hierarchical Permissions Editor _______________________
-	
+
+	/**
+	 * Create a jstree instance for each hierarchical post type
+	 */ 
+	var loadHierarchicalEditor = function( $editor ) {
+
+		var post_type = $editor.data('post-type');
+		
+		// Append global jstree options with configuration for this post type
+		options['json_data'] = {
+			ajax : {
+				url : ajaxurl,
+				type: 'GET',
+				cache: false,
+				data : function(n) {
+					return {
+						action : 'buse_render_post_list',
+						group_id : $('#group_id').val(),
+						post_type : post_type,
+						query: {
+							child_of : n.attr ? n.attr('id').substr(1) : 0
+						}
+					}
+				}
+			}
+		}
+
+		// Attach jstree instance
+		$test = $editor.jstree(options);
+
+		// Event handlers
+		$editor
+			.bind('loaded.jstree', function( event, data ) {
+
+				// Start lazy loading
+				$(this).find('ul > .jstree-closed').each( function(){
+					var $post = $(this);
+					data.inst.load_node( $(this), function(){
+						correctIconsForSection($post);
+					});
+				});
+
+			})
+			.bind('select_node.jstree', function( event, data ) {
+
+				if( data.inst.is_selected( data.rslt.obj ) ) {
+
+					showOverlay( data.rslt.obj, $editor );
+
+				} 
+
+			})
+			.bind('deselect_node.jstree', function( event, data ) {
+
+				hideOverlay( $editor );
+
+			})
+			.bind('deselect_all.jstree', function( event, data ) {
+
+				hideOverlay( $editor );
+
+			})
+			.bind( 'overlay_clicked.buse', function(e) {
+				
+				$editor.jstree( 'get_selected' ).each( function(){
+
+					// Update permissions
+					updatePostPermissions( $(this), $editor );
+
+					// Deselect
+					$editor.jstree('deselect_node', $(this) );
+
+				});
+
+			});
+
+		// Deselect all
+		$editor.click( function(e) {
+
+			/* 
+			Need to make sure we're not in the process of selecting a node,
+			as the jstree method select_node does not allows us to stop click
+			events from bubbling up on selection
+			*/
+
+			if( $(e.target).hasClass('jstree-clicked') || $(e.target).parents('.jstree-clicked').length )
+				return;
+
+			if( $editor.jstree('get_selected').length )
+				$editor.jstree( 'deselect_all' );
+
+		});
+
+	};
+
 	// jstree global configuration
 	var options = {
 		plugins : [ 'themes', 'types', 'json_data', 'ui' ],
@@ -480,214 +653,12 @@ jQuery(document).ready(function($){
 			select_limit: 1
 		}
 	};
+	
+	// ____________________ PERM EDITOR API _____________________
 
 	/**
-	 * Create a jstree instance for each hierarchical post type
-	 */ 
-	var loadHierarchicalEditor = function( $editor ) {
-
-		var post_type = $editor.data('post-type');
-		
-		// Append global jstree options with configuration for this post type
-		options['json_data'] = {
-			ajax : {
-				url : ajaxurl,
-				type: 'GET',
-				cache: false,
-				data : function(n) {
-					return {
-						action : 'buse_render_post_list',
-						group_id : $('#group_id').val(),
-						post_type : post_type,
-						query: {
-							child_of : n.attr ? n.attr('id').substr(1) : 0
-						}
-					}
-				}
-			}
-		}
-
-		$editor.jstree( options )
-			.bind('loaded.jstree', function( event, data ) {
-
-				// Start lazy loading
-				$(this).find('ul > .jstree-closed').each( function(){
-					var $post = $(this);
-					data.inst.load_node( $(this), function(){
-						correctIconsForSection($post);
-					});
-				});
-
-			})
-			.bind('select_node.jstree', function( event, data ) {
-
-				// Event handler for permissions update
-				var actionCallback = function( e ) {
-
-					var $post = $(this);
-
-					data.inst.deselect_node( $post );
-					
-					updatePostPermissions( $post, data.inst.get_container() );
-					
-				}
-
-				if( data.inst.is_selected( data.rslt.obj ) ) {
-
-					createOverlay( data.rslt.obj, actionCallback );
-
-				} else {
-
-					removeOverlay( data.rslt.obj );
-				}
-
-			})
-			.bind('deselect_node.jstree', function( event, data ) {
-
-				removeOverlay( data.rslt.obj );
-
-			})
-			.bind('deselect_all.jstree', function( event, data ) {
-
-				// Remove existing contect menus if we have a previous selection
-				if( data.rslt.obj.length ) {
-
-					removeOverlay( data.rslt.obj );
-
-				}
-
-			});
-
-	};
-
-	var loadFlatEditor = function( $editor ) {
-		
-		var pt = $editor.data('post-type');
-
-		// Attach event handlers
-		attachFlatEditorHandlers( $editor );
-
-		// Event binding
-		$editor
-			.bind( 'posts_loaded.buse', function(e, data ) {
-
-				// Merge incoming server state with pending edits
-				var $pending = $(this).siblings('input.buse-edits').first();
-
-				if( $pending.val().length === 0 )
-					return;
-
-				var edits = JSON.parse($pending.val());
-
-				for( post_id in edits ) {
-					var $p = $editor.find('#p' + post_id );
-
-					if( $p.length ) {
-						$p.attr( 'rel', edits[post_id] );
-					}
-				}
-
-			})
-			.bind( 'select_post.buse', function(e, data) {
-
-				console.log('Post selected:' );
-				console.log(data.post);
-
-				showOverlay( data.post, $editor );
-				
-			})
-			.bind( 'deselect_all.buse', function(e, data) {
-
-				console.log('Deselecting all posts!');
-
-				hideOverlay( $editor );
-
-			})
-			.bind( 'overlay_clicked.buse', function(e) {
-				
-				console.log('Overlay clicked!');
-
-				$editor.find('.perm-item-selected').each(function(){
-
-					console.log('Selected item:');
-					console.log($(this));
-
-					// Update permissions
-					updatePostPermissions( $(this), $editor );
-
-					// Deselect
-					$(this).removeClass('perm-item-selected');
-
-				});
-
-			});
-
-		// Display initial posts
-		displayPosts( $editor, { post_type: pt });
-
-	}
-
-	// @todo
-	// create an object around the editor instances with a consistent
-	// API for these actions
-	var loadToolbar = function( $panel, $editor ) {
-
-		// Search
-		$panel.delegate( 'button.perm-search', 'click', function(e){
-			e.preventDefault();
-			var term = $(this).siblings('input').first().val();
-			var args = {
-				'post_type': $editor.data('post-type'),
-				'query': {
-					s: term
-				}
-			};
-
-			displayPosts( $editor, args );
-
-		});
-
-		// Sort
-		$panel.delegate( 'select.perm-sort', 'change', function(e){
-			e.preventDefault();
-
-			var sort = $(this).val().split(':'),
-				orderby = sort[0],
-				order = sort[1] || 'DESC';
-
-			var args = {
-				'post_type': $editor.data('post-type'),
-				'query': {
-					orderby: orderby,
-					order: order
-				}
-			};
-
-			displayPosts( $editor, args );
-
-		});
-
-		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
-			if( e.keyCode == 13 ) {
-				e.preventDefault();
-				$(this).siblings('button').first().click();
-			}
-		});
-
-		// Expand all
-		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
-			e.preventDefault();
-			$.jstree._reference($editor).open_all();
-		});
-		
-		// Collapse all
-		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
-			e.preventDefault();
-			$.jstree._reference($editor).close_all();
-		});
-
-	}
-
+	 * Display posts, fetched dynamically based on query args
+	 */
 	var displayPosts = function( $editor, query ) {
 
 		var editorData = {
@@ -723,53 +694,6 @@ jQuery(document).ready(function($){
 
 	}
 
-	/**
-	 * Load post type editors dynamically on click
-	 */
-	var loadPermissionsPanel = function( $panel ) {
-
-		var $editor = $panel.find('.perm-editor').first();
-
-		// Load appropriate editor
-		if( $editor.hasClass('hierarchical') ) {
-			
-			loadHierarchicalEditor( $editor );
-
-		} else {
-
-			loadFlatEditor( $editor );
-		}
-
-		// Load toolbar
-		loadToolbar( $panel, $editor );
-
-		// Load overlay
-		loadOverlay( $editor );
-
-		$panel.addClass('loaded');
-	}
-
-	/**
-	 * Permissions editor loading
-	 */
-	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
-
-		var $panel = $($(this).attr('href'));
-		
-		if( ! $panel.hasClass('loaded') ) {
-	
-			loadPermissionsPanel( $panel );
-	
-		}
-
-	});
-	
-	// Initial loading
-	var $initialPanel = $('#perm-panel-container').find('.perm-panel').first();
-	if( $initialPanel.length )
-		loadPermissionsPanel( $initialPanel );
-
-	
 	/**
 	 * The user has allowed/denied a specific node
 	 */
@@ -984,7 +908,7 @@ jQuery(document).ready(function($){
 
 	}
 
-	/* Perm Stats */
+	// ____________________ PERM STATS ______________________ 
 
 	/**
 	 * Stats widget -- permissions count
@@ -1122,5 +1046,13 @@ jQuery(document).ready(function($){
 		}
 				
 	});
+
+	// ___________________ ON PAGE LOAD _____________________
+
+	// Initial loading
+	var $initialPanel = $('#perm-panel-container').find('.perm-panel').first();
+	if( $initialPanel.length )
+		loadPermissionsPanel( $initialPanel );
+
 
 });
