@@ -209,7 +209,15 @@ class BU_Section_Capabilities {
 			$post = get_post($id);
 			$post_type = get_post_type($post);
 			$post_type = get_post_type_object($post_type);
-			if($post_type->hierarchical != true) {
+			$is_alt = false;
+			
+			// BU Versions uses the post_parent to relate the alternate version 
+			// to the original
+			if(class_exists('BU_Version_Workflow')) {
+				$is_alt = BU_Version_Workflow::$v_factory->is_alt(get_post_type($post));
+			}
+
+			if($post_type->hierarchical != true && $is_alt != true) {
 				if(self::can_edit($user_id, $id)) {
 					$caps = array('publish_in_section');
 				}
@@ -225,7 +233,6 @@ class BU_Section_Capabilities {
 					}
 
 				} else {
-
 					if ( isset($id) && self::can_edit($user_id, $post->post_parent ) ) {
 						$caps = array('publish_in_section');
 					}
