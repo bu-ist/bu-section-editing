@@ -151,31 +151,46 @@ class BU_Section_Capabilities {
 		if( in_array( $cap, self::get_caps_for_post_types( 'edit_post', $post_types ) ) ) {
 			$parent_id = null;
 			$post = get_post($id);
+			$post_type = get_post_type($post);
+			$post_type = get_post_type_object($post_type);
 
-			// Post parent has switched
-			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) &&  $post->post_parent != $_POST['parent_id']) {
-				$parent_id = (int) $_POST['parent_id'];
-
-				if( $post->post_status == 'publish' && self::can_edit($user_id, $parent_id)) {
-					//error_log('[BUSE] edit_post meta_caps are forbidding user moving post under new parent: ' . $parent_id );
+			if($post_type->hierarchical != true) {
+				if(self::can_edit($user_id, $id)) {
 					$caps = array('edit_published_in_section');
 				}
+			} else {
+				// Post parent has switched
+				if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) &&  $post->post_parent != $_POST['parent_id']) {
+					$parent_id = (int) $_POST['parent_id'];
 
+					if( $post->post_status == 'publish' && self::can_edit($user_id, $parent_id)) {
+						$caps = array('edit_published_in_section');
+					}
+
+				}
+
+				if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
+					$caps = array('edit_published_in_section');
+				}
 			}
 
-			if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
-				//error_log('[BUSE] edit_post meta_caps are forbidding user from editing post: ' . $id );
-				$caps = array('edit_published_in_section');
-			}
 
 			return $caps;
 		}
 
 		if( in_array( $cap, self::get_caps_for_post_types( 'delete_post', $post_types ) ) ) {
 			$post = get_post($id);
+			$post_type = get_post_type($post);
+			$post_type = get_post_type_object($post_type);
 
-			if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
-				$caps = array('delete_published_in_section');
+			if($post_type->hierarchical != true) {
+				if(self::can_edit($user_id, $id)) {
+					$caps = array('delete_published_in_section');
+				}
+			} else {
+				if($id && $post->post_status == 'publish' && self::can_edit($user_id, $id)) {
+					$caps = array('delete_published_in_section');
+				}
 			}
 			return $caps;
 		}
@@ -188,23 +203,32 @@ class BU_Section_Capabilities {
 			if(isset($post_ID)) {
 				$id = $post_ID;
 			}
+			if(!isset($id)) {
+				return $caps;
+			}
 			$post = get_post($id);
-			// User is attempting to switch post parent while publishing
-			if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
-
-				$parent_id = (int) $_POST['parent_id'];
-
-				// Can't move published posts under sections they can't edit
-				if( self::can_edit( $user_id, $parent_id ) ) {
+			$post_type = get_post_type($post);
+			$post_type = get_post_type_object($post_type);
+			if($post_type->hierarchical != true) {
+				if(self::can_edit($user_id, $id)) {
 					$caps = array('publish_in_section');
-					//error_log('[BUSE] publish_posts is forbidding user from moving post under new parent: ' . $parent_id );
 				}
-
 			} else {
+				// User is attempting to switch post parent while publishing
+				if(isset($_POST['post_ID']) && $id == $_POST['post_ID'] && isset($_POST['parent_id']) && $post->post_parent != $_POST['parent_id']) {
 
-				if ( isset($id) && self::can_edit($user_id, $post->post_parent ) ) {
-					$caps = array('publish_in_section');
-					//error_log('[BUSE] publish_posts meta_caps are forbidding user from publishing post: ' . $id );
+					$parent_id = (int) $_POST['parent_id'];
+
+					// Can't move published posts under sections they can't edit
+					if( self::can_edit( $user_id, $parent_id ) ) {
+						$caps = array('publish_in_section');
+					}
+
+				} else {
+
+					if ( isset($id) && self::can_edit($user_id, $post->post_parent ) ) {
+						$caps = array('publish_in_section');
+					}
 				}
 			}
 			return $caps;
