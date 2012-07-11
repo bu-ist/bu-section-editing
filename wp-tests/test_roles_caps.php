@@ -38,11 +38,32 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 				'status' => 'publish'
 			)
 		);
+
+		$posts = array(
+			'draft1' => array(
+				'status' => 'draft',
+				'groups' => array('alpha')
+			),
+			'publish1' => array(
+				'status' => 'publish',
+				'groups' => array('alpha')
+			),
+			'nogroups-draft' => array(
+				'status' => 'draft',
+				'author' => 'section_editor2'
+			),
+			'nogroups-published' => array(
+				'status' => 'publish',
+				'author' => 'section_editor2'
+			)
+
+		);
 		$this->addUser('section_editor1');
 		$this->addUser('section_editor2');
 		$section_editor1 = get_user_by('login', 'section_editor1');
 		$section_editor2 = get_user_by('login', 'section_editor2');
-		$this->insertPages($pages);
+		$this->insertPosts($pages, 'page');
+		$this->insertPosts($posts, 'post');
 		$perms = $this->getEditable('alpha');
 		$this->addGroup('alpha', array($section_editor1->ID), $perms);
 		$perms = $this->getEditable('beta');
@@ -66,6 +87,16 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->assertTrue(current_user_can('edit_page', $post_id));
 		$post_id = $this->pages['top-level1']->ID;
 		$this->assertFalse(current_user_can('edit_page', $post_id));
+
+		$post_id = $this->posts['draft1']->ID;
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+		$post_id = $this->posts['publish1']->ID;
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+
+		$post_id = $this->posts['nogroups-draft']->ID;
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+		$post_id = $this->posts['nogroups-published']->ID;
+		$this->assertFalse(current_user_can('edit_post', $post_id));
 	}
 
 	function test_delete() {
@@ -77,6 +108,17 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$post_id = $this->pages['top-level1']->ID;
 		$this->assertFalse(current_user_can('delete_page', $post_id));
+
+		$post_id = $this->posts['draft1']->ID;
+		$this->assertTrue(current_user_can('delete_post', $post_id));
+		$post_id = $this->posts['publish1']->ID;
+		$this->assertTrue(current_user_can('delete_post', $post_id));
+
+		$post_id = $this->posts['nogroups-draft']->ID;
+		$this->assertFalse(current_user_can('delete_post', $post_id));
+
+		$post_id = $this->posts['nogroups-published']->ID;
+		$this->assertFalse(current_user_can('delete_post', $post_id));
 
 	}
 
@@ -103,8 +145,26 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$_POST['post_ID'] = $post_id;
 		$_POST['parent_id'] = 0;
 		$this->assertFalse(current_user_can('publish_pages'));
+
+		$post_id = $this->posts['draft1']->ID;
+		$GLOBALS['post_ID'] = $post_id;
+		$this->assertTrue(current_user_can('publish_posts'));
+
+		$post_id = $this->posts['publish1']->ID;
+		$GLOBALS['post_ID'] = $post_id;
+		$this->assertTrue(current_user_can('publish_posts'));
+
+		$post_id = $this->posts['nogroups-draft']->ID;
+		$GLOBALS['post_ID'] = $post_id;
+		$this->assertFalse(current_user_can('publish_posts'));
+
+		$post_id = $this->posts['nogroups-published']->ID;
+		$GLOBALS['post_ID'] = $post_id;
+		$this->assertFalse(current_user_can('publish_posts'));
+
 		unset($_POST['parent_id']);
 		unset($_POST['post_ID']);
+
 	}
 
 
@@ -138,13 +198,23 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$perms = array();
 
 		if(is_array($this->pages)) {
+			$perms['page'] = array();
 			foreach($this->pages as $page) {
 				if(isset($page->groups) && in_array($group_name, $page->groups)) {
-					$perms[$page->ID] = 'allowed';
+					$perms['page'][$page->ID] = 'allowed';
 				}
 			}
 		}
-		return array('page' => $perms);
+
+		if(is_array($this->posts)) {
+			$perms['post'] = array();
+			foreach($this->posts as $post) {
+				if(isset($post->groups) && in_array($group_name, $post->groups)) {
+					$perms['post'][$post->ID] = 'allowed';
+				}
+			}
+		}
+		return $perms;
 	}
 
 	function deleteGroup($id) {
@@ -168,7 +238,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 	}
 
-	function insertPages($pages, $parent = 0) {
+	function insertPosts($pages, $post_type = 'page', $parent = 0) {
 
 		foreach($pages as $title => $properties) {
 			if(!isset($properties['status'])) {
@@ -189,7 +259,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 				'post_title' => $title,
 				'post_content' => "{$title} content",
 				'post_excerpt' => "{$title} excerpt",
-				'post_type' => 'page',
+				'post_type' => $post_type,
 				'post_parent' => $parent
 
 			);
@@ -197,14 +267,14 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 			$result = wp_insert_post($post);
 
 			if(!is_wp_error($result)) {
-				$page = get_post($result);
+				$post = get_post($result);
 				if(isset($properties['groups'])) {
-					$page->groups = $properties['groups'];
+					$post->groups = $properties['groups'];
 				}
 
-				$this->pages[$page->post_title] = $page;
+				$this->{$post_type . "s"}[$post->post_title] = $post;
 				if(!empty($properties['children'])) {
-					$this->insertPages($properties['children'], $page->ID);
+					$this->insertPosts($properties['children'], $post_type, $post->ID);
 				}
 			}
 
