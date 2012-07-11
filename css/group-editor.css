@@ -1,57 +1,5 @@
-/* Manage groups page */
-#buse-group-table {
-	width: 50%;
-	border-spacing: 0;
-	border-collapse: collapse;
-	margin: 25px 0;
-	border: 1px solid #D3D3D3;
-	-webkit-border-top-left-radius: 3px;
-	-webkit-border-top-right-radius: 3px;
-	border-top-left-radius: 3px;
-	border-top-right-radius: 3px;
-}
-
-#buse-group-table thead {
-	background-color: #F1F1F1;
-	background-image: -ms-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -moz-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -o-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -webkit-gradient(linear,left top,left bottom,from(#F9F9F9),to(#ECECEC));
-	background-image: -webkit-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: linear-gradient(top,#F9F9F9,#ECECEC);
-}
-
-#buse-group-table tbody {
-
-}
-
-#buse-group-table th {
-	margin: 0;
-	padding: 3px 10px;;
-	text-align: left;
-	border-bottom: 1px solid #ccc;
-	font-weight: normal;
-}
-
-#buse-group-table tr {
-	margin: 0;
-}
-
-#buse-group-table td {
-	margin: 0;
-	border-top: 1px solid #eee;
-	padding: 5px 10px;
-}
-
-#buse-group-table tr:first-child td {
-	border-top: none;
-}
-
-#buse-group-table .submitdelete img {
-	vertical-align: bottom;
-}
-
 /* Group editor containers */
+
 #section-group-editor {
 	position:relative;
 }
@@ -85,24 +33,7 @@
 	margin-right: 375px;
 }
 
-/* Panel containers */
-
-#section-group-editor {
-}
-
-#section-group-members {
-}
-
-#section-group-permissions {
-}
-
-/* Name panel */
-
-
 /* Members panel */
-#group-member-list {
-
-}
 
 #add-group-members-header {
 	background-image: url('../images/user_add.png');
@@ -177,7 +108,7 @@
 }
 
 #perm-tab-container .nav-tab-active {
-		color: #464646;
+	color: #464646;
 }
 
 #perm-panel-container {
@@ -226,7 +157,6 @@
 	font-style: normal;
 }
 
-
 #perm-panel-container .perm-scroll-area {
 	overflow-x: auto;
 }
@@ -274,10 +204,6 @@
 	outline: none;
 }
 
-.perm-editor.flat ul {
-
-}
-
 .perm-editor.flat li[rel="allowed"] .flat-perm-icon {
 	background: url('../images/group_perm_allowed.png');
 	background-repeat: no-repeat;
@@ -312,10 +238,6 @@
 
 .perm-list.flat li:first-child {
 	border-top: none;
-}
-
-.perm-list.flat li.odd {
-	background-color: #f9f9f9;
 }
 
 #perm-panel-container .perm-list input[type="checkbox"] {
@@ -437,11 +359,11 @@
 }
 
 .perm-stats-diff.positive {
-		color: #0CA02A;    
+	color: #0CA02A;    
 }
 
 .perm-stats-diff.negative {
-		color: #E24740;
+	color: #E24740;
 }
 
 #group-stats-widget .actions {
@@ -499,6 +421,12 @@
 	border-top: none;
 }
 
+/* Groups table */
+
+#section-groups td {
+	padding: 10px 7px;
+}
+
 /* Member counts */
 
 #member-list-count {
@@ -506,7 +434,8 @@
 	font-weight: normal;
 }
 
-/* States */
+/* Panel show/hide states */
+
 .js .edit-group-panel { 
 	position: absolute;
 	top: -9999px;

@@ -156,8 +156,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				$p = $this->format_post( $post );
 
 				// Alternating table rows for prettiness
-				$alt_class = $count % 2 ? 'odd' : 'even';
-				$p['attr']['class'] = $alt_class;
+				$alt_class = $count % 2 ? '' : 'alternate';
+
+				if( $alt_class )
+					$p['attr']['class'] = $alt_class;
 
 				// Add this post with the specified format
 				switch( $this->format ) {
