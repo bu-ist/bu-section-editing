@@ -34,7 +34,7 @@
 				<td><a href="<?php echo $edit_url ?>"><?php echo $group->name; ?></a></td>
 				<td><?php echo $description; ?></td>
 				<td><?php echo count( $group->get_active_users() ); ?></td>
-				<td><?php echo BU_Groups_Admin::group_permissions_string( $group->id ); ?></td>
+				<td><?php echo BU_Groups_Admin::group_permissions_string( $group ); ?></td>
 				<td>
 					<a class="submitdelete" href="<?php echo BU_Groups_Admin::manage_groups_url( 'delete', array( 'id' => $group->id ) ); ?>">
 					<img src="<?php echo plugins_url( BUSE_PLUGIN_PATH . '/images/group_remove.png' ); ?>" alt="Delete"></a>

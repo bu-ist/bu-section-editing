@@ -517,8 +517,13 @@ MSG;
 
 		$output = '';
 		$counts = array();
-
 		$groups = BU_Edit_Groups::get_instance();
+
+		if( is_numeric( $group ) )
+			$group = $groups->get( $group );
+
+		if( ! is_object( $group ) )
+			return false;
 
 		foreach( $content_types as $pt ) {
 
