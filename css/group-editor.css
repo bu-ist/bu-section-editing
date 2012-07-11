@@ -252,6 +252,16 @@
 	border-color: #555;
 }
 
+/* Override default throbber while loading descendents */
+
+.perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
+	background: url('../images/group_perm_denied_desc_unknown.png');
+}
+
+.perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
+	background: url('../images/group_perm_allowed_desc_unknown.png');
+}
+
 /* Flat Permissions */
 
 .perm-editor.flat {
