@@ -199,7 +199,7 @@
 	background-image: -o-linear-gradient(top,#ECECEC,#DFDFDF);
 	background-image: -webkit-gradient(linear,left top,left bottom,from(#ECECEC),to(#DFDFDF));
 	background-image: -webkit-linear-gradient(top,#ECECEC,#DFDFDF);
-	background-image: linear-gradient(top,#ECECEC,#ECECEC);
+	background-image: linear-gradient(top,#ECECEC,#DFDFDF);
 }
 
 .perm-toolbar.top {
@@ -477,13 +477,13 @@
 	-webkit-border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
-	background-color: #F1F1F1;
-	background-image: -ms-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -moz-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -o-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: -webkit-gradient(linear,left top,left bottom,from(#F9F9F9),to(#ECECEC));
-	background-image: -webkit-linear-gradient(top,#F9F9F9,#ECECEC);
-	background-image: linear-gradient(top,#F9F9F9,#ECECEC);
+	background-color: #ECECEC;
+	background-image: -ms-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -moz-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -o-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#ECECEC),to(#DFDFDF));
+	background-image: -webkit-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: linear-gradient(top,#ECECEC,#DFDFDF);
 }
 
 .buse-widget-header h4 {

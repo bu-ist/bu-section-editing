@@ -959,10 +959,10 @@ jQuery(document).ready(function($){
 		// Generate diff string
 		if( total > 0 ) {
 			count_str = ' ( +' + total +' )';
-			$diff_el.addClass('positive');
+			$diff_el.removeClass('negative').addClass('positive');
 		} else if( total < 0 ) {
 			count_str = ' ( ' + total +' )';
-			$diff_el.addClass('negative');
+			$diff_el.removeClass('positive').addClass('negative');
 		} else {
 			$diff_el.removeClass('positive negative');
 		}
