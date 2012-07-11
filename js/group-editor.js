@@ -502,9 +502,14 @@ jQuery(document).ready(function($){
 			}
 		}
 
+		// Attach jstree instance to our editor container
+		$editor.jstree(options);
+
 		// Event handlers
 		$editor
 			.bind('loaded.jstree', function( event, data ) {
+
+				// @todo disable individual icon loaders in favor of global loading spinner
 
 				// Start lazy loading
 				$(this).find('ul > .jstree-closed').each( function(){
@@ -607,19 +612,6 @@ jQuery(document).ready(function($){
 						image: buse_config.pluginUrl + "/images/group_perm_denied.png"
 					}
 				},
-				'allowed' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_allowed.png"
-					}
-				},
 				'denied-desc-allowed' : {
 					clickable	: true,
 					renameable	: false,
@@ -633,6 +625,32 @@ jQuery(document).ready(function($){
 						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_allowed.png"
 					}
 				},
+				'denied-desc-unknown' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_unknown.png"
+					}
+				},
+				'allowed' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_allowed.png"
+					}
+				},
 				'allowed-desc-denied' : {
 					clickable	: true,
 					renameable	: false,
@@ -644,6 +662,19 @@ jQuery(document).ready(function($){
 					valid_children	: "all",
 					icon: {
 						image: buse_config.pluginUrl + "/images/group_perm_allowed_desc_denied.png"
+					}
+				},
+				'allowed-desc-unknown' : {
+					clickable	: true,
+					renameable	: false,
+					deletable	: false,
+					creatable	: false,
+					draggable	: false,
+					max_children	: -1,
+					max_depth	: -1,
+					valid_children	: "all",
+					icon: {
+						image: buse_config.pluginUrl + "/images/group_perm_allowed_desc_unknown.png"
 					}
 				}
 			}
@@ -857,8 +888,8 @@ jQuery(document).ready(function($){
 
 				switch( state ) {
 
-					case 'allowed': case 'allowed-desc-denied':
-						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"]').length > 0 );
+					case 'allowed': case 'allowed-desc-denied': case 'allowed-desc-unknown':
+						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"],li[rel="denied-desc-unknown"]').length > 0 );
 						
 						// Adjust state
 						if( mismatch ) $parent_post.attr('rel','allowed-desc-denied');
@@ -866,8 +897,8 @@ jQuery(document).ready(function($){
 
 						break;
 
-					case 'denied': case 'denied-desc-allowed':
-						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"]').length > 0 );
+					case 'denied': case 'denied-desc-allowed': case 'denied-desc-unknown':
+						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"],li[rel="allowed-desc-unknown"]').length > 0 );
 						
 						// Adjust state
 						if( mismatch ) $parent_post.attr('rel','denied-desc-allowed');

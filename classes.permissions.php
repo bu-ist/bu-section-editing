@@ -396,15 +396,26 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$p = $this->format_post( $post, $has_children );
 
 			// Maybe fetch descendents
-			if( $has_children && $this->child_of != 0 ) {
+			if( $has_children ) {
 
-				$post_id = $post->ID;
-				$descendents = $this->get_posts( $post_id );
-		
-				if( !empty( $descendents ) ) {	
-					$p['state'] = 'closed';
-					$p['children'] = $descendents;
-				}	
+				// Default to closed with children
+				$p['state'] = 'closed';
+
+				if( $this->child_of > 0 ) {
+
+					$post_id = $post->ID;
+					$descendents = $this->get_posts( $post_id );
+			
+					if( !empty( $descendents ) ) {	
+						$p['children'] = $descendents;
+					}
+
+				} else {
+
+					// Let users known descendents have not yet been loaded
+					$p['attr']['rel'] = $post->perm . '-desc-unknown';
+
+				}
 
 			}
 
@@ -470,7 +481,9 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				'class' => esc_attr( $classes ),
 				'data-perm' => esc_attr( $post->perm )
 			),
-			'data' => esc_html( $title ),
+			'data' => array(
+				'title' => esc_html( $title )
+				),
 			'children' => null
 			);
 
