@@ -427,6 +427,8 @@ class BU_Groups_Admin {
 
 		if( isset( $_GET['status'] ) ) {
 
+			$groups_url = admin_url( self::MANAGE_GROUPS_PAGE );
+
 			switch( $_GET['status'] ) {
 
 				case 1:
@@ -434,11 +436,11 @@ class BU_Groups_Admin {
 					break;
 
 				case 2:
-					$notices['update'][] = '<p>Group added.</p>';
+					$notices['update'][] = sprintf( '<p>Group added. <a href="%s">View all groups</a></p></p>', $groups_url );
 					break;
 
 				case 3:
-					$notices['update'][] = '<p>Group updated.</p>';
+					$notices['update'][] = sprintf( '<p>Group updated. <a href="%s">View all groups</a></p>', $groups_url );
 					break;
 
 				case 4:
