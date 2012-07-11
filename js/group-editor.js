@@ -502,9 +502,6 @@ jQuery(document).ready(function($){
 			}
 		}
 
-		// Attach jstree instance
-		$test = $editor.jstree(options);
-
 		// Event handlers
 		$editor
 			.bind('loaded.jstree', function( event, data ) {
@@ -556,13 +553,15 @@ jQuery(document).ready(function($){
 
 			/* 
 			Need to make sure we're not in the process of selecting a node,
-			as the jstree method select_node does not allows us to stop click
+			as the jstree event select_node.jstree does not allows us to stop click
 			events from bubbling up on selection
 			*/
 
+			// Bail if click target is a selected anchor (label) or ins (icon)
 			if( $(e.target).hasClass('jstree-clicked') || $(e.target).parents('.jstree-clicked').length )
 				return;
 
+			// Otherwise force deselection
 			if( $editor.jstree('get_selected').length )
 				$editor.jstree( 'deselect_all' );
 
