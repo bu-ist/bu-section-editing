@@ -337,7 +337,7 @@ jQuery(document).ready(function($){
 		var $container = $('#perm-panel-container');
 		var $o = $ed.siblings('.buse-overlay').first();
 
-		var state_classes = Object.keys( overlayStates ).join(' ');
+		// Current state
 		var st = overlayStates[status];
 
 		// Setup positioning
@@ -354,7 +354,7 @@ jQuery(document).ready(function($){
 		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st['label'] );
 
 		// Display
-		$o.removeClass( 'inactive ' + state_classes )
+		$o.removeClass( 'inactive allowed allowed-desc-denied denied denied-desc-allowed')
 			.addClass( st['class'] )
 			.position( pos );
 
@@ -362,11 +362,9 @@ jQuery(document).ready(function($){
 
 	var hideOverlay = function( $ed ) {
 
-		var state_classes = Object.keys( overlayStates ).join(' ');
-
 		// Remove all classes on the link
 		$ed.siblings('.buse-overlay')
-			.removeClass( state_classes )
+			.removeClass( 'allowed allowed-desc-denied denied denied-desc-allowed' )
 			.addClass('inactive')[0].removeAttribute('style');
 
 	}
