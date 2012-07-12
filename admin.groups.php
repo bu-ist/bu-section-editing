@@ -3,7 +3,6 @@
 /*
 @todo
 - Need to add an edit lock to editing groups (look at navman)
-- Keep tab selected when saving
 */
 
 class BU_Groups_Admin {
@@ -245,17 +244,19 @@ class BU_Groups_Admin {
 	 */
 	public static function admin_scripts( $hook ) {
 
+		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
+	
 		if( $hook == self::$manage_groups_hook ) {
 			wp_enqueue_script('json2');
 			//@todo do we need jquery-cookie?
-			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree.js' ), array('jquery'), '1.0-rc3' );
+			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree' . $suffix . '.js' ), array('jquery'), '1.0-rc3' );
 
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
 			// @see https://github.com/jquery/jquery-ui/pull/254
 			// @see http://bugs.jqueryui.com/ticket/5645
-			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position.js' ), array('jquery') );
+			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position' . $suffix . '.js' ), array('jquery') );
 
-			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor.js' ), array('jquery'), '0.3' );
+			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery'), '0.3' );
 
 			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
@@ -270,7 +271,7 @@ class BU_Groups_Admin {
 		}
 
 		if( in_array($hook, array('post.php', 'post-new.php', 'edit.php') ) ) {
-			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post.js', __FILE__), array('jquery'), '1.0', true);
+			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), '1.0', true);
 		}
 
 	}
