@@ -27,7 +27,7 @@
 	position: relative;
 }
 
-.edit-group-panel {
+.group-panel {
 	min-height: 400px;
 	padding-top: 2em;
 	margin-right: 375px;
@@ -436,13 +436,13 @@
 
 /* Panel show/hide states */
 
-.js .edit-group-panel { 
+.js .group-panel { 
 	position: absolute;
 	top: -9999px;
 	left: -9999px;
 }
 
-.edit-group-panel.active { 
+.group-panel.active { 
 	position: static; 
 }
 

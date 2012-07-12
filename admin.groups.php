@@ -288,6 +288,8 @@ class BU_Groups_Admin {
 
 			$groups = BU_Edit_Groups::get_instance();
 			$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
+			$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
+			$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
 			$redirect_url = '';
 
 			switch( $_REQUEST['action'] ) {
@@ -350,7 +352,7 @@ class BU_Groups_Admin {
 						$status = 3;
 					}
 
-					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => $status ) );
+					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => $status, 'tab' => $tab, 'perm_panel' => $perm_panel ) );
 					break;
 
 				case 'delete':
@@ -392,6 +394,7 @@ class BU_Groups_Admin {
 		$group_id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : -1;
 		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
 		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
+		$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
 
 		$template_path = 'interface/groups.php';
 

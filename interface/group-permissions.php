@@ -3,14 +3,14 @@
 	<?php if( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
 			<?php foreach( $content_types as $index => $pt ): ?>
-				<?php $active = $index == 0 ? ' nav-tab-active' : ''; ?>
-				<a href="#perm-panel-<?php echo $pt->name; ?>" class="nav-link nav-tab inline<?php echo $active; ?>"><?php echo $pt->label; ?></a>
+				<?php $active = $perm_panel == $pt->name ? ' nav-tab-active' : ''; ?>
+				<a href="#perm-panel-<?php echo $pt->name; ?>" class="nav-link nav-tab inline<?php echo $active; ?>" data-target="<?php echo $pt->name; ?>" ><?php echo $pt->label; ?></a>
 			<?php endforeach; ?>
 		</div><!-- perm-tab-container -->
 		<div id="perm-panel-container">
 		<?php foreach( $content_types as $index => $pt ): ?>
 			<?php 
-			$active = $index == 0 ? ' active' : ''; 
+			$active = $perm_panel == $pt->name ? ' active' : '';
 			$hierarchical = $pt->hierarchical ? true : false;
 			$hiearchical_class = $hierarchical ? 'hierarchical' : 'flat';
 			?>

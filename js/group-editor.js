@@ -5,15 +5,6 @@ jQuery(document).ready(function($){
 	var $nav_links = $('a.nav-link');
 
 	// _______________________ Navigation Tabs ________________________
-	
-	if( location.hash ) {
-		// Initial state based on incoming hash...
-		var $tab = $('a.nav-tab[href=' + location.hash + ']');
-		$target = $(location.hash);
-
-		$tab.addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
-		$target.addClass('active').siblings().removeClass('active');
-	}
 
 	$nav_links.click(function(e){
 		e.preventDefault();
@@ -21,6 +12,11 @@ jQuery(document).ready(function($){
 		var $tab = $('a.nav-tab[href=' + this.hash + ']');
 		var $target = $(this.hash);
 
+		// Update hidden inputs
+		$input = $target.hasClass('group-panel') ? $('#tab') : $('#perm_panel');
+		$input.val($tab.data('target'));
+
+		// Switch panels
 		$tab.addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
 		$target.addClass('active').siblings().removeClass('active');
 
@@ -1072,7 +1068,7 @@ jQuery(document).ready(function($){
 	// ___________________ ON PAGE LOAD _____________________
 
 	// Initial loading
-	var $initialPanel = $('#perm-panel-container').find('.perm-panel').first();
+	var $initialPanel = $('#perm-panel-container').find('.perm-panel.active').first();
 	if( $initialPanel.length ) {
 		loadPermissionsPanel( $initialPanel );
 	}
