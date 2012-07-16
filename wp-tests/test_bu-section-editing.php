@@ -1,13 +1,9 @@
 <?php
 
+/**
+ * @group bu-section-editing
+ **/
 class Test_BU_Section_Editing extends WP_UnitTestCase {
-
-	function setUp() {
-		parent::setUp();
-	}
-	function tearDown() {
-		parent::tearDown();
-	}
 
 	//________________________GROUP CONTROLLER TESTS_______________________
 
@@ -122,7 +118,6 @@ class Test_BU_Section_Editing extends WP_UnitTestCase {
 		// Generate 3 random groups
 		$args = $this->generate_test_group_args();
 		$groups = $this->quick_add_group( $args, 3 );
-
 		foreach( $groups as $group ) {
 			$this->assertInstanceOf( 'BU_Edit_Group', $group );
 		}
