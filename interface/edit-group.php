@@ -8,7 +8,7 @@
 			<a id="nav-tab-members" href="#group-members-panel" class="nav-link nav-tab <?php if($tab == 'members') echo 'nav-tab-active'; ?>" data-target="members" >Members</a>
 			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-link nav-tab <?php if($tab == 'permissions') echo 'nav-tab-active'; ?>" data-target="permissions" >Permissions</a>
 		</h3>
-		<form id="group-edit-form" method="post">
+		<form name="group-edit-form" id="group-edit-form" method="post">
 			<input type="hidden" name="action" value="update"/>
 			<input type="hidden" id="group_id" name="id" value="<?php echo $group_id; ?>" />
 			<input type="hidden" id="tab" name="tab" value="<?php echo $tab; ?>" />

@@ -1043,7 +1043,7 @@ jQuery(document).ready(function($){
 	/**
 	 * Saving/updating does not trigger alerts
 	 */ 
-	$('input[type="submit"]').click(function(e) {
+	$('#group-edit-form').submit(function(e){
 		window.onbeforeunload = null;
 
 		//@todo client-side validation
