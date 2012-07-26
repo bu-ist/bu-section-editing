@@ -614,7 +614,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_allowed.png"
+						image: buse_config.pluginUrl + "/images/group-perms-sprite.png",
+						position: "0 -1px"
 					}
 				},
 				'denied-desc-unknown' : {
@@ -653,7 +654,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_allowed_desc_denied.png"
+						image: buse_config.pluginUrl + "/images/group-perms-sprite.png",
+						position: "-22px -1px"
 					}
 				},
 				'allowed-desc-unknown' : {
