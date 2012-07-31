@@ -97,19 +97,24 @@ class BU_Edit_Groups {
 		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
-		foreach( $args['perms'] as $post_type => $post_statuses ) {
-			if( ! is_array( $post_statuses ) ) {
-				error_log("Unepected value for post stati: $post_statuses" );
-				unset( $args['perms'][$post_type]);
-				continue;
-			}
+		// Set permissions
+		if( isset($args['perms']) && is_array($args['perms'])) {
 
-			foreach( $post_statuses as $post_id => $status ) {
-				if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-					error_log("Removing post $post_id due to unexpected status: $status" );
-					unset( $args['perms'][$post_type][$post_id] );
+			foreach( $args['perms'] as $post_type => $post_statuses ) {
+				if( ! is_array( $post_statuses ) ) {
+					error_log("Unepected value for post stati: $post_statuses" );
+					unset( $args['perms'][$post_type]);
+					continue;
+				}
+
+				foreach( $post_statuses as $post_id => $status ) {
+					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+						error_log("Removing post $post_id due to unexpected status: $status" );
+						unset( $args['perms'][$post_type][$post_id] );
+					}
 				}
 			}
+
 		}
 
 		// Create new model
@@ -125,7 +130,10 @@ class BU_Edit_Groups {
 
 		// Commit updates
 		$this->increment_index();
-		$this->update_group_permissions( $group->id, $args['perms'] );
+		
+		if( isset( $args['perms'] ) )
+			$this->update_group_permissions( $group->id, $args['perms'] );
+
 		$this->save();
 
 		add_action( 'bu_add_section_editing_group', $group );
@@ -373,7 +381,6 @@ class BU_Edit_Groups {
 
 		$groups = get_option(self::OPTION_NAME);
 
-		// create groups from db data
 		if(is_array($groups)) {
 
 			foreach( $groups as $group_data ) {
@@ -390,6 +397,8 @@ class BU_Edit_Groups {
 		if( $index === false ) $index = 1;
 
 		$this->index = $index;
+
+		return $this->groups;
 
 	}
 
@@ -508,7 +517,6 @@ class BU_Edit_Groups {
 	 * Commit section editing group data to database
 	 */ 
 	private function update( $group_data ) {
-
 		return update_option(self::OPTION_NAME, $group_data );
 	
 	}

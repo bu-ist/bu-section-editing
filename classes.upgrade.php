@@ -11,8 +11,6 @@ class BU_Section_Editing_Upgrader {
 		// Check if plugin has been updated (or just installed) and store current version
 		if( $last_version === false || $last_version != BU_Section_Editing_Plugin::BUSE_VERSION ) {
 
-			error_log( "Updating verison from $last_version to " . BU_Section_Editing_Plugin::BUSE_VERSION );
-
 			if( $last_version )
 				self::upgrade( $last_version );
 
@@ -59,8 +57,6 @@ class BU_Section_Editing_Upgrader {
 	private static function upgrade_03() {
 		global $wpdb;
 
-		error_log( 'Upgrading from 0.2 to 0.3!' );
-
 		// Upgrade (0.2 -> 0.3)
 		$patterns = array( '/^(\d+):allowed$/');
 		$replacements = array('${1}' );
@@ -70,13 +66,12 @@ class BU_Section_Editing_Upgrader {
 			$wpdb->postmeta, 
 			BU_Edit_Group::META_KEY
 			);
+		
 		$allowed_posts = $wpdb->get_results( $allowed_query );
 
 		foreach( $allowed_posts as $post ) {
 			$new_meta_value = preg_replace( $patterns, $replacements, $post->meta_value );
 			update_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $new_meta_value, $post->meta_value );
-			error_log( "Updating post meta for post {$post->post_id}: OLD = {$post->meta_value}, NEW = $new_meta_value" );
-
 		}
 
 		// Fetch existing values
@@ -89,7 +84,6 @@ class BU_Section_Editing_Upgrader {
 		// Loop through and update
 		foreach( $denied_posts as $post ) {
 			delete_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $post->meta_value );
-			error_log( "Deleting post meta for post {$post->post_id}" );
 		}
 
 	}
