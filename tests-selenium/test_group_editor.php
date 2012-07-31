@@ -20,11 +20,6 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		// Login to start each test
 		$this->wp_login( 'admin', 'password' );
 
-		/**
-		 * Temporary -- eventually the framework will handle plugin activation automatically
-		 */
-		$this->activate_plugin( 'bu-section-editing' );
-
 	}
 
 	// _______________________ TAB/PANEL SWITCHING _______________________
