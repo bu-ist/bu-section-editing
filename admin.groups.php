@@ -46,7 +46,7 @@ class BU_Groups_Admin {
 
 		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
 
-			$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
+			$supported_post_types = BU_Group_Permissions::get_supported_post_types('names');
 
 			foreach( $supported_post_types as $post_type ) {
 				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
@@ -319,7 +319,7 @@ class BU_Groups_Admin {
 						return;
 					}
 
-					$post_types = BU_Permissions_Editor::get_supported_post_types( 'names' );
+					$post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
 
 					foreach( $post_types as $post_type ) {
 
@@ -517,7 +517,7 @@ MSG;
 		extract( wp_parse_args( $args, $defaults ) );
 		
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
-		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
+		else  $content_types =  BU_Group_Permissions::get_supported_post_types();
 
 		$output = '';
 		$counts = array();

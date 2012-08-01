@@ -119,7 +119,7 @@ class BU_Edit_Groups {
 		
 		// Set permissions
 		if( isset( $data['perms'] ) )
-			$this->update_group_permissions( $group->id, $data['perms'] );
+			BU_Group_Permissions::update_group_permissions( $group->id, $data['perms'] );
 
 		// Notify
 		add_action( 'bu_add_section_editing_group', $group );
@@ -150,7 +150,7 @@ class BU_Edit_Groups {
 			return false;
 
 		// Update permissions.
-		$this->update_group_permissions( $id, $data['perms'] );
+		BU_Group_Permissions::update_group_permissions( $id, $data['perms'] );
 
 		return $group;
 
@@ -173,7 +173,7 @@ class BU_Edit_Groups {
 		}
 
 		// Remove group permissions.
-		$this->delete_group_permissions($id);
+		BU_Group_Permissions::delete_group_permissions($id);
 
 		return true;
 
@@ -320,7 +320,6 @@ class BU_Edit_Groups {
 		$args = array(
 			'post_type'=>self::POST_TYPE_NAME,
 			'numberposts'=>-1,
-			'orderby' => 'ID',
 			'order' => 'ASC'
 			);
 
@@ -520,116 +519,6 @@ class BU_Edit_Groups {
 		$group = new BU_Edit_Group( $data );
 
 		return $group;
-
-	}
-
-	// ____________________PERMISSIONS________________________
-
-	/**
-	 * Update permissions for a group
-	 * 
-	 * @todo move this to a BU_Group_Permissions class
-	 * 
-	 * @param int $group_id ID of group to modify ACL for
-	 * @param array $permissions Permissions, as an associative array indexed by post type
-	 */ 
-	private function update_group_permissions( $group_id, $permissions ) {
-		global $wpdb;
-
-		if( ! is_array( $permissions ) )
-			return false;
-
-		foreach( $permissions as $post_type => $new_perms ) {
-
-			if( ! is_array( $new_perms ) ) {
-				error_log( "Unexpected value found while updating permissions: $new_perms" );
-				continue;
-			}
-
-			// Incoming allowed posts
-			$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
-
-			if( ! empty( $allowed_ids ) ) {
-
-				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
-					$wpdb->postmeta,
-					implode( ',', $allowed_ids ),
-					BU_Edit_Group::META_KEY,
-					$group_id
-					);
-
-				$previously_allowed = $wpdb->get_col( $allowed_select );
-				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
-
-				foreach( $additions as $post_id ) {
-
-					add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-
-				}
-
-			}
-
-			// Incoming restricted posts
-			$denied_ids = array_keys( $permissions[$post_type], 'denied' );
-
-			if( ! empty( $denied_ids ) ) {
-
-				// Select meta_id's for removal based on incoming posts
-				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
-					$wpdb->postmeta,
-					implode( ',', $denied_ids ),
-					BU_Edit_Group::META_KEY,
-					$group_id
-					);
-
-				$denied_meta_ids = $wpdb->get_col( $denied_select );
-
-				// Bulk deletion
-				if( ! empty( $denied_meta_ids ) ) {
-
-					$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
-						$wpdb->postmeta,
-						implode(',', $denied_meta_ids )
-						);
-
-					// Remove allowed status in one query
-					$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
-
-					// Purge cache
-					foreach( $denied_ids as $post_id ) {
-						wp_cache_delete( $post_id, 'post_meta' );
-					}
-
-				}
-
-			}
-			
-		}
-
-	}
-
-	private function delete_group_permissions( $group_id ) {
-
-		$supported_post_types = BU_Permissions_Editor::get_supported_post_types( 'names' );
-
-		$meta_query = array(
-			'key' => BU_Edit_Group::META_KEY,
-			'value' => $group_id,
-			'compare' => 'LIKE'
-			);
-
-		$args = array(
-			'post_type' => $supported_post_types,
-			'meta_query' => array( $meta_query ),
-			'posts_per_page' => -1,
-			'fields' => 'ids'
-			);
-
-		$query = new WP_Query( $args );
-
-		foreach( $query->posts as $post_id ) {
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
-		}
 
 	}
 

@@ -1,5 +1,5 @@
 <div id="group-permission-editor">
-	<?php $content_types = BU_Permissions_Editor::get_supported_post_types(); ?>
+	<?php $content_types = BU_Group_Permissions::get_supported_post_types(); ?>
 	<?php if( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
 			<?php foreach( $content_types as $index => $pt ): ?>
