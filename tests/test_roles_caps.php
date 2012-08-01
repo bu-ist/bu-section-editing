@@ -1,6 +1,6 @@
 <?php
 
-/**
+/** 
  * @group bu-section-editing
  **/
 class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
@@ -77,7 +77,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		parent::tearDown();
 		$groups = BU_Edit_Groups::get_instance();
 		foreach($this->groups as $group) {
-			$this->deleteGroup($group->ID);
+			$this->deleteGroup($group->id);
 		}
 	}
 
@@ -194,7 +194,6 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$args['users'] = $user_ids;
 		$args['description'] = 'lorem ipsum.';
 		$this->groups[] = $groups->add_group($args);
-		$groups->save();
 	}
 
 	function getEditable($group_name) {
@@ -226,7 +225,6 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		if(isset($this->groups[$id])) {
 			unset($this->groups[$id]);
 		}
-		$groups->save();
 	}
 
 	function insertPage($post, $groups = null) {

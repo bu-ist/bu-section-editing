@@ -72,6 +72,8 @@ class BU_Section_Editing_Plugin {
 		add_action( 'init', array('BU_Section_Editing_Plugin', 'init' ) );
 		add_action( 'init', array('BU_Section_Editing_Plugin', 'add_post_type_support' ), 20 );
 
+		add_action( 'init', array('BU_Edit_Groups', 'register_post_type' ) );
+
 	}
 
 	public static function init() {

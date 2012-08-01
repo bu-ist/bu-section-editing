@@ -3,15 +3,14 @@
 /**
  * Section editor group controller
  * 
- * @todo store groups as posts in a custom post type.
+ * @todo investigate replacing in-memory groups store with cache API
  */
 class BU_Edit_Groups {
 
-	const OPTION_NAME = '_bu_section_groups';
-	const INDEX_NAME = '_bu_section_groups_index';
+	const POST_TYPE_NAME = 'buse_group';
+	const MEMBER_KEY = '_buse_group_users';
 
 	public $groups = array();
-	public $index = null;
 
 	static protected $instance;
 
@@ -22,6 +21,7 @@ class BU_Edit_Groups {
 	 */ 
 	protected function __construct() {
 
+		// Load group data
 		$this->load();
 		
 	}
@@ -36,6 +36,30 @@ class BU_Edit_Groups {
 		}
 
 		return BU_Edit_Groups::$instance;
+	}
+
+	/**
+	 * Register hidden post type for group data storage
+	 */ 
+	static public function register_post_type() {
+
+		$args = array(
+			'label' => 'Section Groups',
+			'public' => false,
+			'publicly_queryable' => false,
+			'show_ui' => false, 
+			'show_in_menu' => false, 
+			'query_var' => true,
+			'rewrite' => false,
+			'capability_type' => 'post',
+			'has_archive' => false, 
+			'hierarchical' => false,
+			'menu_position' => null,
+			'can_export' => true
+		);
+
+		register_post_type( self::POST_TYPE_NAME, $args );
+
 	}
 
 	// ___________________PUBLIC_INTERFACE_____________________
@@ -68,74 +92,36 @@ class BU_Edit_Groups {
 	}
 
 	/**
-	 * Add a BU_Edit_Group object to internal groups array
-	 */ 
-	private function add( BU_Edit_Group $group ) {
-
-		array_push($this->groups, $group);
-
-	}
-
-	/**
 	 * Remove all groups from internal array 
 	 */
 	public function delete_groups() {
 
 		$this->groups = array();
+
 	}
 
 	/**
 	 * Add a new section editing group
 	 * 
-	 * @param array $args an array of parameters for group initialization
+	 * @param array $data an array of parameters for group initialization
 	 * @return BU_Edit_Group the group that was just added
 	 */ 
-	public function add_group($args) {
+	public function add_group($data) {
 
-		// Process input
-		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
-		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+		// Sanitize input
+		$this->_clean_group_data( $data );
 
+		// Create new group from args
+		$group = $this->insert( $data );
+
+		if( ! $group instanceof BU_Edit_Group )
+			return false;
+		
 		// Set permissions
-		if( isset($args['perms']) && is_array($args['perms'])) {
+		if( isset( $data['perms'] ) )
+			$this->update_group_permissions( $group->id, $data['perms'] );
 
-			foreach( $args['perms'] as $post_type => $post_statuses ) {
-				if( ! is_array( $post_statuses ) ) {
-					error_log("Unepected value for post stati: $post_statuses" );
-					unset( $args['perms'][$post_type]);
-					continue;
-				}
-
-				foreach( $post_statuses as $post_id => $status ) {
-					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log("Removing post $post_id due to unexpected status: $status" );
-						unset( $args['perms'][$post_type][$post_id] );
-					}
-				}
-			}
-
-		}
-
-		// Create new model
-		$group = new BU_Edit_Group($args);
-		
-		// Update attributes
-		$group->id = $this->index;
-		$group->created = time();
-		$group->modified = time();
-
-		// Add to our model list
-		$this->add($group);
-
-		// Commit updates
-		$this->increment_index();
-		
-		if( isset( $args['perms'] ) )
-			$this->update_group_permissions( $group->id, $args['perms'] );
-
-		$this->save();
-
+		// Notify
 		add_action( 'bu_add_section_editing_group', $group );
 
 		return $group;
@@ -146,50 +132,27 @@ class BU_Edit_Groups {
 	 * Update an existing section editing group
 	 * 
 	 * @param int $id the id of the group to update
-	 * @param array $args an array of parameters with group fields to update
+	 * @param array $data an array of parameters with group fields to update
 	 * @return BU_Edit_Group|bool the group that was just updated or false if none existed
 	 */
-	public function update_group($id, $args = array()) {
+	public function update_group($id, $data = array()) {
 
-		$group = $this->get($id);
+		if( $this->get($id) === false )
+			return false;
 
-		if($group) {
+		// Sanitize.
+		$this->_clean_group_data( $data );
 
-			// Process input
-			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-			$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
-			$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+		// Update group.
+		$group = $this->update( $id, $data);
 
-			foreach( $args['perms'] as $post_type => $post_statuses ) {
-				if( ! is_array( $post_statuses ) ) {
-					error_log("Unepected value for post stati: $post_statuses" );
-					unset( $args['perms'][$post_type]);
-					continue;
-				}
+		if( ! $group instanceof BU_Edit_Group )
+			return false;
 
-				foreach( $post_statuses as $post_id => $status ) {
-					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log("Removing post $post_id due to unexpected status: $status" );
-						unset( $args['perms'][$post_type][$post_id] );
-					}
-				}
-			}
+		// Update permissions.
+		$this->update_group_permissions( $id, $data['perms'] );
 
-			// Update our model list
-			$group->update($args);
-
-			// Bump modified time
-			$group->modified = time();
-
-			// Commit updates
-			$this->update_group_permissions( $group->id, $args['perms'] );
-			$this->save();
-
-			return $group;
-
-		}
-
-		return false;
+		return $group;
 
 	}
 
@@ -201,26 +164,18 @@ class BU_Edit_Groups {
 	 */
 	public function delete_group($id) {
 
-		foreach( $this->groups as $index => $group ) {
+		// Remove group.
+		$result = $this->delete( $id );
 
-			if( $group->id == $id) {
-
-				unset($this->groups[$index]);
-				$this->groups = array_values($this->groups);	// reindex
-
-				// Remove permissions data
-				$this->delete_group_permissions($id);
-
-				// Commit changes
-				$this->save();
-
-				return true;
-			
-			}
-
+		if( ! $result ) {
+			error_log('Error deleting group: ' . $id );
+			return false;
 		}
 
-		return false;
+		// Remove group permissions.
+		$this->delete_group_permissions($id);
+
+		return true;
 
 	}
 
@@ -355,55 +310,213 @@ class BU_Edit_Groups {
 
 	}
 
-	/**
-	 * Convert internal BU_Edit_Group array to data array and commit to db
-	 * 
-	 * @return bool true on succesfully save, false on failure
-	 */ 
-	public function save() {
-
-		$group_data = array();
-
-		foreach( $this->groups as $group ) {
-
-			$group_data[] = $group->get_attributes();
-
-		}
-
-		return $this->update( $group_data );
-
-	}
+	// ____________________PERSISTENCE________________________
 
 	/**
-	 * Load group data models and group index counter from database
+	 * Load all groups
 	 */ 
 	public function load() {
 
-		$groups = get_option(self::OPTION_NAME);
+		$group_posts = get_posts(array('post_type'=>self::POST_TYPE_NAME,'numberposts'=>-1,'post_status'=>'any'));
 
-		if(is_array($groups)) {
+		if(is_array($group_posts)) {
 
-			foreach( $groups as $group_data ) {
+			foreach( $group_posts as $group_post ) {
 
-				$group = new BU_Edit_Group( $group_data );
-				$this->add($group);
+				$this->groups[] = $this->_post_to_group( $group_post );
 
 			}
 
 		}
 
-		// Auto-increment index (starts at 1)
-		$index = get_option(self::INDEX_NAME);
-		if( $index === false ) $index = 1;
+	}
 
-		$this->index = $index;
+	/**
+	 * Insert a new group
+	 * 
+	 * @param array $data a parameter list of group data for insertion 
+	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the new group on success.
+	 */ 
+	protected function insert( $data ) {
 
-		return $this->groups;
+		// Create new group
+		$group = new BU_Edit_Group($data);
+
+		// Map group data to post for insertion
+		$postdata = $this->_group_to_post( $group );
+
+		// Insert into DB
+		$result = wp_insert_post( $postdata );
+
+		if( is_wp_error( $result ) ) {
+			error_log(sprintf('Error adding group: %s', $result->get_error_message()));
+			return false;
+		}
+
+		// Add auto-generated ID
+		$group->id = $result;
+
+		// Add group member meta
+		add_post_meta( $group->id, self::MEMBER_KEY, $group->users );
+
+		// Add group to internal groups store
+		$this->groups[] = $group;
+
+		return $group;
+
+	 }
+
+	/**
+	 * Update an existing group
+	 * 
+	 * @param int $id ID of group to update
+	 * @param array $data a parameter list of group data for update 
+	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the updated group on success.
+	 */ 
+	 protected function update( $id, $data ) {
+
+	 	// Fetch existing group
+		$group = $this->get( $id );
+
+		if( ! $group instanceof BU_Edit_Group )
+			return false;
+
+		// Update group data
+		$group->update( $data );
+
+		// Map group data to post for update
+		$postdata = $this->_group_to_post( $group );
+
+		// Update DB
+		$result = wp_update_post( $postdata );
+
+		if( is_wp_error( $result ) ) {
+			error_log(sprintf('Error updating group %s: %s', $group->id, $result->get_error_message()));
+			return false;
+		}
+
+		// Update group member meta
+		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
+
+		// Update internal groups store
+		foreach( $this->groups as $index => $group ) {
+
+			if( $group->id == $id) {
+
+				$this->groups[$index] = $group;
+			}
+
+		}
+
+		return $group;
 
 	}
 
-	// ____________________PERSISTENCE________________________
+	/**
+	 * Delete section editing group
+	 * 
+	 * @param int $id ID of group to delete
+	 * @return bool 
+	 */ 
+	protected function delete( $id ) {
 
+		foreach( $this->groups as $index => $group ) {
+
+			if( $group->id == $id) {
+
+				// Delete from db
+				$result = wp_delete_post( $id, true );
+
+				if( $result === false )
+					return false;
+
+				// Delete from internal groups store
+				unset($this->groups[$index]);
+				$this->groups = array_values($this->groups);	// reindex
+
+				return $group;
+			
+			}
+
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * Sanitizes array of group data prior to group creation or updating
+	 */ 
+	protected function _clean_group_data( &$args ) {
+
+		// Process input
+		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
+		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
+		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+
+		foreach( $args['perms'] as $post_type => $post_statuses ) {
+			if( ! is_array( $post_statuses ) ) {
+				error_log("Unepected value for post stati: $post_statuses" );
+				unset( $args['perms'][$post_type]);
+				continue;
+			}
+
+			foreach( $post_statuses as $post_id => $status ) {
+				if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+					error_log("Removing post $post_id due to unexpected status: $status" );
+					unset( $args['perms'][$post_type][$post_id] );
+				}
+			}
+		}
+
+	}
+	
+	/**
+	 * Maps a group object to post object
+	 * 
+	 * @param BU_Edit_Group $group Group object for translation
+	 * @return StdClass $post Resulting post object
+	 */ 
+	protected function _group_to_post( $group ) {
+
+		$post = new stdClass();
+
+		if( $group->id > 0 )
+			$post->ID = $group->id;
+
+		$post->post_type = self::POST_TYPE_NAME;
+		$post->post_title = $group->name;
+		$post->post_content = $group->description;
+		$post->post_status = 'publish';
+
+		return $post;
+
+	}
+
+	/**
+	 * Maps a WP post object to group object
+	 * 
+	 * @param StdClass $post Post object for translation
+	 * @return BU_Edit_Group $group Resulting group object
+	 */ 
+	protected function _post_to_group( $post ) {
+
+		// Map post -> group fields
+		$data['id'] = $post->ID;
+		$data['name'] = $post->post_title;
+		$data['description'] = $post->post_content;
+		$data['created'] = $post->post_date;
+		$data['modified'] = $post->post_modified;
+		$data['users'] = get_post_meta( $post->ID, self::MEMBER_KEY, true );
+
+		// Create a new group
+		$group = new BU_Edit_Group( $data );
+
+		return $group;
+
+	}
+
+	// ____________________PERMISSIONS________________________
 
 	/**
 	 * Update permissions for a group
@@ -510,34 +623,6 @@ class BU_Edit_Groups {
 		foreach( $query->posts as $post_id ) {
 			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
 		}
-
-	}
-
-	/**
-	 * Commit section editing group data to database
-	 */ 
-	private function update( $group_data ) {
-		return update_option(self::OPTION_NAME, $group_data );
-	
-	}
-
-	/**
-	 * Remove section editing group data from database
-	 */ 
-	private function delete() {
-
-		return delete_option(self::OPTION_NAME);
-	
-	}
-
-	/**
-	 * Simulates MySQL autoincrement for group ID field
-	 */ 
-	private function increment_index() {
-
-		$this->index++;
-
-		return update_option( self::INDEX_NAME, $this->index );
 
 	}
 
