@@ -317,7 +317,14 @@ class BU_Edit_Groups {
 	 */ 
 	public function load() {
 
-		$group_posts = get_posts(array('post_type'=>self::POST_TYPE_NAME,'numberposts'=>-1,'post_status'=>'any'));
+		$args = array(
+			'post_type'=>self::POST_TYPE_NAME,
+			'numberposts'=>-1,
+			'orderby' => 'ID',
+			'order' => 'ASC'
+			);
+
+		$group_posts = get_posts($args);
 
 		if(is_array($group_posts)) {
 
