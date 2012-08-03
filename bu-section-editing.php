@@ -2,7 +2,7 @@
 /*
  Plugin Name: BU Section Editing
  Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
- Version: 0.3
+ Version: 0.4
  Author: Boston University (IS&T)
 */
 
@@ -63,14 +63,17 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
  */
 class BU_Section_Editing_Plugin {
 
-	const BUSE_VERSION = '0.3';
+	const BUSE_VERSION = '0.4';
 
 	public static function register_hooks() {
 
-		register_activation_hook( __FILE__, array('BU_Section_Editing_Plugin','on_activate' ));
+		add_action( 'init', array( 'BU_Section_Editing_Plugin', 'init' ) );
+		add_action( 'init', array( 'BU_Section_Editing_Plugin', 'add_post_type_support' ), 20 );
 
-		add_action( 'init', array('BU_Section_Editing_Plugin', 'init' ) );
-		add_action( 'init', array('BU_Section_Editing_Plugin', 'add_post_type_support' ), 20 );
+		add_action( 'init', array( 'BU_Edit_Groups', 'register_post_type' ) );
+
+		// Run last so all post types are registered
+		add_action( 'init', array( 'BU_Section_Editing_Upgrader', 'version_check' ), 99 );
 
 	}
 
@@ -87,9 +90,6 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin_Ajax::register_hooks();
 		}
 
-		// Check plugin version
-		BU_Section_Editing_Upgrader::version_check();
-
 	}
 
 	public static function add_post_type_support() {
@@ -103,14 +103,6 @@ class BU_Section_Editing_Plugin {
 		}
 
 	}
-
-	public static function on_activate() {
-
-		BU_Section_Editing_Upgrader::version_check();
-
-	}
-
-
 
 	/**
 	 * Placeholder function until we determine the best method to determine how

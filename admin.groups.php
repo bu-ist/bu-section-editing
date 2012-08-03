@@ -46,7 +46,7 @@ class BU_Groups_Admin {
 
 		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
 
-			$supported_post_types = BU_Permissions_Editor::get_supported_post_types('names');
+			$supported_post_types = BU_Group_Permissions::get_supported_post_types('names');
 
 			foreach( $supported_post_types as $post_type ) {
 				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
@@ -111,7 +111,7 @@ class BU_Groups_Admin {
 
 			foreach( $section_groups as $group ) {
 				$meta_query[] = array(
-					'key' => BU_Edit_Group::META_KEY,
+					'key' => BU_Group_Permissions::META_KEY,
 					'value' => $group->id,
 				    	'compare' => '='
 					);
@@ -172,14 +172,14 @@ class BU_Groups_Admin {
 				$group_controller = BU_Edit_Groups::get_instance();
 				$groups = $group_controller->get_groups();
 
-				$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
-				$parent_groups = get_post_meta( $parent->ID, BU_Edit_Group::META_KEY );
+				$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
+				$parent_groups = get_post_meta( $parent->ID, BU_Group_Permissions::META_KEY );
 
 				foreach( $groups as $group ) {
 
 					// Add newly valid groups
 					if( in_array( $group->id, $parent_groups ) && ! in_array( $group->id, $existing_groups ) ) {
-						add_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
+						add_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
 					}
 
 				}
@@ -194,12 +194,12 @@ class BU_Groups_Admin {
 			$group_controller = BU_Edit_Groups::get_instance();
 			$groups = $group_controller->get_groups();
 
-			$existing_groups = get_post_meta( $post->ID, BU_Edit_Group::META_KEY );
+			$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
 
 			foreach( $groups as $group ) {
 
 				// Remove all group permissions for non-published posts
-				delete_post_meta( $post->ID, BU_Edit_Group::META_KEY, $group->id );
+				delete_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
 
 			}
 
@@ -319,7 +319,7 @@ class BU_Groups_Admin {
 						return;
 					}
 
-					$post_types = BU_Permissions_Editor::get_supported_post_types( 'names' );
+					$post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
 
 					foreach( $post_types as $post_type ) {
 
@@ -517,7 +517,7 @@ MSG;
 		extract( wp_parse_args( $args, $defaults ) );
 		
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
-		else  $content_types =  BU_Permissions_Editor::get_supported_post_types();
+		else  $content_types =  BU_Group_Permissions::get_supported_post_types();
 
 		$output = '';
 		$counts = array();

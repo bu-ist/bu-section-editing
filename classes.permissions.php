@@ -1,5 +1,181 @@
 <?php
 
+class BU_Group_Permissions {
+
+	const META_KEY = '_bu_section_group';
+
+	/**
+	 * Allows developers to opt-out for section editing feature
+	 */ 
+	public static function get_supported_post_types( $output = 'objects') {
+
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		$supported_post_types = array();
+
+		foreach( $post_types as $post_type ) {
+			if( post_type_supports( $post_type->name, 'section-editing' ) ) {
+
+				switch( $output ) {
+
+					case 'names':
+						$supported_post_types[] = $post_type->name;
+						break;
+
+					case 'objects': default:
+						$supported_post_types[] = $post_type;
+						break;
+				}
+			}
+				
+		}
+
+		return $supported_post_types;
+
+	}
+
+	/**
+	 * Update permissions for a group
+	 * 
+	 * @param int $group_id ID of group to modify ACL for
+	 * @param array $permissions Permissions, as an associative array indexed by post type
+	 */ 
+	public static function update_group_permissions( $group_id, $permissions ) {
+		global $wpdb;
+
+		if( ! is_array( $permissions ) )
+			return false;
+
+		foreach( $permissions as $post_type => $new_perms ) {
+
+			if( ! is_array( $new_perms ) ) {
+				error_log( "Unexpected value found while updating permissions: $new_perms" );
+				continue;
+			}
+
+			// Incoming allowed posts
+			$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
+
+			if( ! empty( $allowed_ids ) ) {
+
+				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+					$wpdb->postmeta,
+					implode( ',', $allowed_ids ),
+					self::META_KEY,
+					$group_id
+					);
+
+				$previously_allowed = $wpdb->get_col( $allowed_select );
+				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
+
+				foreach( $additions as $post_id ) {
+
+					add_post_meta( $post_id, self::META_KEY, $group_id );
+
+				}
+
+			}
+
+			// Incoming restricted posts
+			$denied_ids = array_keys( $permissions[$post_type], 'denied' );
+
+			if( ! empty( $denied_ids ) ) {
+
+				// Select meta_id's for removal based on incoming posts
+				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+					$wpdb->postmeta,
+					implode( ',', $denied_ids ),
+					self::META_KEY,
+					$group_id
+					);
+
+				$denied_meta_ids = $wpdb->get_col( $denied_select );
+
+				// Bulk deletion
+				if( ! empty( $denied_meta_ids ) ) {
+
+					$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
+						$wpdb->postmeta,
+						implode(',', $denied_meta_ids )
+						);
+
+					// Remove allowed status in one query
+					$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
+
+					// Purge cache
+					foreach( $denied_ids as $post_id ) {
+						wp_cache_delete( $post_id, 'post_meta' );
+					}
+
+				}
+
+			}
+			
+		}
+
+	}
+
+	public static function delete_group_permissions( $group_id ) {
+
+		$supported_post_types = self::get_supported_post_types( 'names' );
+
+		$meta_query = array(
+			'key' => self::META_KEY,
+			'value' => $group_id,
+			'compare' => 'LIKE'
+			);
+
+		$args = array(
+			'post_type' => $supported_post_types,
+			'meta_query' => array( $meta_query ),
+			'posts_per_page' => -1,
+			'fields' => 'ids'
+			);
+
+		$query = new WP_Query( $args );
+
+		foreach( $query->posts as $post_id ) {
+			delete_post_meta( $post_id, self::META_KEY, $group_id );
+		}
+
+	}
+
+	/**
+	 * Can this group edit a particular post
+	 */ 
+	public function group_can_edit( $group_id, $post_id ) {
+		
+		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
+
+		return in_array( $group_id, $allowed_groups ) ? true : false;
+	
+	}
+
+	/**
+	 * Query for all posts that have section editing permissions assigned for this group
+	 * 
+	 * @uses WP_Query
+	 *
+	 * @param array $args an optional array of WP_Query arguments, will override defaults
+	 * @return array an array of posts that have section editing permissions for this group
+	 */ 
+	public function get_allowed_posts_for_group( $group_id, $args = array() ) {
+
+		$defaults = array(
+			'post_type' => 'page',
+			'meta_key' => self::META_KEY,
+			'meta_value' => $group_id,
+			'posts_per_page' => -1
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$query = new WP_Query( $args );
+
+		return $query->posts;
+	}
+
+}
+
 /**
  * Abstract base class for post permissions editor
  */ 
@@ -72,37 +248,6 @@ abstract class BU_Permissions_Editor {
 	abstract protected function load();
 	abstract protected function format_post( $post, $has_children = false );
 	abstract protected function get_post_markup( $p );
-
-	/**
-	 * Allows developers to opt-out for section editing feature
-	 * 
-	 * @todo move this to a BU_Group_Permissions class
-	 */ 
-	public static function get_supported_post_types( $output = 'objects') {
-
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
-		$supported_post_types = array();
-
-		foreach( $post_types as $post_type ) {
-			if( post_type_supports( $post_type->name, 'section-editing' ) ) {
-
-				switch( $output ) {
-
-					case 'names':
-						$supported_post_types[] = $post_type->name;
-						break;
-
-					case 'objects': default:
-						$supported_post_types[] = $post_type;
-						break;
-				}
-			}
-				
-		}
-
-		return $supported_post_types;
-
-	}
 
 }
 
@@ -246,6 +391,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			'attr' => array( 
 				'id' => esc_attr( 'p' . $post->ID ), 
 				'rel' => esc_attr( $post->perm ),
+				'class' => '',
 				'data-perm' => esc_attr( $post->perm )
 			),
 			'data' => array(
@@ -269,7 +415,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	public function filter_posts( $posts ) {
 
 		foreach( $posts as $post ) {
-			$post->perm = ( $this->group->can_edit( $post->ID ) ) ? 'allowed' : 'denied';
+			$post->perm = ( BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID ) ) ? 'allowed' : 'denied';
 		}
 
 		return $posts;
@@ -332,7 +478,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Get post IDs for this section
 		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);
-
+		
 		// Fetch posts
 		$page_args = array(
 			'sections' => $sections,
@@ -506,7 +652,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys($posts);
-			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
+			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode(',', $ids), $this->group->id );
 			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
 			if (!is_array($group_meta)) $group_meta = array();
 
