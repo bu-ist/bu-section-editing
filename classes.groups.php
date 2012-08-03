@@ -461,24 +461,28 @@ class BU_Edit_Groups {
 		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
-		foreach( $args['perms'] as $post_type => $post_statuses ) {
+		if( isset($args['perms']) && is_array($args['perms'])) {
+		
+			foreach( $args['perms'] as $post_type => $post_statuses ) {
 
-			if( ! is_array( $post_statuses ) ) {
+				if( ! is_array( $post_statuses ) ) {
 
-				error_log("Unepected value for post stati: $post_statuses" );
-				unset( $args['perms'][$post_type]);
-				continue;
-			}
+					error_log("Unepected value for post stati: $post_statuses" );
+					unset( $args['perms'][$post_type]);
+					continue;
+				}
 
-			foreach( $post_statuses as $post_id => $status ) {
+				foreach( $post_statuses as $post_id => $status ) {
 
-				if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-					error_log("Removing post $post_id due to unexpected status: $status" );
-					unset( $args['perms'][$post_type][$post_id] );
+					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+						error_log("Removing post $post_id due to unexpected status: $status" );
+						unset( $args['perms'][$post_type][$post_id] );
+					}
+
 				}
 
 			}
-
+			
 		}
 
 	}
