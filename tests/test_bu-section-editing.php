@@ -1,5 +1,7 @@
 <?php
 
+require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
+
 /**
  * @group bu-section-editing
  **/

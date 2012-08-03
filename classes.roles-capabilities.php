@@ -79,7 +79,7 @@ class BU_Section_Capabilities {
 	 * @param int $user_id
 	 * @param int $post_id
 	 */
-	static function can_edit($user_id, $post_id)  {
+	static function can_edit( $user_id, $post_id )  {
 
 		if($user_id == 0) return false;
 
@@ -88,31 +88,24 @@ class BU_Section_Capabilities {
 
 			if( $post_id == 0 ) return false;
 
-			// Get groups associated with post
-			$post_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
-			//error_log( "[BUSE] Checking if user $user_id can edit post $post_id" );
-
 			// Get all groups for this user
 			$edit_groups_o = BU_Edit_Groups::get_instance();
 			$groups = $edit_groups_o->find_groups_for_user( $user_id );
 
 			if(empty($groups)) {
-				//error_log('[BUSE] I am a section editor with no groups assigned, cant edit anything...' );
 				return false;
 			}
 
 			foreach( $groups as $key => $group ) {
 
 				// This group is good, bail here
-				if( in_array( (string) $group->id, $post_groups ) ) {
-					//error_log( "[BUSE] My group is allowed for this post $post_id: " . $group->name );
+				if( BU_Group_Permissions::group_can_edit( $group->id, $post_id ) ) {
 					return true;
 				}
 
 			}
 
 			// User is section editor, but not allowed for this section
-			//error_log('[BUSE] My group memberships do not allow me to edit post: ' . $post_id );
 			return false;
 		}
 
