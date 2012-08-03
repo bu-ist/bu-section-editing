@@ -150,7 +150,8 @@ class BU_Edit_Groups {
 			return false;
 
 		// Update permissions.
-		BU_Group_Permissions::update_group_permissions( $id, $data['perms'] );
+		if( isset( $data['perms'] ) )
+			BU_Group_Permissions::update_group_permissions( $group->id, $data['perms'] );
 
 		return $group;
 
@@ -296,7 +297,7 @@ class BU_Edit_Groups {
 		$count_query = sprintf( "SELECT DISTINCT(p.ID) FROM %s %s WHERE (meta_key = '%s' AND meta_value IN (%s) %s) %s GROUP BY p.ID",
 			$wpdb->postmeta,
 			$posts_join,
-			BU_Edit_Group::META_KEY,
+			BU_Group_Permissions::META_KEY,
 			implode( ',', $group_ids ),
 			$post_type_clause,
 			$post_status_or
@@ -461,18 +462,23 @@ class BU_Edit_Groups {
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
 		foreach( $args['perms'] as $post_type => $post_statuses ) {
+
 			if( ! is_array( $post_statuses ) ) {
+
 				error_log("Unepected value for post stati: $post_statuses" );
 				unset( $args['perms'][$post_type]);
 				continue;
 			}
 
 			foreach( $post_statuses as $post_id => $status ) {
+
 				if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
 					error_log("Removing post $post_id due to unexpected status: $status" );
 					unset( $args['perms'][$post_type][$post_id] );
 				}
+
 			}
+
 		}
 
 	}
@@ -525,7 +531,9 @@ class BU_Edit_Groups {
 }
 
 /**
- * Class for listing groups (designed to be extended) 
+ * Class for listing groups (designed to be extended)
+ * 
+ * @todo rework to use standard array traversal function and allow for keyed arrays
  */
 class BU_Groups_List {
 
@@ -655,42 +663,6 @@ class BU_Edit_Group {
 			unset($this->users[array_search($user_id, $this->users)]);
 		}
 
-	}
-
-
-	/**
-	 * Can this group edit a particular post
-	 * 
-	 */ 
-	public function can_edit( $post_id ) {
-		
-		$allowed_groups = get_post_meta( $post_id, BU_Edit_Group::META_KEY );
-		return in_array( $this->id, $allowed_groups ) ? true : false;
-	
-	}
-
-	/**
-	 * Query for all posts that have section editing permissions assigned for this group
-	 * 
-	 * @uses WP_Query
-	 *
-	 * @param array $args an optional array of WP_Query arguments, will override defaults
-	 * @return array an array of posts that have section editing permissions for this group
-	 */ 
-	public function get_posts( $args = array() ) {
-
-		$defaults = array(
-			'post_type' => 'page',
-			'meta_key' => self::META_KEY,
-			'meta_value' => $this->id,
-			'posts_per_page' => -1
-			);
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$query = new WP_Query( $args );
-
-		return $query->posts;
 	}
 
 	/**

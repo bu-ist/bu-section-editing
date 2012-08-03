@@ -1,5 +1,9 @@
 <?php
 
+/*
+@todo write upgrade method for option -> post type group storage switch
+*/
+
 class BU_Section_Editing_Upgrader {
 
 	const BUSE_VERSION_OPTION = '_buse_version';
@@ -43,13 +47,13 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array('${1}:allowed', '${1}:denied' );
 
 		// Fetch existing values
-		$query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s"', $wpdb->postmeta, BU_Edit_Group::META_KEY );
+		$query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s"', $wpdb->postmeta, BU_Group_Permissions::META_KEY );
 		$posts = $wpdb->get_results( $query );
 
 		// Loop through and update
 		foreach( $posts as $post ) {
 			$result = preg_replace( $patterns, $replacements, $post->meta_value );
-			update_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $result, $post->meta_value );
+			update_post_meta( $post->post_id, BU_Group_Permissions::META_KEY, $result, $post->meta_value );
 		}
 
 	}
@@ -64,26 +68,26 @@ class BU_Section_Editing_Upgrader {
 		// Fetch existing values
 		$allowed_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s  WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%:allowed"', 
 			$wpdb->postmeta, 
-			BU_Edit_Group::META_KEY
+			BU_Group_Permissions::META_KEY
 			);
 		
 		$allowed_posts = $wpdb->get_results( $allowed_query );
 
 		foreach( $allowed_posts as $post ) {
 			$new_meta_value = preg_replace( $patterns, $replacements, $post->meta_value );
-			update_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $new_meta_value, $post->meta_value );
+			update_post_meta( $post->post_id, BU_Group_Permissions::META_KEY, $new_meta_value, $post->meta_value );
 		}
 
 		// Fetch existing values
 		$denied_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%denied"', 
 			$wpdb->postmeta,
-			BU_Edit_Group::META_KEY
+			BU_Group_Permissions::META_KEY
 			);
 		$denied_posts = $wpdb->get_results( $denied_query );
 
 		// Loop through and update
 		foreach( $denied_posts as $post ) {
-			delete_post_meta( $post->post_id, BU_Edit_Group::META_KEY, $post->meta_value );
+			delete_post_meta( $post->post_id, BU_Group_Permissions::META_KEY, $post->meta_value );
 		}
 
 	}

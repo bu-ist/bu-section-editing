@@ -2,6 +2,9 @@
 
 class BU_Group_Permissions {
 
+	// @todo rename (_bu_section_groups or _buse_groups)
+	const META_KEY = '_bu_section_group';
+
 	/**
 	 * Allows developers to opt-out for section editing feature
 	 * 
@@ -36,8 +39,6 @@ class BU_Group_Permissions {
 	/**
 	 * Update permissions for a group
 	 * 
-	 * @todo move this to a BU_Group_Permissions class
-	 * 
 	 * @param int $group_id ID of group to modify ACL for
 	 * @param array $permissions Permissions, as an associative array indexed by post type
 	 */ 
@@ -62,7 +63,7 @@ class BU_Group_Permissions {
 				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
 					$wpdb->postmeta,
 					implode( ',', $allowed_ids ),
-					BU_Edit_Group::META_KEY,
+					self::META_KEY,
 					$group_id
 					);
 
@@ -71,7 +72,7 @@ class BU_Group_Permissions {
 
 				foreach( $additions as $post_id ) {
 
-					add_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
+					add_post_meta( $post_id, self::META_KEY, $group_id );
 
 				}
 
@@ -86,7 +87,7 @@ class BU_Group_Permissions {
 				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
 					$wpdb->postmeta,
 					implode( ',', $denied_ids ),
-					BU_Edit_Group::META_KEY,
+					self::META_KEY,
 					$group_id
 					);
 
@@ -121,7 +122,7 @@ class BU_Group_Permissions {
 		$supported_post_types = self::get_supported_post_types( 'names' );
 
 		$meta_query = array(
-			'key' => BU_Edit_Group::META_KEY,
+			'key' => self::META_KEY,
 			'value' => $group_id,
 			'compare' => 'LIKE'
 			);
@@ -136,10 +137,46 @@ class BU_Group_Permissions {
 		$query = new WP_Query( $args );
 
 		foreach( $query->posts as $post_id ) {
-			delete_post_meta( $post_id, BU_Edit_Group::META_KEY, $group_id );
+			delete_post_meta( $post_id, self::META_KEY, $group_id );
 		}
 
 	}
+
+	/**
+	 * Can this group edit a particular post
+	 */ 
+	public function group_can_edit( $group_id, $post_id ) {
+		
+		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
+
+		return in_array( $group_id, $allowed_groups ) ? true : false;
+	
+	}
+
+	/**
+	 * Query for all posts that have section editing permissions assigned for this group
+	 * 
+	 * @uses WP_Query
+	 *
+	 * @param array $args an optional array of WP_Query arguments, will override defaults
+	 * @return array an array of posts that have section editing permissions for this group
+	 */ 
+	public function get_allowed_posts_for_group( $group_id, $args = array() ) {
+
+		$defaults = array(
+			'post_type' => 'page',
+			'meta_key' => self::META_KEY,
+			'meta_value' => $group_id,
+			'posts_per_page' => -1
+			);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$query = new WP_Query( $args );
+
+		return $query->posts;
+	}
+
 }
 
 /**
@@ -381,7 +418,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	public function filter_posts( $posts ) {
 
 		foreach( $posts as $post ) {
-			$post->perm = ( $this->group->can_edit( $post->ID ) ) ? 'allowed' : 'denied';
+			$post->perm = ( BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID ) ) ? 'allowed' : 'denied';
 		}
 
 		return $posts;
@@ -444,7 +481,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Get post IDs for this section
 		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);
-
+		
 		// Fetch posts
 		$page_args = array(
 			'sections' => $sections,
@@ -618,7 +655,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys($posts);
-			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Edit_Group::META_KEY, implode(',', $ids), $this->group->id );
+			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode(',', $ids), $this->group->id );
 			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
 			if (!is_array($group_meta)) $group_meta = array();
 
