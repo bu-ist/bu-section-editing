@@ -31,14 +31,23 @@ class BU_Section_Editing_Upgrader {
 
 		$current_version = BU_Section_Editing_Plugin::BUSE_VERSION;
 
+		// @todo Delete these before final release
 		if( version_compare( $last_version, '0.2', '<' ) && version_compare( $current_version, '0.2', '>=' ) )
 			self::upgrade_02();
 
 		if( version_compare( $last_version, '0.3', '<' ) && version_compare( $current_version, '0.3', '>=' ) )
 			self::upgrade_03();
 
+		// Post alpha release
+
+		if( version_compare( $last_version, '0.4', '<' ) && version_compare( $current_version, '0.4', '>=' ) )
+			self::upgrade_04();
+
 	}
 
+	/**
+	 * Switched data structure for perms
+	 */ 
 	private static function upgrade_02() {
 		global $wpdb;
 
@@ -58,6 +67,9 @@ class BU_Section_Editing_Upgrader {
 
 	}
 
+	/**
+	 * Switched data structure for perms (again)
+	 */ 
 	private static function upgrade_03() {
 		global $wpdb;
 
@@ -92,8 +104,56 @@ class BU_Section_Editing_Upgrader {
 
 	}
 
+	/**
+	 * Switched from options -> custom post type posts for group storage
+	 */ 
+	private static function upgrade_04() {
+		global $wpdb;
+
+		error_log( "[buse_upgrade -> 0.4] BU Section Editing plugin upgrading from 0.3 -> 0.4" );
+
+		// Get old groups
+		$groups = get_option('_bu_section_groups');
+
+		if( false === $groups ) {
+			error_log( "[buse_upgrade -> 0.4] No previous groups found, exiting upgrade" );
+			return;
+		}
+
+		error_log( "[buse_upgrade -> 0.4] Groups for upgrade: " . count($groups) );
+
+		$gc = BU_Edit_Groups::get_instance();
+
+		foreach( $groups as $groupdata ) {
+
+			// Need to remove pre-existing ID and let wp_insert_post do its thing
+			$old_id = $groupdata['id'];
+			unset($groupdata['id']);
+
+			// Convert to new structure
+			$group = $gc->add_group($groupdata);
+
+			error_log( "[buse_upgrade -> 0.4] Group upgraded: {$group->name} (#{$group->id})" );
+
+			// Migrate permissions
+			$count = $wpdb->update( 
+				$wpdb->postmeta, 
+				array( 'meta_value' => $group->id ), // New value
+				array( 'meta_key' => BU_Group_Permissions::META_KEY, 'meta_value' => $old_id )	// Old value 
+			);
+
+			error_log( "[buse_upgrade -> 0.4] Group permissions migrated for group {$group->id}: $count" );
+
+		}
+
+		// Cleanup
+		delete_option( '_bu_section_groups' );
+		delete_option( '_bu_section_groups_index');
+
+		error_log( "[buse_upgrade -> 0.4] Upgrade completed succesfully!" );
+
+	}
 
 }
-
 
 ?>

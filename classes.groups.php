@@ -8,7 +8,7 @@
 class BU_Edit_Groups {
 
 	const POST_TYPE_NAME = 'buse_group';
-	const MEMBER_KEY = '_buse_group_users';
+	const MEMBER_KEY = '_bu_section_group_users';
 
 	public $groups = array();
 
@@ -232,7 +232,8 @@ class BU_Edit_Groups {
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
 	 *
 	 * @todo cleanup this query
-	 *  
+	 * @todo move to BU_Group_Permissions
+	 *
 	 * @param $args array optional args
 	 * 
 	 * @return int allowed post count for the given post type 
@@ -505,6 +506,8 @@ class BU_Edit_Groups {
 		$post->post_content = $group->description;
 		$post->post_status = 'publish';
 
+		error_log('Group to post result: ' . print_r($post,true));
+
 		return $post;
 
 	}
@@ -523,7 +526,10 @@ class BU_Edit_Groups {
 		$data['description'] = $post->post_content;
 		$data['created'] = $post->post_date;
 		$data['modified'] = $post->post_modified;
-		$data['users'] = get_post_meta( $post->ID, self::MEMBER_KEY, true );
+
+		// Users are stored in post meta
+		$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
+		$data['users'] = $users ? $users : array();
 
 		// Create a new group
 		$group = new BU_Edit_Group( $data );
@@ -579,8 +585,6 @@ class BU_Edit_Group {
 	private $users = array();
 	private $created = null;
 	private $modified = null;
-
-	const META_KEY = '_bu_section_group';
 
 	/**
 	 * Instantiate new edit group
@@ -643,6 +647,9 @@ class BU_Edit_Group {
 
 	}
 
+	/**
+	 * @todo remove this once users are removed from groups on role switch
+	 */ 
 	public function get_active_users() {
 
 		$active_users = array();

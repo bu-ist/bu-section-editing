@@ -2,13 +2,10 @@
 
 class BU_Group_Permissions {
 
-	// @todo rename (_bu_section_groups or _buse_groups)
 	const META_KEY = '_bu_section_group';
 
 	/**
 	 * Allows developers to opt-out for section editing feature
-	 * 
-	 * @todo move this to a BU_Group_Permissions class
 	 */ 
 	public static function get_supported_post_types( $output = 'objects') {
 
