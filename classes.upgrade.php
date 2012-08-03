@@ -1,9 +1,5 @@
 <?php
 
-/*
-@todo write upgrade method for option -> post type group storage switch
-*/
-
 class BU_Section_Editing_Upgrader {
 
 	const BUSE_VERSION_OPTION = '_buse_version';
