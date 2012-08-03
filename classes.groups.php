@@ -506,8 +506,6 @@ class BU_Edit_Groups {
 		$post->post_content = $group->description;
 		$post->post_status = 'publish';
 
-		error_log('Group to post result: ' . print_r($post,true));
-
 		return $post;
 
 	}
