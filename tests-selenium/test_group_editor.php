@@ -308,11 +308,12 @@ class BUSE_GroupsPage {
 
 	private $selenium = null;
 
+	const MANAGE_GROUPS_URL = '/wp-admin/users.php?page=manage_groups';
+
 	function __construct( $selenium ) {
 		$this->selenium = $selenium;
-		$request_url = '/wp-admin/' . BU_Groups_Admin::MANAGE_GROUPS_PAGE;
 
-		$this->selenium->open( $request_url );
+		$this->selenium->open( self::MANAGE_GROUPS_URL );
 
 		$page_title = $this->selenium->getTitle();
 
@@ -363,7 +364,6 @@ class BUSE_EditGroupPage {
 		$this->selenium = $selenium;
 
 		// Generate request URL
-		// @todo use BU_Groups_Admin::manage_groups_url method in place of this logic
 		$action_str = $group_str ='';
 
 		if( is_null( $group_id ) ) {
@@ -373,7 +373,7 @@ class BUSE_EditGroupPage {
 			$group_str = '&id=' . $group_id;
 		}
 		$query_str = sprintf('%s%s', $action_str, $group_str );
-		$request_url = '/wp-admin/' . BU_Groups_Admin::MANAGE_GROUPS_PAGE . $query_str;
+		$request_url = BUSE_GroupsPage::MANAGE_GROUPS_URL . $query_str;
 
 		$this->selenium->open( $request_url  );
 
