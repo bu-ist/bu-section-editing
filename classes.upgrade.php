@@ -4,6 +4,13 @@ class BU_Section_Editing_Upgrader {
 
 	const BUSE_VERSION_OPTION = '_buse_version';
 
+	public static function register_hooks() {
+
+		// Run late to allow for post type registrations
+		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
+
+	}
+
 	public static function version_check() {
 
 		$last_version = get_option( self::BUSE_VERSION_OPTION );

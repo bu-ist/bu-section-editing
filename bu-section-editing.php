@@ -31,11 +31,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 require_once(dirname(__FILE__) . '/classes.roles-capabilities.php');
-// @todo only load admin code when is_admin()
-require_once(dirname(__FILE__) . '/admin.groups.php');
 require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
-require_once(dirname(__FILE__) . '/classes.upgrade.php');
 
 if(!defined('BU_INCLUDES_PATH')) {
 	// @todo We should try to come up with a way of supporting
@@ -50,30 +47,19 @@ if(!defined('BU_INCLUDES_PATH')) {
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
-// @see apply_filters('wp_insert_post_parent') which could be used to check whether a user is permitted to move a post
-
-// do_action("{$old_status}_to_{$new_status}", $post); internally WordPress uses 'new' status as the
-// previous status when creating a new post
-// the status could be used to propagate the ACL of the parent to the new draft if the user has placed
-// the draft in an editable location
-
-
 /**
  * Plugin entry point
  */
 class BU_Section_Editing_Plugin {
-
+	
 	const BUSE_VERSION = '0.4';
 
 	public static function register_hooks() {
 
-		add_action( 'init', array( 'BU_Section_Editing_Plugin', 'init' ) );
-		add_action( 'init', array( 'BU_Section_Editing_Plugin', 'add_post_type_support' ), 20 );
+		add_action( 'init', array( __CLASS__, 'init' ) );
+		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 
-		add_action( 'init', array( 'BU_Edit_Groups', 'register_post_type' ) );
-
-		// Run last so all post types are registered
-		add_action( 'init', array( 'BU_Section_Editing_Upgrader', 'version_check' ), 99 );
+		BU_Edit_Groups::register_hooks();
 
 	}
 
@@ -84,10 +70,27 @@ class BU_Section_Editing_Plugin {
 		add_filter( 'bu_user_manager_allowed_roles', array( 'BU_Section_Editing_Roles', 'bu_allowed_roles' ) );
 		BU_Section_Editing_Roles::maybe_create();
 
-		// Admin
+		// Admin requests
 		if( is_admin() ) {
-			BU_Groups_Admin::register_hooks();
-			BU_Groups_Admin_Ajax::register_hooks();
+			
+			// AJAX
+			if( defined('DOING_AJAX') && DOING_AJAX ) {
+
+				require_once(dirname(__FILE__) . '/admin-ajax.groups.php');
+				
+				BU_Groups_Admin_Ajax::register_hooks();
+
+			} else {
+
+				require_once(dirname(__FILE__) . '/classes.upgrade.php');
+				require_once(dirname(__FILE__) . '/admin.groups.php');
+
+				BU_Groups_Admin::register_hooks();
+				BU_Section_Editing_Upgrader::register_hooks();
+
+
+			}
+		
 		}
 
 	}

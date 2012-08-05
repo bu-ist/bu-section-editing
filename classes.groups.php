@@ -38,6 +38,12 @@ class BU_Edit_Groups {
 		return BU_Edit_Groups::$instance;
 	}
 
+	static public function register_hooks() {
+
+		add_action( 'init', array( __CLASS__, 'register_post_type' ) );
+
+	}
+
 	/**
 	 * Register hidden post type for group data storage
 	 */ 
