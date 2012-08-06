@@ -64,6 +64,9 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 class BU_Section_Editing_Plugin {
 
 	const BUSE_VERSION = '0.4';
+	
+	public static $caps;
+	public static $roles;
 
 	public static function register_hooks() {
 
@@ -78,11 +81,13 @@ class BU_Section_Editing_Plugin {
 	}
 
 	public static function init() {
+		self::$caps = new BU_Section_Capabilities();
+		self::$roles = new BU_Section_Editing_Roles();
 
 		// Roles and capabilities
-		add_filter( 'map_meta_cap', array('BU_Section_Capabilities', 'map_meta_cap'), 10, 4);
-		add_filter( 'bu_user_manager_allowed_roles', array( 'BU_Section_Editing_Roles', 'bu_allowed_roles' ) );
-		BU_Section_Editing_Roles::maybe_create();
+		add_filter( 'map_meta_cap', array( self::$caps, 'map_meta_cap' ), 10, 4 );	
+		add_filter( 'bu_user_manager_allowed_roles', array( $self::$roles, 'allowed_roles' ) );
+		self::$roles->maybe_create();
 
 		// Admin
 		if( is_admin() ) {
