@@ -31,9 +31,79 @@ class BU_Groups_Admin {
 		// bug pre-3.2 -- a workaround may exist, but i
 		// haven't dug into it yet.
 		if( version_compare( $wp_version, '3.2', '>=' ) ) {
-			add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
+			add_action( 'admin_init', array( __CLASS__, 'add_edit_views' ), 20 );
 			add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
 			add_action( 'parse_query', array( __CLASS__, 'parse_query' ) );
+		}
+
+	}
+
+	/**
+	 * Runs when a post is updated and the status has changed
+	 *
+	 * Currently, we are looking for any transition to and from 'publish', and
+	 * updating the groups post meta accordingly
+	 *
+	 * Once we decide how to handle drafts, we will want to switch this logic to
+	 * add group post meta to any 'new' post if it is saved in an editable location
+	 */
+	public static function transition_post_status( $new_status, $old_status, $post ) {
+
+		$pto = get_post_type_object( $post->post_type );
+
+		// We only need special logic for hierarchical post types
+		if( ! $pto->hierarchical ) {
+			return;
+		}
+
+		$status_blacklist = array( 'publish', 'trash' );
+
+		// From draft|pending|etc -> publish
+		if( ! in_array( $old_status, $status_blacklist ) && $new_status == 'publish' ) {
+
+			// This prevents section editors from publishing top-level posts
+			if( empty( $post->post_parent ) )
+				return;
+
+			$parent = get_post( $post->post_parent );
+
+			// Copy post permissions from parent on publish
+			if( $parent && $parent->post_status == 'publish') {
+
+				$group_controller = BU_Edit_Groups::get_instance();
+				$groups = $group_controller->get_groups();
+
+				$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
+				$parent_groups = get_post_meta( $parent->ID, BU_Group_Permissions::META_KEY );
+
+				foreach( $groups as $group ) {
+
+					// Add newly valid groups
+					if( in_array( $group->id, $parent_groups ) && ! in_array( $group->id, $existing_groups ) ) {
+						add_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
+					}
+
+				}
+
+			}
+
+		}
+
+		// From publish -> draft|pending|etc
+		if( $old_status == 'publish' && ! in_array( $new_status, $status_blacklist ) ) {
+
+			$group_controller = BU_Edit_Groups::get_instance();
+			$groups = $group_controller->get_groups();
+
+			$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
+
+			foreach( $groups as $group ) {
+
+				// Remove all group permissions for non-published posts
+				delete_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
+
+			}
+
 		}
 
 	}
@@ -135,76 +205,6 @@ class BU_Groups_Admin {
 		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
 
 		return $where;
-	}
-
-	/**
-	 * Runs when a post is updated and the status has changed
-	 *
-	 * Currently, we are looking for any transition to and from 'publish', and
-	 * updating the groups post meta accordingly
-	 *
-	 * Once we decide how to handle drafts, we will want to switch this logic to
-	 * add group post meta to any 'new' post if it is saved in an editable location
-	 */
-	public static function transition_post_status( $new_status, $old_status, $post ) {
-
-		$pto = get_post_type_object( $post->post_type );
-
-		// We only need special logic for hierarchical post types
-		if( ! $pto->hierarchical ) {
-			return;
-		}
-
-		$status_blacklist = array( 'publish', 'trash' );
-
-		// From draft|pending|etc -> publish
-		if( ! in_array( $old_status, $status_blacklist ) && $new_status == 'publish' ) {
-
-			// This prevents section editors from publishing top-level posts
-			if( empty( $post->post_parent ) )
-				return;
-
-			$parent = get_post( $post->post_parent );
-
-			// Copy post permissions from parent on publish
-			if( $parent && $parent->post_status == 'publish') {
-
-				$group_controller = BU_Edit_Groups::get_instance();
-				$groups = $group_controller->get_groups();
-
-				$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
-				$parent_groups = get_post_meta( $parent->ID, BU_Group_Permissions::META_KEY );
-
-				foreach( $groups as $group ) {
-
-					// Add newly valid groups
-					if( in_array( $group->id, $parent_groups ) && ! in_array( $group->id, $existing_groups ) ) {
-						add_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
-					}
-
-				}
-
-			}
-
-		}
-
-		// From publish -> draft|pending|etc
-		if( $old_status == 'publish' && ! in_array( $new_status, $status_blacklist ) ) {
-
-			$group_controller = BU_Edit_Groups::get_instance();
-			$groups = $group_controller->get_groups();
-
-			$existing_groups = get_post_meta( $post->ID, BU_Group_Permissions::META_KEY );
-
-			foreach( $groups as $group ) {
-
-				// Remove all group permissions for non-published posts
-				delete_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
-
-			}
-
-		}
-
 	}
 
 	/**
