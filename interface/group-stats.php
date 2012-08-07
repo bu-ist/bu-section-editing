@@ -7,7 +7,7 @@
 		<?php $perm_str = BU_Groups_Admin::group_permissions_string( $group, array( 'sep' => "\n" ) ); ?>
 		<ul>
 			<li><span class="title">Name:</span> <span id="group-stats-name"><?php echo $group->name; ?></span></li>
-			<li><span class="title">Members:</span> <span class="member-count"><?php echo count( $group->get_active_users() ); ?></span></li>
+			<li><span class="title">Members:</span> <span class="member-count"><?php echo count( $group->users ); ?></span></li>
 			<li class="clearfix"><span id="group-stats-permissions"><?php echo $perm_str; ?></span> <span class="title">Permission to Edit:</span> </li>
 		</ul>
 		<div class="actions clearfix">

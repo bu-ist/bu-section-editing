@@ -21,10 +21,13 @@ class BU_Groups_Admin {
 	public static function register_hooks() {
 		global $wp_version;
 
-		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
-		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
+		// Interface
+		add_action( 'admin_menu', array( __CLASS__, 'admin_menus' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
-		add_action('transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
+		// WP hooks that trigger group related state changes
+		add_action( 'transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
+		add_action( 'set_user_role', array( __CLASS__, 'user_role_switched'), 10, 2 );
 
 		// for filtering posts by editable status per user
 		// parses query to add meta_query, which was a known
@@ -103,6 +106,34 @@ class BU_Groups_Admin {
 				delete_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
 
 			}
+
+		}
+
+	}
+
+	/**
+	 * Remove group members when user role has switched to role that cannot belong in section groups
+	 * 
+	 * @todo make sure this works in 3.1.4
+	 */ 
+	public static function user_role_switched( $user_id, $newrole ) {
+
+		$role = get_role( $newrole );
+
+		// @todo move this logic check to a method in classes.roles-capabilities once
+		// Gregory figures out how to handle "Section Editing"-ness
+		if( ! $role->has_cap('edit_published_in_section') ) {
+
+			// Remove members from any groups
+			$manager = BU_Edit_Groups::get_instance();
+
+			$groups = $manager->find_groups_for_user( $user_id );
+			foreach( $groups as $group ) {
+				$group->remove_user( $user_id );
+			}
+
+			// commit state
+			$manager->save();
 
 		}
 

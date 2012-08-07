@@ -88,6 +88,7 @@ class BU_Section_Editing_Plugin {
 				BU_Groups_Admin::register_hooks();
 				BU_Section_Editing_Upgrader::register_hooks();
 
+				add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
 			}
 		
@@ -105,6 +106,16 @@ class BU_Section_Editing_Plugin {
 			add_post_type_support( $post_type, 'section-editing' );
 		}
 
+	}
+
+	public static function plugin_settings_link( $links, $file ) {
+        if ( $file != plugin_basename( __FILE__ ))
+            return $links;
+
+		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
+        array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
+
+		return $links;
 	}
 
 	/**

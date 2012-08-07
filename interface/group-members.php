@@ -18,7 +18,7 @@
 <div id="group-members" class="buse-widget">
 	<div class="buse-widget-header">
 		<div id="member-list-count">
-			<span class="member-count"><?php echo count( $group->get_active_users() ); ?></span> members
+			<span class="member-count"><?php echo count( $group->users ); ?></span> members
 		</div>
 		<h4 id="edit-group-members-header">Group Member List</h4>
 	</div>

@@ -346,6 +346,33 @@ class BU_Edit_Groups {
 	}
 
 	/**
+	 * Save all groups
+	 */ 
+	public function save() {
+
+		$result = true;
+
+		foreach( $this->groups as $group ) {
+
+			$postdata = $this->_group_to_post( $group );
+
+			// Update DB
+			$result = wp_update_post( $postdata );
+
+			if( is_wp_error( $result ) ) {
+				error_log(sprintf('Error updating group %s: %s', $group->id, $result->get_error_message()));
+				$result = false;
+			}
+
+			// Update group member meta
+			update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
+
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Insert a new group
 	 * 
 	 * @param array $data a parameter list of group data for insertion 
@@ -631,6 +658,8 @@ class BU_Edit_Group {
 	/**
 	 * Does the specified user exist for this group?
 	 * 
+	 * @todo test coverage
+	 *
 	 * @return bool true if user exists, false otherwise
 	 */ 
 	public function has_user($user_id) {
@@ -639,6 +668,8 @@ class BU_Edit_Group {
 
 	/**
 	 * Add a new user to this group
+	 * 
+	 * @todo test coverage
 	 * 
 	 * @param int $user_id WordPress user ID to add for this group
 	 */ 
@@ -652,29 +683,15 @@ class BU_Edit_Group {
 	}
 
 	/**
-	 * @todo remove this once users are removed from groups on role switch
-	 */ 
-	public function get_active_users() {
-
-		$active_users = array();
-
-		foreach( $this->users as $user_id ) {
-			if( BU_Section_Editing_Plugin::is_allowed_user( $user_id ) )
-				$active_users[] = $user_id;
-		}
-
-		return $active_users;
-		
-	}
-
-	/**
 	 * Remove a user from this group
+	 * 
+	 * @todo test coverage
 	 * 
 	 * @param int $user_id WordPress user ID to remove from this group
 	 */ 
 	public function remove_user($user_id) {
 		
-		if($this->have_user($user_id)) {
+		if($this->has_user($user_id)) {
 			unset($this->users[array_search($user_id, $this->users)]);
 		}
 

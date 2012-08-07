@@ -164,6 +164,12 @@ class Test_BU_Section_Editing extends WP_UnitTestCase {
 
 	}
 
+	// @todo Test BU_Edit_Group operations:
+	//  - has_user
+	// 	- add_user
+	//  - remove_user
+	//  - update
+
 
 	//_______________________HELPERS___________________________
 
