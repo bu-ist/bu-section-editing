@@ -286,7 +286,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	 */ 
 	public function get_posts( $post_id = 0 ) {
 
-		$posts = array();
+		if( $this->format == 'json' )
+			$posts = array();
+		else if ( $this->format == 'html' )
+			$posts = '';
 
 		if( ! empty( $this->posts ) ) {
 
@@ -325,6 +328,9 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			if( $this->format == 'html' )
 				$posts .= "</ul>";
 			
+		} else {
+			$labels = get_post_type_object( $this->post_type )->labels;
+			$posts = sprintf('<ul class="perm-list flat"><li><p>%s</p></li></ul>', $labels->not_found );
 		}
 
 		return $posts;
