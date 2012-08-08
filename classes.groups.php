@@ -347,6 +347,9 @@ class BU_Edit_Groups {
 
 	/**
 	 * Save all groups
+	 * 
+	 * @todo refactor so that both insert and update groups utilize this method
+	 * @todo test coverage
 	 */ 
 	public function save() {
 
@@ -374,6 +377,8 @@ class BU_Edit_Groups {
 
 	/**
 	 * Insert a new group
+	 * 
+	 * @todo test coverage
 	 * 
 	 * @param array $data a parameter list of group data for insertion 
 	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the new group on success.
@@ -410,6 +415,8 @@ class BU_Edit_Groups {
 	/**
 	 * Update an existing group
 	 * 
+	 * @todo test coverage
+	 * 
 	 * @param int $id ID of group to update
 	 * @param array $data a parameter list of group data for update 
 	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the updated group on success.
@@ -440,12 +447,10 @@ class BU_Edit_Groups {
 		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
 
 		// Update internal groups store
-		foreach( $this->groups as $index => $group ) {
+		foreach( $this->groups as $i => $g ) {
 
-			if( $group->id == $id) {
-
-				$this->groups[$index] = $group;
-			}
+			if( $g->id == $group->id )
+				$this->groups[$i] = $group;
 
 		}
 
@@ -455,6 +460,8 @@ class BU_Edit_Groups {
 
 	/**
 	 * Delete section editing group
+	 * 
+	 * @todo test coverage
 	 * 
 	 * @param int $id ID of group to delete
 	 * @return bool 
