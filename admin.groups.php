@@ -8,6 +8,7 @@
 class BU_Groups_Admin {
 
 	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
+	const EDITABLE_POST_STATUS = 'section_editable';
 
 	public static $manage_groups_hook;
 
@@ -29,14 +30,12 @@ class BU_Groups_Admin {
 		add_action( 'transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
 		add_action( 'set_user_role', array( __CLASS__, 'user_role_switched'), 10, 2 );
 
-		// for filtering posts by editable status per user
-		// parses query to add meta_query, which was a known
-		// bug pre-3.2 -- a workaround may exist, but i
+		// For filtering posts by editable status for current user
+		// parses query to add meta_query, which was a known bug pre-3.2 -- a workaround may exist, but I
 		// haven't dug into it yet.
 		if( version_compare( $wp_version, '3.2', '>=' ) ) {
 			add_action( 'admin_init', array( __CLASS__, 'add_edit_views' ), 20 );
-			add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
-			add_action( 'parse_query', array( __CLASS__, 'parse_query' ) );
+			add_action( 'parse_query', array( __CLASS__, 'add_editable_query' ) );
 		}
 
 	}
@@ -141,15 +140,33 @@ class BU_Groups_Admin {
 
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
+	 * 
+	 * register_post_status API/admin UI functionality is limited as of 3.5
+	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
 	public static function add_edit_views() {
 
 		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
 
+			// Most of these options don't do anything at this time, but we should keep an eye
+			// on the ticket mentioned above as this could change in future releases
+			$args = array(
+				'label' => 'Editable',
+				'label_count' => true,
+				'public' => true,
+				'show_in_admin_all' => true,
+				'publicly_queryable' => true,
+				'show_in_admin_status_list' => false,
+				'show_in_admin_all_list' => true,
+			);
+
+			// WP_Query will not recognize custom post status query vars without this
+			register_post_status( self::EDITABLE_POST_STATUS, $args );
+
 			$supported_post_types = BU_Group_Permissions::get_supported_post_types('names');
 
 			foreach( $supported_post_types as $post_type ) {
-				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
+				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
 			}
 
 		}
@@ -158,11 +175,8 @@ class BU_Groups_Admin {
 
 	/**
 	 * Custom bucket for filter posts table to display only posts editable by current user
-	 *
-	 * This should be done with register_post_status() but that API is incomplete as of 3.5
-	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
-	public static function section_editing_views( $views ) {
+	public static function add_editable_view( $views ) {
 		global $post_type_object;
 
 		$groups = BU_Edit_Groups::get_instance();
@@ -170,40 +184,35 @@ class BU_Groups_Admin {
 		$user_id = get_current_user_id();
 
 		$class = '';
-		if( isset( $_REQUEST['editable_by'] ) )
+		if( isset( $_REQUEST['post_status'] ) && $_REQUEST['post_status'] == self::EDITABLE_POST_STATUS )
 			$class = ' class="current"';
 
-		// adding a fake post status prevents the "All" link from being highlighted as current
-		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=editable&editable_by=" . $user_id );
+		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=" . self::EDITABLE_POST_STATUS );
 		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_unpublished' => true );
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
+		$views[self::EDITABLE_POST_STATUS] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
 
 		return $views;
 
 	}
 
 	/**
-	 * Add custom query var for filtering posts by editable status
+	 * Query logic for filtering posts by editable status for current user
 	 */
-	public static function query_vars( $query_vars ) {
-		$query_vars[] = 'editable_by';
-		return $query_vars;
-	}
+	public static function add_editable_query( $query ) {
 
-	/**
-	 * Query logic for filtering posts by editable status for specific user
-	 */
-	public static function parse_query( $query ) {
+		if( isset( $query->query_vars['post_status'] ) && $query->query_vars['post_status'] == self::EDITABLE_POST_STATUS ) {
 
-		if( isset( $query->query_vars['editable_by'] ) ) {
+			$user_id = get_current_user_id();
 
-			$user_id = $query->query_vars['editable_by'];
+			if( empty( $user_id ) )
+				return;
+
 			$groups = BU_Edit_Groups::get_instance();
 			$section_groups = $groups->find_groups_for_user($user_id);
 
-			if( empty($section_groups) )
+			if( empty( $section_groups ) )
 				return;
 
 			$meta_query = array(
@@ -236,6 +245,7 @@ class BU_Groups_Admin {
 		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
 
 		return $where;
+
 	}
 
 	/**
