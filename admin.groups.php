@@ -141,7 +141,6 @@ class BU_Groups_Admin {
 
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
-	 *
 	 */
 	public static function add_edit_views() {
 
@@ -160,8 +159,8 @@ class BU_Groups_Admin {
 	/**
 	 * Custom bucket for filter posts table to display only posts editable by current user
 	 *
-	 * @todo figure out "current" class
-	 *
+	 * This should be done with register_post_status() but that API is incomplete as of 3.5
+	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
 	public static function section_editing_views( $views ) {
 		global $post_type_object;
@@ -174,7 +173,8 @@ class BU_Groups_Admin {
 		if( isset( $_REQUEST['editable_by'] ) )
 			$class = ' class="current"';
 
-		$edit_link = admin_url( "edit.php?post_type=$post_type&editable_by=" . $user_id );
+		// adding a fake post status prevents the "All" link from being highlighted as current
+		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=editable&editable_by=" . $user_id );
 		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_unpublished' => true );
 		$count = $groups->get_allowed_post_count( $args );
 
