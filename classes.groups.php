@@ -71,12 +71,12 @@ class BU_Edit_Groups {
 	// ___________________PUBLIC_INTERFACE_____________________
 
 	/**
-	 * Returns a group by id from internal groups array
+	 * Returns a group by ID from internal groups array
 	 * 
-	 * @param int $id edit group ID to return
-	 * @return BU_Edit_Group|bool a BU_Edit_Group object if one exists, otherwise false
+	 * @param int $id unique ID of section group to return
+	 * @return BU_Edit_Group|bool the requested section group object, or false on bad ID
 	 */ 
-	public function get($id) {
+	public function get( $id ) {
 
 		foreach( $this->groups as $group ) {
 			if( $group->id == $id )
@@ -87,7 +87,44 @@ class BU_Edit_Groups {
 	}
 
 	/**
+	 * Add a group object to the internal groups array
+	 * 
+	 * @param BU_Edit_Group $group a valid section editing group object
+	 */ 
+	public function add( $group ) {
+
+		if( ! $group instanceof BU_Edit_Group )
+			return false;
+
+		$this->groups[] = $group;
+
+	}
+
+	/**
+	 * Remove a group by ID from the internal groups array
+	 * 
+	 * @param int $id unique ID of section group to delete
+	 * @return BU_Edit_Group|bool the deleted section group object on success, otherwise false
+	 */ 
+	public function delete( $id ) {
+
+		foreach( $this->groups as $i => $g ) {
+			if( $g->id == $id ) {
+				unset($this->groups[$i] );
+				$this->groups = array_values($this->groups);	// reindex
+				return $g;
+			}
+		}
+
+		return false;
+
+	}
+
+	/**
 	 * Return an array of all groups
+	 * 
+	 * @todo *_groups methods usually touch the DB
+	 * 	- investigate renaming to get_all()
 	 * 
 	 * @return type 
 	 */
@@ -98,7 +135,10 @@ class BU_Edit_Groups {
 	}
 
 	/**
-	 * Remove all groups from internal array 
+	 * Remove all groups from internal array
+	 * 
+	 * @todo *_groups methods usually touch the DB
+	 * 	- investigate renaming to delete_all()
 	 */
 	public function delete_groups() {
 
@@ -172,12 +212,18 @@ class BU_Edit_Groups {
 	public function delete_group($id) {
 
 		// Remove group.
-		$result = $this->delete( $id );
+		$group = $this->delete( $id );
 
-		if( ! $result ) {
+		if( ! $group ) {
 			error_log('Error deleting group: ' . $id );
 			return false;
-		}
+		} 
+
+		// Delete from db
+		$result = wp_delete_post( $id, true );
+
+		if( $result === false )
+			return false;
 
 		// Remove group permissions.
 		BU_Group_Permissions::delete_group_permissions($id);
@@ -212,7 +258,9 @@ class BU_Edit_Groups {
 
 	/**
 	 * Returns whether or not a user exists in an array of edit groups
-	 * 
+	 *
+	 * @todo remove this if it unused
+	 *  
 	 * @param array $groups an array of BU_Edit_Group objects to check
 	 * @param int $user_id WordPress user id to check
 	 */ 
@@ -298,10 +346,12 @@ class BU_Edit_Groups {
 
 		}
 
-		if( $include_unpublished )
+		if( $include_unpublished ) {
+			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
 			$post_status_or = "OR (p.post_status IN ('draft','pending') $post_type_clause)";
+		}
 
-		$count_query = sprintf( "SELECT DISTINCT(p.ID) FROM %s %s WHERE (meta_key = '%s' AND meta_value IN (%s) %s) %s GROUP BY p.ID",
+		$count_query = sprintf( "SELECT DISTINCT( post_id ) FROM %s %s WHERE (meta_key = '%s' AND meta_value IN (%s) %s) %s GROUP BY post_id",
 			$wpdb->postmeta,
 			$posts_join,
 			BU_Group_Permissions::META_KEY,
@@ -360,7 +410,11 @@ class BU_Edit_Groups {
 			$postdata = $this->_group_to_post( $group );
 
 			// Update DB
-			$result = wp_update_post( $postdata );
+			$result = wp_insert_post( $postdata );
+
+			// Set group ID with post ID if needed
+			if( $group->id < 0 )
+				$group->id = $result;
 
 			if( is_wp_error( $result ) ) {
 				error_log(sprintf('Error updating group %s: %s', $group->id, $result->get_error_message()));
@@ -443,6 +497,9 @@ class BU_Edit_Groups {
 			return false;
 		}
 
+		// Update modified time stamp
+		$group->modified = get_post_modified_time('U',false,$result);
+
 		// Update group member meta
 		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
 
@@ -455,40 +512,6 @@ class BU_Edit_Groups {
 		}
 
 		return $group;
-
-	}
-
-	/**
-	 * Delete section editing group
-	 * 
-	 * @todo test coverage
-	 * 
-	 * @param int $id ID of group to delete
-	 * @return bool 
-	 */ 
-	protected function delete( $id ) {
-
-		foreach( $this->groups as $index => $group ) {
-
-			if( $group->id == $id) {
-
-				// Delete from db
-				$result = wp_delete_post( $id, true );
-
-				if( $result === false )
-					return false;
-
-				// Delete from internal groups store
-				unset($this->groups[$index]);
-				$this->groups = array_values($this->groups);	// reindex
-
-				return $group;
-			
-			}
-
-		}
-
-		return false;
 
 	}
 
@@ -562,8 +585,8 @@ class BU_Edit_Groups {
 		$data['id'] = $post->ID;
 		$data['name'] = $post->post_title;
 		$data['description'] = $post->post_content;
-		$data['created'] = $post->post_date;
-		$data['modified'] = $post->post_modified;
+		$data['created'] = strtotime($post->post_date);
+		$data['modified'] = strtotime($post->post_modified);
 
 		// Users are stored in post meta
 		$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
@@ -714,8 +737,9 @@ class BU_Edit_Group {
 		$valid_fields = array_keys( $this->get_attributes() );
 
 		foreach( $args as $key => $val ) {
-			if( in_array($key, $valid_fields))
+			if( in_array($key, $valid_fields)) {
 				$this->$key = $val;
+			}
 		}
 
 	}
