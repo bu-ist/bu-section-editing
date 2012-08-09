@@ -50,6 +50,8 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 	 @todo more tests
 	 	- update group
 	 	- delete group
+
+	 	-- NEED TO CONFIRM STATE POST GROUP SAVE/UPDATE
 	*/
 
 	public function test_create_group() {
@@ -306,18 +308,18 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
  */ 
 class BUSE_GroupsPage {
 
-	private $selenium = null;
+	private $webdriver = null;
 
 	const MANAGE_GROUPS_URL = '/wp-admin/users.php?page=manage_groups';
 
-	function __construct( $selenium ) {
-		$this->selenium = $selenium;
+	function __construct( $webdriver ) {
+		$this->webdriver = $webdriver;
 
-		$this->selenium->open( self::MANAGE_GROUPS_URL );
+		$this->webdriver->open( self::MANAGE_GROUPS_URL );
 
-		$page_title = $this->selenium->getTitle();
+		$page_title = $this->webdriver->getTitle();
 
-		if( strpos( $this->selenium->getTitle(), 'Section Groups' ) === false )
+		if( strpos( $this->webdriver->getTitle(), 'Section Groups' ) === false )
 			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . $request_url );
 	}
 
@@ -328,7 +330,7 @@ class BUSE_GroupsPage {
  */ 
 class BUSE_EditGroupPage {
 
-	protected $selenium = null;
+	protected $webdriver = null;
 	protected $group_form = null;
 
 	/* Markup constants */
@@ -360,8 +362,8 @@ class BUSE_EditGroupPage {
 	 * 
 	 * @todo make URL generation more flexible
 	 */ 
-	function __construct( $selenium, $group_id = null ) {
-		$this->selenium = $selenium;
+	function __construct( $webdriver, $group_id = null ) {
+		$this->webdriver = $webdriver;
 
 		// Generate request URL
 		$action_str = $group_str ='';
@@ -375,14 +377,14 @@ class BUSE_EditGroupPage {
 		$query_str = sprintf('%s%s', $action_str, $group_str );
 		$request_url = BUSE_GroupsPage::MANAGE_GROUPS_URL . $query_str;
 
-		$this->selenium->open( $request_url  );
+		$this->webdriver->open( $request_url  );
 
-		$page_title = $this->selenium->getTitle();
+		$page_title = $this->webdriver->getTitle();
 
 		if( strpos( $page_title, 'Section Groups' ) === false )
 			throw new Exception('Edit Group Page failed to load -- Unable to load URL: ' . $request_url );
 
-		$this->group_form = new SeleniumFormHelper( $this->selenium, self::GROUP_EDIT_FORM );
+		$this->group_form = new SeleniumFormHelper( $this->webdriver, self::GROUP_EDIT_FORM );
 
 	}
 
@@ -402,7 +404,7 @@ class BUSE_EditGroupPage {
 				break;
 		}
 
-		$tab = $this->selenium->getElement( LocatorStrategy::id, $tab_id );
+		$tab = $this->webdriver->getElement( LocatorStrategy::id, $tab_id );
 		$tab->click();
 
 	}
@@ -426,7 +428,7 @@ class BUSE_EditGroupPage {
 		if( is_null( $panel_id ) )
 			return false;
 
-		$panel = $this->selenium->getElement( LocatorStrategy::id, $panel_id );
+		$panel = $this->webdriver->getElement( LocatorStrategy::id, $panel_id );
 
 		if( isset( $panel ) && strpos( $panel->getAttribute('class'), self::ACTIVE_PANEL_CLASS ) !== false )
 			return true;
@@ -452,7 +454,7 @@ class BUSE_EditGroupPage {
 	function getName() {
 
 		$this->loadPanel( 'properties' );
-		$name_input = $this->selenium->getElement( LocatorStrategy::id, self::GROUP_NAME_INPUT );
+		$name_input = $this->webdriver->getElement( LocatorStrategy::id, self::GROUP_NAME_INPUT );
 
 		if( isset( $name_input ) )
 			return $name_input->getAttribute('value');
@@ -464,7 +466,7 @@ class BUSE_EditGroupPage {
 	function getDescription() {
 
 		$this->loadPanel( 'properties' );
-		$desc_input = $this->selenium->getElement( LocatorStrategy::id, self::GROUP_DESC_INPUT );
+		$desc_input = $this->webdriver->getElement( LocatorStrategy::id, self::GROUP_DESC_INPUT );
 
 		if( isset( $desc_input ) )
 			return $desc_input->getAttribute('value');
@@ -488,9 +490,9 @@ class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 
 	const ACTIVE_MEMBER_XPATH = "//li[contains(@class,'member') and contains(@class,'active')]//label[text()='%s']";
 
-	function __construct( $selenium, $group_id = null ) {
+	function __construct( $webdriver, $group_id = null ) {
 
-		parent::__construct( $selenium, $group_id );
+		parent::__construct( $webdriver, $group_id );
 
 		$this->loadPanel( 'members' );
 
@@ -500,12 +502,12 @@ class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 
 		$this->group_form->populateFields( array( self::GROUP_ADD_MEMBER_INPUT => array( 'type' => 'text', 'value' => $login ) ) );
 
-		$add_btn = $this->selenium->getElement( LocatorStrategy::id, self::GROUP_ADD_MEMBER_BTN );
+		$add_btn = $this->webdriver->getElement( LocatorStrategy::id, self::GROUP_ADD_MEMBER_BTN );
 		$add_btn->click();
 
 		// Verify member has been added before continuing (AJAX call is utilized)
         $xpath = sprintf(self::ACTIVE_MEMBER_XPATH,$login);
-        $this->selenium->getElement( LocatorStrategy::xpath, $xpath );
+        $this->webdriver->getElement( LocatorStrategy::xpath, $xpath );
 
 	}
 
@@ -514,7 +516,7 @@ class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 
 		if( is_numeric($id) ) {
 			// @todo don't hard code remove_member
-			$remove_btn = $this->selenium->getElement( LocatorStrategy::id, '#remove_member_' . $id );
+			$remove_btn = $this->webdriver->getElement( LocatorStrategy::id, '#remove_member_' . $id );
 			$remove_btn->click();
 		} else {
 			// @todo find remove link based on display name label (xpath)
@@ -525,7 +527,7 @@ class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 	function hasMember( $login ) {
 
         $xpath = sprintf(self::ACTIVE_MEMBER_XPATH,$login);
-        $member_row = $this->selenium->getElement( LocatorStrategy::xpath, $xpath );
+        $member_row = $this->webdriver->getElement( LocatorStrategy::xpath, $xpath );
 
         if( isset( $member_row ) )
         	return true;
@@ -546,9 +548,9 @@ class BUSE_EditGroupPermissions extends BUSE_EditGroupPage {
 	const STATE_ALLOWED_DESC_DENIED = 'allowed-desc-denied';
 	const STATE_DENIED_DESC_ALLOWED = 'denied-desc-allowed';
 
-	function __construct( $selenium, $group_id = null ) {
+	function __construct( $webdriver, $group_id = null ) {
 
-		parent::__construct( $selenium, $group_id );
+		parent::__construct( $webdriver, $group_id );
 
 		$this->loadPanel( 'permissions' );
 
@@ -556,32 +558,32 @@ class BUSE_EditGroupPermissions extends BUSE_EditGroupPage {
 
 	function loadPostTypeEditor( $name ) {
 
-		$tab = $this->selenium->getElement( LocatorStrategy::id, 'perm-panel-' . $name );
+		$tab = $this->webdriver->getElement( LocatorStrategy::id, 'perm-panel-' . $name );
 		$tab->click();
 
 	}
 
 	function expandAll() {
 
-		$link = $this->selenium->getElement( LocatorStrategy::cssSelector, '.group-panel.active .perm-tree-expand' );
+		$link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '.group-panel.active .perm-tree-expand' );
 		$link->click();
 	}
 
 	function togglePostState( $id ) {
 
 		// Trigger overlay
-		$post_link = $this->selenium->getElement( LocatorStrategy::cssSelector, '#p' . $id . ' > a' );
+		$post_link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '#p' . $id . ' > a' );
 		$post_link->click();
 
 		// Wait for overlay
-		$overlay_link = $this->selenium->getElement( LocatorStrategy::cssSelector, '.buse-overlay .buse-action' );
+		$overlay_link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '.buse-overlay .buse-action' );
 		$overlay_link->click();
 
 	}
 
 	function getPostState( $id ) {
 		
-		$post_link = $this->selenium->getElement( LocatorStrategy::id, 'p' . $id );
+		$post_link = $this->webdriver->getElement( LocatorStrategy::id, 'p' . $id );
 		return $post_link->getAttribute('rel');
 
 	}
