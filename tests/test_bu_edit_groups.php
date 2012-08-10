@@ -263,52 +263,115 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 		// Configure state
 		$posts = $this->factory->post->create_many(3);
-		$drafts = $this->factory->post->create_many(3, array('post_status'=>'draft'));
+		$drafts = $this->factory->post->create_many(3, array('post_type' => 'page', 'post_status'=>'draft'));
 		$pages = $this->factory->post->create_many(3, array('post_type'=>'page'));
+		$denied_pages = $this->factory->post->create_many(3);
 
-		$user_one = $this->factory->post->create();
-		$user_two = $this->factory->post->create();
+		$u1 = $this->factory->post->create( array('role' => 'section_editor') );
+		$u2 = $this->factory->post->create( array('role' => 'section_editor') );
+		$u3 = $this->factory->post->create();
 
-		$perms = array(
+		// Group one - 3 allowed posts, 0 allowed pages (3 draft pages)
+		$g1_perms = array(
 			'post' => array_combine( $posts, array('allowed','allowed','allowed')),
 			);
 
-		$group_one = $this->factory->group->create( array( 'perms' => $perms, 'users' => array( $user_one, $user_two ) ) );
+		$g1 = $this->factory->group->create( array( 'perms' => $g1_perms, 'users' => array( $u1, $u2 ) ) );
 
-		$perms = array(
+		// Group two - 0 allowed posts, 3 allowed pages (3 draft pages)
+		$g2_perms = array(
 			'page' => array_combine( $pages, array('allowed','allowed','allowed'))
 			);
 
-		$group_two = $this->factory->group->create( array( 'perms' => $perms, 'users' => array( $user_two ) ) );
-
-		error_log('All posts: ' . print_r($posts,true) );
-		error_log('All pages: ' . print_r($pages,true) );
-		error_log('All drafts: ' . print_r($drafts,true) );
-		// error_log('Group Two: ' . print_r($group_two,true) );
-		// error_log('Group One: ' . print_r($group_one,true) );
-		// error_log('Group Two: ' . print_r($group_two,true) );
+		$g2 = $this->factory->group->create( array( 'perms' => $g2_perms, 'users' => array( $u2 ) ) );
 
 		$gc = BU_Edit_Groups::get_instance();
 
-		// Generate with different arguments
-		$count_for_user_one = $gc->get_allowed_post_count( array('user_id' => $user_one ) );
-		$count_for_user_two = $gc->get_allowed_post_count( array('user_id' => $user_two ) );
-		$count_for_user_two_drafts_inc = $gc->get_allowed_post_count( array( 'user_id' => $user_two, 'include_unpublished' => true ) );
+		// Generate counts with all possible combinations of args
 
-		$count_for_group_one = $gc->get_allowed_post_count( array('group' => $group_one->id ) );
-		$count_for_group_two = $gc->get_allowed_post_count( array('group' => $group_two->id ) );
+		// User one
+		$count_all_u1 = $gc->get_allowed_post_count( array('user_id' => $u1 ) );
+		$count_post_u1 = $gc->get_allowed_post_count( array('user_id' => $u1, 'post_type' => 'post' ) );
+		$count_page_u1 = $gc->get_allowed_post_count( array('user_id' => $u1, 'post_type' => 'page' ) );
+		$count_post_drafts_inc_u1 = $gc->get_allowed_post_count( array('user_id' => $u1, 'post_type' => 'post', 'include_unpublished' => true  ) );
+		$count_page_drafts_inc_u1 = $gc->get_allowed_post_count( array('user_id' => $u1, 'post_type' => 'page', 'include_unpublished' => true  ) );
+		$count_all_drafts_inc_u1 = $gc->get_allowed_post_count( array( 'user_id' => $u1, 'include_unpublished' => true ) );
 
-		$post_count_for_group_one = $gc->get_allowed_post_count( array('group' => $group_one->id, 'post_type' => 'post' ) );
-		$page_count_for_group_one = $gc->get_allowed_post_count( array('group' => $group_one->id, 'post_type' => 'page'  ) );
+		// User two
+		$count_all_u2 = $gc->get_allowed_post_count( array('user_id' => $u2 ) );
+		$count_post_u2 = $gc->get_allowed_post_count( array('user_id' => $u2, 'post_type' => 'post' ) );
+		$count_page_u2 = $gc->get_allowed_post_count( array('user_id' => $u2, 'post_type' => 'page' ) );
+		$count_post_drafts_inc_u2 = $gc->get_allowed_post_count( array('user_id' => $u2, 'post_type' => 'post', 'include_unpublished' => true  ) );
+		$count_page_drafts_inc_u2 = $gc->get_allowed_post_count( array('user_id' => $u2, 'post_type' => 'page', 'include_unpublished' => true  ) );
+		$count_all_drafts_inc_u2 = $gc->get_allowed_post_count( array( 'user_id' => $u2, 'include_unpublished' => true ) );
+
+		// User 3 (no permissions)
+		$count_for_user_three = $gc->get_allowed_post_count( array('user_id' => $u3 ) );
+
+		// Group 1
+		$count_all_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id ) );
+		$count_post_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'post' ) );
+		$count_page_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'page'  ) );
+		$count_post_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'post', 'include_unpublished' => true ) );
+		$count_page_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'page', 'include_unpublished' => true ) );
+		$count_all_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'include_unpublished' => true ) );
+		
+		$count_all_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id ) );
+		$count_post_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'post' ) );
+		$count_page_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'page'  ) );
+		$count_post_draft_inc_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'post', 'include_unpublished' => true ) );
+		$count_page_draft_inc_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'page', 'include_unpublished' => true ) );
+		$count_all_draft_inc_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'include_unpublished' => true ) );
+
+		// Invalid args
+		$invalid_count_one = $gc->get_allowed_post_count( array( 'post_type' => 'page' ) );
+		$invalid_count_two = $gc->get_allowed_post_count( array( 'post_type' => 'page', 'include_unpublished' => true ) );
+		$invalid_count_three = $gc->get_allowed_post_count( array( 'user_id' => -1 ) );
+		$invalid_count_four = $gc->get_allowed_post_count( array( 'group' => -1 ) );
 
 		// Assertions
-		$this->assertEquals( 3, $count_for_user_one );
-		$this->assertEquals( 6, $count_for_user_two );
-		$this->assertEquals( 9, $count_for_user_two_drafts_inc ); // THIS FAILS!
-		$this->assertEquals( 3, $count_for_group_one );
-		$this->assertEquals( 3, $count_for_group_two );
-		$this->assertEquals( 3, $post_count_for_group_one );
-		$this->assertEquals( 0, $page_count_for_group_one );
+
+		// User One
+		$this->assertEquals( 3, $count_all_u1 );
+		$this->assertEquals( 3, $count_post_u1 );
+		$this->assertEquals( 0, $count_page_u1 );
+		$this->assertEquals( 3, $count_post_drafts_inc_u1 );
+		$this->assertEquals( 3, $count_page_drafts_inc_u1 );
+		$this->assertEquals( 6, $count_all_drafts_inc_u1 );
+
+		// User two
+		$this->assertEquals( 6, $count_all_u2 );
+		$this->assertEquals( 3, $count_post_u2 );
+		$this->assertEquals( 3, $count_page_u2 );
+		$this->assertEquals( 3, $count_post_drafts_inc_u2 );
+		$this->assertEquals( 6, $count_page_drafts_inc_u2 );
+		$this->assertEquals( 9, $count_all_drafts_inc_u2 );
+
+		// User three
+		$this->assertEquals( 0, $count_for_user_three );
+
+		// Group 1
+		$this->assertEquals( 3, $count_all_g1 );
+		$this->assertEquals( 3, $count_post_g1 );
+		$this->assertEquals( 0, $count_page_g1 );
+		$this->assertEquals( 3, $count_post_draft_inc_g1 );
+		$this->assertEquals( 3, $count_page_draft_inc_g1 );
+		$this->assertEquals( 6, $count_all_draft_inc_g1 );
+
+		// Group 2
+		$this->assertEquals( 3, $count_all_g2 );
+		$this->assertEquals( 0, $count_post_g2 );
+		$this->assertEquals( 3, $count_page_g2 );
+		$this->assertEquals( 0, $count_post_draft_inc_g2 );
+		$this->assertEquals( 6, $count_page_draft_inc_g2 );
+		$this->assertEquals( 6, $count_all_draft_inc_g2 );
+
+		// Invalid args
+		$this->assertFalse( $invalid_count_one );
+		$this->assertFalse( $invalid_count_two );
+		$this->assertFalse( $invalid_count_three );
+		$this->assertFalse( $invalid_count_four );
+
 
 	}
 

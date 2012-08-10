@@ -285,12 +285,13 @@ class BU_Edit_Groups {
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
 	 *
-	 * @todo cleanup this query
-	 * @todo move to BU_Group_Permissions
+	 * @todo implement cacheing with md5 of args
+	 * @todo re-examine and optimize this query
+	 * @todo possibly move to BU_Group_Permissions
 	 *
 	 * @param $args array optional args
 	 * 
-	 * @return int allowed post count for the given post type 
+	 * @return int allowed post count for the given post type, group or user
 	 */ 
 	public function get_allowed_post_count( $args = array() ) {
 		global $wpdb;
@@ -325,46 +326,62 @@ class BU_Edit_Groups {
 			if( is_array( $group ) )
 				$group_ids = $group;
 
-			if( is_numeric( $group ) )
+			if( is_numeric( $group ) && $group > 0 )
 				$group_ids = array($group);
 
 		}
 
 		// Bail if we don't have any valid groups by now
 		if( empty( $group_ids ) ) {
-			//error_log('Exiting allowed post count, no valid groups...');
 			return false;
 		}
 
-		$posts_join = $post_type_clause = $post_status_or = '';
+		// Generate query
+		$post_type_clause = $post_status_or = '';
 
 		// Maybe filter by post type and status
 		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
-			$post_type_clause = "AND p.post_type = '$post_type' ";
+			$post_type_clause = "AND post_type = '$post_type' ";
 
 		}
 
+		// Include unpublished should only work for hierarchical post types
 		if( $include_unpublished ) {
-			$posts_join = "INNER JOIN {$wpdb->posts} AS p ON p.ID = post_id ";
-			$post_status_or = "OR (p.post_status IN ('draft','pending') $post_type_clause)";
+
+			// Flat post types are not allowed to include unpublished, as perms can be set for drafts
+			if( $post_type ) {
+
+				$pto = get_post_type_object( $post_type );
+
+				if( $pto->hierarchical ) {
+
+					$post_status_or = "OR (post_status IN ('draft','pending') $post_type_clause)";
+				
+				}
+
+			} else {
+
+				$post_status_or = "OR post_status IN ('draft','pending')";
+
+			}
+
 		}
 
-		$count_query = sprintf( "SELECT DISTINCT( post_id ) FROM %s %s WHERE (meta_key = '%s' AND meta_value IN (%s) %s) %s GROUP BY post_id",
+		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s, %s WHERE ID = post_ID AND ( meta_key = '%s' AND meta_value IN (%s) %s) %s",
+			$wpdb->posts,
 			$wpdb->postmeta,
-			$posts_join,
 			BU_Group_Permissions::META_KEY,
 			implode( ',', $group_ids ),
 			$post_type_clause,
 			$post_status_or
 			);
 
+		// Execute query
 		$ids = $wpdb->get_col( $count_query );
 
-		$count = count($ids);
-
-		return $count;
+		// Count and return results
+		return count( $ids );
 
 	}
 
