@@ -588,7 +588,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						"image": buse_config.pluginUrl + "/images/group_perm_denied.png"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-60px 0"
 					}
 				},
 				'denied' : {
@@ -601,7 +602,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_denied.png"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-60px 0"
 					}
 				},
 				'denied-desc-allowed' : {
@@ -614,8 +616,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group-perms-sprite.png",
-						position: "0 -1px"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "2px 0"
 					}
 				},
 				'denied-desc-unknown' : {
@@ -628,7 +630,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_denied_desc_unknown.png"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-100px 0"
 					}
 				},
 				'allowed' : {
@@ -641,7 +644,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_allowed.png"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-40px 0"
 					}
 				},
 				'allowed-desc-denied' : {
@@ -654,8 +658,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group-perms-sprite.png",
-						position: "-22px -1px"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-20px 0"
 					}
 				},
 				'allowed-desc-unknown' : {
@@ -668,7 +672,8 @@ jQuery(document).ready(function($){
 					max_depth	: -1,
 					valid_children	: "all",
 					icon: {
-						image: buse_config.pluginUrl + "/images/group_perm_allowed_desc_unknown.png"
+						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
+						position: "-120px 0"
 					}
 				}
 			}

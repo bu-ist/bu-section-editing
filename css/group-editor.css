@@ -75,6 +75,8 @@
 
 #group-permission-editor {
 	width: 100%;
+	/* Preload permissions sprite */
+	background: url('../images/group_perms_sprite.png') no-repeat -9999px -9999px;
 }
 
 #perm-tab-container {
@@ -172,9 +174,13 @@
 .perm-editor.jstree li {
 }
 
-.perm-editor.jstree a > ins {
+.perm-editor.jstree a {
 	height: 18px;
-	width: 20px;
+}
+
+.perm-editor.jstree a > ins {
+	height: 20px;
+	width: 21px;
 }
 
 .perm-editor.jstree-classic a.jstree-clicked {
@@ -185,11 +191,11 @@
 /* Override default throbber while loading descendents */
 
 .perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perm_denied_desc_unknown.png');
+	background: url('../images/group_perms_sprite.png') no-repeat -100px 0;
 }
 
 .perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perm_allowed_desc_unknown.png');
+	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
 }
 
 /* Flat Permissions */
@@ -204,24 +210,20 @@
 	outline: none;
 }
 
-.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
-	background: url('../images/group_perm_allowed.png');
-	background-repeat: no-repeat;
+.perm-editor.flat li .flat-perm-icon {
 	display: block;
 	float: left;
-	padding-right: 10px;
+	padding-right: 8px;
 	width: 15px;
 	height: 15px;
 }
 
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
+	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
+}
+
 .perm-editor.flat li[rel="denied"] .flat-perm-icon {
-	background: url('../images/group_perm_denied.png');
-	background-repeat: no-repeat;
-	display: block;
-	float: left;
-	padding-right: 10px;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
 }
 
 .perm-list {
