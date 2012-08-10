@@ -278,16 +278,16 @@
 }
 
 .buse-overlay.allowed .buse-icon {
-	background: url('../images/group_perm_denied.png') no-repeat;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
+	width: 18px;
+	height: 20px;
 	margin: 1px 5px 0 0;
 }
 
 .buse-overlay.denied .buse-icon {
-	background: url('../images/group_perm_allowed.png') no-repeat;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
+	width: 18px;
+	height: 20px;
 	margin: 1px 5px 0 0;
 }
 
@@ -305,7 +305,7 @@
 	padding: 10px 8px;
 	border-radius: 3px;
 	text-decoration: none;
-	width: 105px;
+	width: 106px;
 }
 
 .buse-action:hover {
