@@ -290,11 +290,19 @@ jQuery(document).ready(function($){
 			'label' : 'Deny Editing',
 			'class' : 'allowed'
 		},
+		'allowed-desc-unknown' : {
+			'label' : 'Deny Editing',
+			'class' : 'allowed'
+		},
 		'denied' : {
 			'label' : 'Allow Editing',
 			'class' : 'denied'
 		},
 		'denied-desc-allowed' : {
+			'label' : 'Allow Editing',
+			'class' : 'denied'
+		},
+		'denied-desc-unknown' : {
 			'label' : 'Allow Editing',
 			'class' : 'denied'
 		}
@@ -335,6 +343,9 @@ jQuery(document).ready(function($){
 
 		// Current state
 		var st = overlayStates[status];
+
+		if( typeof st == 'undefined' )
+			return;
 
 		// Setup positioning
 		var pos = {
@@ -503,11 +514,20 @@ jQuery(document).ready(function($){
 
 				// Start lazy loading once tree is fully loaded
 				$(this).find('ul > .jstree-closed').each( function(){
-					var $post = $(this);
-					data.inst.load_node( $(this), function(){
-						correctIconsForSection($post);
-					});
+
+					// Load using API -- they require callback functions, but we're
+					// handling actions in the load_node.jstree even handler below
+					// so we just pass empty functions
+					data.inst.load_node( $(this), function(){}, function(){} );
 				});
+
+			})
+			.bind('load_node.jstree', function( event, data ) {
+
+				// Correct state post-load for all non-root nodes
+				if( data.rslt.obj != -1 ) {
+					correctIconsForSection(data.rslt.obj);
+				}
 
 			})
 			.bind('select_node.jstree', function( event, data ) {
@@ -787,12 +807,14 @@ jQuery(document).ready(function($){
 			// Previously allowed: denied
 			case 'allowed':
 			case 'allowed-desc-denied':
+			case 'allowed-desc-unknown':
 				$node.attr('rel', 'denied');
 				break;
 
 			// Previously denied: allowed
 			case 'denied':
 			case 'denied-desc-allowed':
+			case 'denied-desc-unknown':
 				$node.attr('rel', 'allowed' );
 				break;
 
