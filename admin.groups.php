@@ -26,6 +26,9 @@ class BU_Groups_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'admin_menus' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
+		add_filter( 'manage_users_columns', array( __CLASS__, 'add_manage_users_column' ) );
+		add_filter( 'manage_users_custom_column', array( __CLASS__, 'manage_users_group_column' ), 10, 3 );
+		
 		// WP hooks that trigger group related state changes
 		add_action( 'transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
 		add_action( 'set_user_role', array( __CLASS__, 'user_role_switched'), 10, 2 );
@@ -37,6 +40,56 @@ class BU_Groups_Admin {
 			add_action( 'admin_init', array( __CLASS__, 'add_edit_views' ), 20 );
 			add_action( 'parse_query', array( __CLASS__, 'add_editable_query' ) );
 		}
+
+	}
+
+	/**
+	 * Register a custom "Section Groups" column for the manage users table
+	 */ 
+	public static function add_manage_users_column( $columns ) {
+
+		$columns['section_groups'] = 'Section Groups';
+
+		return $columns;
+
+	}
+
+	/**
+	 * Custom "Section Groups" column for the manage users table
+	 */ 
+	public static function manage_users_group_column( $content, $column, $user_id ) {
+
+		if( $column == 'section_groups' ) {
+
+			// Find groups for the current user row
+			$gc = BU_Edit_Groups::get_instance();
+			$groups = $gc->find_groups_for_user( $user_id );
+
+			if( empty( $groups ) ) {
+				
+				$content = 'None';
+
+			} else {
+
+				/**
+				 * @todo add some smart logic that looks at the length of the resulting string
+				 * 
+				 * If its over a certain limit, display the first two and then add " and 4 more"
+				 * where "and 4 more" is a link to the manage section groups page
+				 */
+				$group_names = array();
+
+				foreach( $groups as $group ) {
+					$group_names[] = $group->name;
+				}
+
+				$content = implode( ', ', $group_names );
+			
+			}
+
+		}
+
+		return $content;
 
 	}
 
