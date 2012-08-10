@@ -337,7 +337,7 @@ class BU_Edit_Groups {
 		}
 
 		// Generate query
-		$post_type_clause = $post_status_or = '';
+		$post_type_clause = $post_status_clause = '';
 
 		// Maybe filter by post type and status
 		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
@@ -356,16 +356,19 @@ class BU_Edit_Groups {
 
 				if( $pto->hierarchical ) {
 
-					$post_status_or = "OR (post_status IN ('draft','pending') $post_type_clause)";
+					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
 				
 				}
 
 			} else {
 
-				$post_status_or = "OR post_status IN ('draft','pending')";
+				$post_status_clause = "OR post_status IN ('draft','pending')";
 
 			}
 
+		} else {
+
+			$post_status_clause = "AND post_status = 'publish'";
 		}
 
 		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s, %s WHERE ID = post_ID AND ( meta_key = '%s' AND meta_value IN (%s) %s) %s",
@@ -374,7 +377,7 @@ class BU_Edit_Groups {
 			BU_Group_Permissions::META_KEY,
 			implode( ',', $group_ids ),
 			$post_type_clause,
-			$post_status_or
+			$post_status_clause
 			);
 
 		// Execute query

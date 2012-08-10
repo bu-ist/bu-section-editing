@@ -188,7 +188,12 @@ class BU_Groups_Admin {
 			$class = ' class="current"';
 
 		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=" . self::EDITABLE_POST_STATUS );
-		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_unpublished' => true );
+
+		$args = array( 'user_id' => $user_id, 'post_type' => $post_type );
+
+		if( $post_type_object->hierarchical )
+			$args['include_unpublished'] = true;
+
 		$count = $groups->get_allowed_post_count( $args );
 
 		$views[self::EDITABLE_POST_STATUS] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
@@ -237,11 +242,19 @@ class BU_Groups_Admin {
 
 	}
 
+	/**
+	 * Modify the WHERE clause to include drafts and pending posts for editable queries
+	 */ 
 	public static function editable_where_clause( $where ) {
 		global $wpdb;
 
 		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
-		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
+		$pto = get_post_type_object( $post_type );
+
+		// Include drafts and pending posts for hierarchical post types
+		if( $pto->hierarchical )
+			$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
+
 		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
 
 		return $where;

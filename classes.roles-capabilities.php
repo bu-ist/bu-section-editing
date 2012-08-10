@@ -22,7 +22,6 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('delete_posts');
 		$role->add_cap('delete_pages');
 
-
 //		$role->remove_cap('edit_published_pages');
 //		$role->remove_cap('publish_pages');
 //		$role->remove_cap('delete_others_pages');
@@ -33,8 +32,8 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('publish_in_section');
 
 		$role->add_cap('edit_posts');
-		$role->add_cap('edit_others_posts');
 
+//		$role->remove_cap('edit_others_posts');
 //		$role->remove_cap('edit_published_posts');
 //		$role->remove_cap('publish_posts');
 //		$role->remove_cap('delete_others_posts');
