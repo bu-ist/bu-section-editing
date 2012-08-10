@@ -97,7 +97,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->assertTrue(current_user_can('edit_post', $post_id));
 
 		$post_id = $this->posts['nogroups-draft']->ID;
-		$this->assertTrue(current_user_can('edit_post', $post_id));
+		$this->assertFalse(current_user_can('edit_post', $post_id));
 		$post_id = $this->posts['nogroups-published']->ID;
 		$this->assertFalse(current_user_can('edit_post', $post_id));
 	}
