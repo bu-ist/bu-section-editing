@@ -9,6 +9,9 @@ class BU_Groups_Admin {
 
 	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
 	const EDITABLE_POST_STATUS = 'section_editable';
+	
+	const MANAGE_USERS_COLUMN = 'section_groups';
+	const MANAGE_USERS_MAX_NAME_LENGTH = 25;
 
 	public static $manage_groups_hook;
 
@@ -48,7 +51,7 @@ class BU_Groups_Admin {
 	 */ 
 	public static function add_manage_users_column( $columns ) {
 
-		$columns['section_groups'] = 'Section Groups';
+		$columns[self::MANAGE_USERS_COLUMN] = 'Section Groups';
 
 		return $columns;
 
@@ -59,7 +62,7 @@ class BU_Groups_Admin {
 	 */ 
 	public static function manage_users_group_column( $content, $column, $user_id ) {
 
-		if( $column == 'section_groups' ) {
+		if( $column == self::MANAGE_USERS_COLUMN ) {
 
 			// Find groups for the current user row
 			$gc = BU_Edit_Groups::get_instance();
@@ -71,19 +74,35 @@ class BU_Groups_Admin {
 
 			} else {
 
-				/**
-				 * @todo add some smart logic that looks at the length of the resulting string
-				 * 
-				 * If its over a certain limit, display the first two and then add " and 4 more"
-				 * where "and 4 more" is a link to the manage section groups page
-				 */
 				$group_names = array();
+				$current_length = $visible_count = $truncated_count = 0;
 
 				foreach( $groups as $group ) {
-					$group_names[] = $group->name;
+
+					$toolong = self::MANAGE_USERS_MAX_NAME_LENGTH < ( $current_length + strlen( $group->name ) );
+
+					// Allow at least one group
+					if( 0 == $visible_count || ( 0 == $truncated_count && ! $toolong ) ) {
+
+						$group_names[] = sprintf( '<a href="%s">%s</a>', self::manage_groups_url( 'edit', array( 'id' => $group->id ) ), $group->name );
+						$current_length += strlen( $group->name );
+						$visible_count++;
+
+					} else {
+
+						$truncated_count++;
+
+					}
+
 				}
 
 				$content = implode( ', ', $group_names );
+
+				if( $truncated_count > 0 ) {
+					$content .= sprintf( ' and <a href="%s"> ' . _n( '%s other', '%s others', $truncated_count, BU_Section_Editing_Plugin::TEXT_DOMAIN ) . '</a>',
+						admin_url(self::MANAGE_GROUPS_PAGE),
+						$truncated_count );
+				}
 			
 			}
 

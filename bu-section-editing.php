@@ -53,6 +53,7 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 class BU_Section_Editing_Plugin {
 	
 	const BUSE_VERSION = '0.4';
+	const TEXT_DOMAIN = 'bu_section_editing';
 
 	public static function register_hooks() {
 
