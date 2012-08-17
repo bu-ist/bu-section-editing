@@ -39,7 +39,7 @@ if(!defined('BU_INCLUDES_PATH')) {
 	// bu-includes that makes use of submodules or some sort of simple build script
 	if(!defined('BU_NAVIGATION_LIB_LOADED') || BU_NAVIGATION_LIB_LOADED != true ) {
 		require_once(dirname(__FILE__) . '/lib/bu-navigation/bu-navigation.php');
-    }
+	}
 } else {
 	require_once(BU_INCLUDES_PATH . '/bu-navigation/bu-navigation.php');
 }
@@ -93,6 +93,10 @@ class BU_Section_Editing_Plugin {
 
 			}
 		
+			if( function_exists( 'bu_navigation_get_pages' ) ) {
+				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation.php' );
+			}
+			
 		}
 
 	}
@@ -110,11 +114,11 @@ class BU_Section_Editing_Plugin {
 	}
 
 	public static function plugin_settings_link( $links, $file ) {
-        if ( $file != plugin_basename( __FILE__ ))
-            return $links;
+		if ( $file != plugin_basename( __FILE__ ))
+			return $links;
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-        array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
+		array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
 
 		return $links;
 	}
