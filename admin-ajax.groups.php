@@ -104,7 +104,6 @@ class BU_Groups_Admin_Ajax {
 			$group_id = intval(trim($_REQUEST['group_id']));
 			$post_type = trim($_REQUEST['post_type']);
 			$query_vars = isset($_REQUEST['query']) ? $_REQUEST['query'] : array();
-
 			$post_type_obj = get_post_type_object( $post_type );
 
 			if( is_null( $post_type_obj ) ) {
@@ -118,7 +117,6 @@ class BU_Groups_Admin_Ajax {
 
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
 				$perm_editor->format = 'json';
-				header("Content-type: application/json");
 
 			} else {
 
@@ -127,9 +125,18 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$perm_editor->query( $query_vars );
+			
+			$response = new stdClass();
+			$child_of = isset( $query_vars['child_of'] ) ? $query_vars['child_of'] : 0;
 
+			$response->posts = $perm_editor->get_posts( $child_of );
+			$response->page = $perm_editor->page;
+			$response->found_posts = $perm_editor->found_posts;
+			$response->post_count = $perm_editor->post_count;
+			$response->max_num_pages = $perm_editor->max_num_pages;
 
-			$perm_editor->display();
+			header("Content-type: application/json");
+			echo json_encode($response);
 			die();
 
 		}

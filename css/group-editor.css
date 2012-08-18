@@ -75,8 +75,6 @@
 
 #group-permission-editor {
 	width: 100%;
-	/* Preload permissions sprite */
-	background: url('../images/group_perms_sprite.png') no-repeat -9999px -9999px;
 }
 
 #perm-tab-container {
@@ -159,6 +157,10 @@
 	font-style: normal;
 }
 
+.perm-toolbar .tablenav-pages a {
+	border-color: #AAA;
+}
+
 #perm-panel-container .perm-scroll-area {
 	overflow-x: auto;
 }
@@ -196,6 +198,21 @@
 
 .perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
 	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
+}
+
+.perm-editor.flat.loading {
+		padding: 10px 15px;	
+}
+
+.perm-editor.flat .loader {
+	padding: none;
+	background: url('../images/loading.gif') no-repeat -9999px -9999px;
+}
+
+.perm-editor.flat.loading .loader {
+	display: block;
+	background: url('../images/loading.gif') no-repeat 0 0;
+	text-indent: -9999px;
 }
 
 /* Flat Permissions */

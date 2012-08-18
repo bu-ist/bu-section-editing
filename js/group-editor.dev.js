@@ -167,7 +167,6 @@ jQuery(document).ready(function($){
 	 * Load post type editors dynamically on click
 	 */
 	var loadPermissionsPanel = function( $panel ) {
-
 		var $editor = $panel.find('.perm-editor').first();
 
 		// Load appropriate editor
@@ -178,10 +177,11 @@ jQuery(document).ready(function($){
 		} else {
 
 			loadFlatEditor( $editor );
+		
 		}
 
 		// Load toolbar
-		loadToolbar( $panel, $editor );
+		loadToolbars( $panel, $editor );
 
 		// Load overlay
 		loadOverlay( $editor );
@@ -209,7 +209,7 @@ jQuery(document).ready(function($){
 	// @todo
 	// create an object around the editor instances with a consistent
 	// API for these actions
-	var loadToolbar = function( $panel, $editor ) {
+	var loadToolbars = function( $panel, $editor ) {
 
 		// Search
 		$panel.delegate( 'button.perm-search', 'click', function(e){
@@ -231,19 +231,41 @@ jQuery(document).ready(function($){
 
 		});
 
-		// Sort
-		$panel.delegate( 'select.perm-sort', 'change', function(e){
+		// Pagination
+		// @todo maintain search term and/or sort order on pagination
+		$panel.find('.pagination-links').delegate( 'a', 'click', function(e){
 			e.preventDefault();
 
-			var sort = $(this).val().split(':'),
-				orderby = sort[0],
-				order = sort[1] || 'DESC';
+			if( $(this).hasClass('disabled') )
+				return;
+
+			var target = $(this).attr('class');
+			var current = parseInt( $(this).parent().find('.current-page').text() );
+			var last = parseInt( $(this).parent().find('.total-pages').text() );
+			var paged = 1;
+
+			switch( target ) {
+				case 'first-page':
+					paged = 1;
+					break;
+
+				case 'prev-page':
+					paged = current - 1;
+					break;
+
+				case 'next-page':
+					paged = current + 1;
+					break;
+
+				case 'last-page':
+					paged = last;
+					break;
+			}
 
 			var args = {
 				'post_type': $editor.data('post-type'),
 				'query': {
-					orderby: orderby,
-					order: order
+					paged: paged
 				}
 			};
 
@@ -500,6 +522,12 @@ jQuery(document).ready(function($){
 							child_of : n.attr ? n.attr('id').substr(1) : 0
 						}
 					}
+				},
+				success: function( response ) {
+					return response.posts;
+				},
+				error: function( response ) {
+					// @todo handle error
 				}
 			}
 		}
@@ -719,6 +747,15 @@ jQuery(document).ready(function($){
 		if( typeof query !== undefined )
 			$.extend( editorData, query );
 
+		$editor.addClass('loading');
+
+		// Set up loading spinner
+		if( editorData.query.offset ) {
+			$editor.append('<span class="loader">Loading...</span>');
+		} else {
+			$editor.html('<span class="loader">Loading...</span>');
+		}
+		
 		$.ajax({
 			url : ajaxurl,
 			type: 'GET',
@@ -727,13 +764,23 @@ jQuery(document).ready(function($){
 			success: function(response) {
 
 				if( editorData.query.offset ) {
-					$editor.append(response);
+					$editor.append(response.posts);
 				} else {
-					$editor.html(response);
+					$editor.html(response.posts);
 				}
 
+				pageVars = { 
+					page: response.page,
+					found_posts: response.found_posts,
+					post_count: response.post_count,
+					max_num_pages: response.max_num_pages,
+				};
+
+				updatePaginationForEditor( pageVars, $editor );
+
 				// Modify icons looking for edits
-				$editor.trigger( 'posts_loaded.buse', { posts : response } );
+				$editor.trigger( 'posts_loaded.buse', { posts : response.posts } );
+				$editor.removeClass('loading');
 
 			},
 			error: function(response){
@@ -741,6 +788,46 @@ jQuery(document).ready(function($){
 			}
 		});
 
+	}
+
+	var updatePaginationForEditor = function( pageVars, $editor ) {
+
+		var post_type = $editor.data('post-type');
+		var group_id = $('#group_id').val();
+
+		$pagination 	= $('#perm-editor-pagination-' + post_type );
+		$total_items 	= $pagination.find('.displaying-num');
+		$current_page 	= $pagination.find('.current-page');
+		$total_pages 	= $pagination.find('.total-pages');
+		$first_page 	= $pagination.find('.first-page');
+		$prev_page 		= $pagination.find('.prev-page');
+		$next_page 		= $pagination.find('.next-page');
+		$last_page 		= $pagination.find('.last-page');
+
+		// Update found posts
+		var noun = ( parseInt( pageVars.found_posts ) == 1 ) ? ' item' : ' items';
+		$total_items.text( pageVars.found_posts + noun );
+
+		// Update page counts (current page, total pages)
+		$current_page.text( pageVars.page );
+		$total_pages.text( pageVars.max_num_pages );
+
+		// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
+		if( pageVars.page == 1 ) {
+			$first_page.addClass('disabled');
+			$prev_page.addClass('disabled');
+		} else {
+			$first_page.removeClass('disabled');
+			$prev_page.removeClass('disabled');
+		}
+
+		if( pageVars.page == pageVars.max_num_pages ) {
+			$next_page.addClass('disabled');
+			$last_page.addClass('disabled');
+		} else {
+			$next_page.removeClass('disabled');
+			$last_page.removeClass('disabled');
+		}
 	}
 
 	/**
@@ -1101,6 +1188,18 @@ jQuery(document).ready(function($){
 	// ___________________ ON PAGE LOAD _____________________
 
 	// Initial loading
+
+	// Image preloading for dynamically loaded images
+	if( document.images ) {
+
+		var permSprite = new Image();
+		var permSpinner = new Image();
+
+		permSprite.src = buse_config.pluginUrl + "/images/group_perms_sprite.png";
+		permSpinner.src = buse_config.pluginUrl + "/images/loading.gif";
+
+	}
+
 	var $initialPanel = $('#perm-panel-container').find('.perm-panel.active').first();
 	if( $initialPanel.length ) {
 		loadPermissionsPanel( $initialPanel );

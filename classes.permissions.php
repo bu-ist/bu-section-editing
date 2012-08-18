@@ -185,6 +185,11 @@ abstract class BU_Permissions_Editor {
 	protected $post_type;
 	protected $posts;
 
+	public $page;
+	public $found_posts;
+	public $post_count;
+	public $max_num_pages;
+
 	public $format = 'html';
 
 	/**
@@ -226,16 +231,22 @@ abstract class BU_Permissions_Editor {
 		$defaults = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',
-			'posts_per_page' => -1, // @todo get_option('posts_per_page') when pagination is implemented
+			'posts_per_page' => 20, // @todo use a configurable screen option inside
 			'orderby' => 'modified',
 			'order' => 'DESC',
+			'paged' => 1
 			);
 
 		$args = wp_parse_args( $args, $defaults );
 
 		$query = new WP_Query( $args );
 
+		// Parse results
 		$this->posts = $query->posts;
+		$this->page = $args['paged'];
+		$this->found_posts = $query->found_posts;
+		$this->post_count = $query->post_count;
+		$this->max_num_pages = $query->max_num_pages;
 
 		wp_reset_postdata();
 
