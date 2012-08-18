@@ -13,6 +13,8 @@ class BU_Groups_Admin {
 	const MANAGE_USERS_COLUMN = 'section_groups';
 	const MANAGE_USERS_MAX_NAME_LENGTH = 25;
 
+	const POSTS_PER_PAGE_OPTION = 'buse_posts_per_page';
+
 	public static $manage_groups_hook;
 
 	private static $notices = array();
@@ -27,6 +29,7 @@ class BU_Groups_Admin {
 
 		// Interface
 		add_action( 'admin_menu', array( __CLASS__, 'admin_menus' ) );
+		add_filter( 'set-screen-option', array( __CLASS__, 'manage_groups_set_screen_option' ), 10, 3);
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
 		add_filter( 'manage_users_columns', array( __CLASS__, 'add_manage_users_column' ) );
@@ -419,6 +422,14 @@ class BU_Groups_Admin {
 			$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
 			$redirect_url = '';
 
+			// Setup screen option
+			add_screen_option( 'per_page', array( 
+				'label' => 'Posts per page',
+				'default' => 10,
+				'option' => self::POSTS_PER_PAGE_OPTION 
+				) 
+			);
+
 			switch( $_REQUEST['action'] ) {
 
 				case 'edit':
@@ -546,6 +557,16 @@ class BU_Groups_Admin {
 
 		// Render screen
 		include $template_path;
+
+	}
+
+	/**
+	 * Store custom "Posts per page" screen option for manage groups page in user meta
+	 */ 
+	public function manage_groups_set_screen_option( $status, $option, $value ) {
+
+		if ( self::POSTS_PER_PAGE_OPTION == $option ) return $value;
+
 	}
 
 	/**

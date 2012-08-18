@@ -1,7 +1,6 @@
 /* Group editor containers */
 
 #section-group-editor {
-	position:relative;
 }
 
 #section-group-editor h3.nav-tab-wrapper {
@@ -147,6 +146,7 @@
 	-webkit-border-bottom-right-radius: 3px;
 	border-bottom-left-radius: 3px;
 	border-bottom-right-radius: 3px;
+	padding: 0 6px;
 }
 
 .perm-toolbar input[type="text"] {
