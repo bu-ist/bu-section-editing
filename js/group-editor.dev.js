@@ -215,7 +215,8 @@ jQuery(document).ready(function($){
 		$panel.delegate( 'button.perm-search', 'click', function(e){
 			e.preventDefault();
 
-			var term = $(this).siblings('input').first().val();
+			var post_type = $editor.data('post-type');
+			var term = $('#perm-search-' + post_type ).val();
 			var args = {
 				'post_type': $editor.data('post-type'),
 				'query': {
@@ -262,12 +263,19 @@ jQuery(document).ready(function($){
 					break;
 			}
 
+			var post_type = $editor.data('post-type');
+
 			var args = {
-				'post_type': $editor.data('post-type'),
+				'post_type': post_type,
 				'query': {
 					paged: paged
 				}
 			};
+
+			// Possibly append search term to query
+			var term = $('#perm-search-' + post_type ).val();
+			if( term.length > 0 )
+				args['query']['s'] = term;
 
 			// Clear any selections
 			hideOverlay( $editor );
