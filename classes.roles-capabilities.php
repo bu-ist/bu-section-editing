@@ -10,7 +10,7 @@ class BU_Section_Editing_Roles {
 			add_role('section_editor', 'Section Editor');
 		}
 
-		$role = get_role('section_editor');
+		$role =& get_role('section_editor');
 
 		$role->add_cap('upload_files');
 
@@ -146,20 +146,25 @@ class BU_Section_Capabilities {
 		// User is section editor, but not allowed for this section
 		return false;
 	}
+	
 
-
+	/**
+	 * Get all Section Editing caps for the registered post types.
+	 *
+	 * @return array $caps
+	 **/
 	public function get_caps() {
 
 		$caps = array('edit_in_section');
-		$base_caps = array('edit_##_in_section', 'delete_##_in_section', 'publish_##_in_section');
+		$operations = array('edit', 'delete', 'publish');
 		$post_types = $this->get_post_types();
 		
 		foreach( $post_types as $post_type ) {
 			if( $post_type->public != true || in_array( $post_type->name, array( 'attachment' ) ) ) {
 				continue;
 			}
-			foreach( $base_caps as $cap ) {
-				$caps[] = str_replace( '##', $post_type->name, $cap );
+			foreach( $operations as $op ) {
+				$caps[] = $this->get_section_cap($op, $post_type->name);
 			}
 		}
 
@@ -168,9 +173,12 @@ class BU_Section_Capabilities {
 	}
 
 	/**
-	 * Filter that modifies the caps based on the current state.
+	 * Filter that modifies the caps needing to take certain actions in cases 
+	 * where the user ($user_id) does not have the capabilities that WordPress 
+	 * has mapped to the meta capability. The mapping is based on which post is 
+	 * being edited, the Section Groups granted access to the post, and the 
+	 * membership of the user in those groups.
 	 *
-	 * @todo need to add a richer explanation of what is going on
 	 *
 	 * @param array $caps
 	 * @param string $cap
@@ -234,7 +242,7 @@ class BU_Section_Capabilities {
 
 		if( $post_type->hierarchical != true ) {
 			if( $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('edit_' . $post->post_type . '_in_section');
+				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		} else {
 			
@@ -242,12 +250,12 @@ class BU_Section_Capabilities {
 				$parent_id = $this->get_new_parent( $post );
 
 				if( $post->post_status == 'publish' && $this->can_edit_section( $user, $parent_id ) ) {
-					$caps = array('edit_' . $post->post_type . '_in_section');
+					$caps = array($this->get_section_cap('edit', $post->post_type));
 				}
 			}
 
 			if( $id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('edit_' . $post->post_type . '_in_section');
+				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		}
 
@@ -261,11 +269,11 @@ class BU_Section_Capabilities {
 
 		if( $post_type->hierarchical != true ) {
 			if( $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('delete_' . $post->post_type . '_in_section');
+				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		} else {
 			if( $post_id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('delete_' . $post->post_type . '_in_section');
+				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		}
 
@@ -294,7 +302,7 @@ class BU_Section_Capabilities {
 
 		if( $post_type->hierarchical != true && $is_alt != true ) {
 			if( $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('publish_' . $post->post_type . '_in_section');
+				$caps = array($this->get_section_cap('publish', $post->post_type));
 			}
 		} else {
 			// User is attempting to switch post parent while publishing
@@ -304,12 +312,12 @@ class BU_Section_Capabilities {
 
 				// Can't move published posts under sections they can't edit
 				if( $this->can_edit_section( $user, $parent_id ) ) {
-					$caps = array('publish_' . $post->post_type . '_in_section');
+					$caps = array($this->get_section_cap('publish', $post->post_type));
 				}
 
 			} else {
 				if ( isset( $post_id ) && $this->can_edit_section( $user, $post->post_parent ) ) {
-					$caps = array('publish_' . $post->post_type . '_in_section');
+					$caps = array($this->get_section_cap('publish', $post->post_type));
 				}
 			}
 		}
@@ -317,7 +325,29 @@ class BU_Section_Capabilities {
 		return $caps;
 	}
 
-	
+	public function get_section_cap($type, $post_type) {
+		
+		$cap = '';	
+		switch($type) {
+			case 'edit':
+				$cap = 'edit_' . $post_type . '_in_section';
+				break;
+
+			case 'publish':
+				$cap = 'publish_' . $post_type . '_in_section';
+				break;
+
+			case 'delete':
+				$cap = 'delete_' . $post_type . '_in_section';
+				break;
+
+			default:
+				$cap = 'edit_in_section';
+		}
+		return $cap;
+	}
+
+
 	public function has_caps( WP_User $user, $caps ) {
 		
 		foreach( $caps as $cap ) {
@@ -338,7 +368,11 @@ class BU_Section_Capabilities {
 	}	
 	
 	/**
-	 * 
+	 * Whether or not the $cap is a meta cap for one of the registered post types.
+	 *
+	 * @param $cap
+	 * @param $meta_cap
+	 * @return bool
 	 **/	
 	public function is_post_cap( $cap, $map_cap ) {
 		
