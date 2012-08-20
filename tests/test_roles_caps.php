@@ -85,7 +85,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
-
+		
 		$post_id = $this->pages['section_editor-draft']->ID;
 		$this->assertTrue(current_user_can('edit_page', $post_id));
 		$post_id = $this->pages['top-level1']->ID;
@@ -93,11 +93,13 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$post_id = $this->posts['draft1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
+		
 		$post_id = $this->posts['publish1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
 
 		$post_id = $this->posts['nogroups-draft']->ID;
-		$this->assertFalse(current_user_can('edit_post', $post_id));
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+		
 		$post_id = $this->posts['nogroups-published']->ID;
 		$this->assertFalse(current_user_can('edit_post', $post_id));
 	}

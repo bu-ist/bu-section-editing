@@ -44,6 +44,10 @@ class BU_Section_Editing_Roles {
 
 	}
 
+	public function add_caps() {
+		
+	}
+
 	/**
 	 * This filter is only needed for BU installations where the bu_user_management plugin is active
 	 *
@@ -230,7 +234,7 @@ class BU_Section_Capabilities {
 
 		if( $post_type->hierarchical != true ) {
 			if( $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('edit_published_' . $post->post_type . '_in_section');
+				$caps = array('edit_' . $post->post_type . '_in_section');
 			}
 		} else {
 			
@@ -238,12 +242,12 @@ class BU_Section_Capabilities {
 				$parent_id = $this->get_new_parent( $post );
 
 				if( $post->post_status == 'publish' && $this->can_edit_section( $user, $parent_id ) ) {
-					$caps = array('edit_published_' . $post->post_type . '_in_section');
+					$caps = array('edit_' . $post->post_type . '_in_section');
 				}
 			}
 
 			if( $id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('edit_published_' . $post->post_type . '_in_section');
+				$caps = array('edit_' . $post->post_type . '_in_section');
 			}
 		}
 
@@ -257,11 +261,11 @@ class BU_Section_Capabilities {
 
 		if( $post_type->hierarchical != true ) {
 			if( $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('delete_published_' . $post->post_type . '_in_section');
+				$caps = array('delete_' . $post->post_type . '_in_section');
 			}
 		} else {
 			if( $post_id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
-				$caps = array('delete_published_' . $post->post_type . '_in_section');
+				$caps = array('delete_' . $post->post_type . '_in_section');
 			}
 		}
 
@@ -271,7 +275,7 @@ class BU_Section_Capabilities {
 	private function _override_publish_caps(WP_User $user, $post_id, $caps ) {
 		
 		if( ! isset( $post_id ) ) {
-			return;
+			return $caps;
 		}
 		
 		$parent_id = null;
