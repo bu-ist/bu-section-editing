@@ -86,7 +86,7 @@ class BU_Section_Editing_Plugin {
 
 		// Roles and capabilities
 		add_filter( 'map_meta_cap', array( self::$caps, 'map_meta_cap' ), 10, 4 );	
-		add_filter( 'bu_user_manager_allowed_roles', array( $self::$roles, 'allowed_roles' ) );
+		add_filter( 'bu_user_manager_allowed_roles', array( self::$roles, 'allowed_roles' ) );
 		self::$roles->maybe_create();
 
 		// Admin

@@ -32,7 +32,7 @@ class BU_Section_Editing_Roles {
 		$role->add_cap('level_1');
 		$role->add_cap('level_0');
 
-		$caps = BU_SectionEditing_Plugin::$caps->get_caps();
+		$caps = BU_Section_Editing_Plugin::$caps->get_caps();
 		
 		foreach( $caps as $cap ) {
 			$role->add_cap( $cap );
