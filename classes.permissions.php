@@ -1,5 +1,7 @@
 <?php
 
+require_once( dirname(__FILE__) . '/admin.groups.php' );
+
 class BU_Group_Permissions {
 
 	const META_KEY = '_bu_section_group';
@@ -185,6 +187,11 @@ abstract class BU_Permissions_Editor {
 	protected $post_type;
 	protected $posts;
 
+	public $page;
+	public $found_posts;
+	public $post_count;
+	public $max_num_pages;
+
 	public $format = 'html';
 
 	/**
@@ -226,16 +233,22 @@ abstract class BU_Permissions_Editor {
 		$defaults = array(
 			'post_type' => $this->post_type,
 			'post_status' => 'any',
-			'posts_per_page' => -1, // @todo get_option('posts_per_page') when pagination is implemented
+			'posts_per_page' => $this->per_page,
 			'orderby' => 'modified',
 			'order' => 'DESC',
+			'paged' => 1
 			);
 
 		$args = wp_parse_args( $args, $defaults );
 
 		$query = new WP_Query( $args );
 
+		// Parse results
 		$this->posts = $query->posts;
+		$this->page = $args['paged'];
+		$this->found_posts = $query->found_posts;
+		$this->post_count = $query->post_count;
+		$this->max_num_pages = $query->max_num_pages;
 
 		wp_reset_postdata();
 
@@ -257,6 +270,17 @@ abstract class BU_Permissions_Editor {
 class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
+
+		// Load user setting for posts per page on the manage groups screen 
+		$user = get_current_user_id();
+		$per_page = get_user_meta( $user, BU_Groups_Admin::POSTS_PER_PAGE_OPTION, true );
+		
+		if ( empty ( $per_page) || $per_page < 1 ) {
+			// get the default value if none is set
+			$per_page = 10;
+		}
+
+		$this->per_page = $per_page;
 
 		add_filter( 'the_posts', array( &$this, 'filter_posts' ) );
 
@@ -286,7 +310,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	 */ 
 	public function get_posts( $post_id = 0 ) {
 
-		$posts = array();
+		if( $this->format == 'json' )
+			$posts = array();
+		else if ( $this->format == 'html' )
+			$posts = '';
 
 		if( ! empty( $this->posts ) ) {
 
@@ -325,6 +352,9 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			if( $this->format == 'html' )
 				$posts .= "</ul>";
 			
+		} else {
+			$labels = get_post_type_object( $this->post_type )->labels;
+			$posts = sprintf('<ul class="perm-list flat"><li><p>%s</p></li></ul>', $labels->not_found );
 		}
 
 		return $posts;

@@ -4,6 +4,13 @@ class BU_Section_Editing_Upgrader {
 
 	const BUSE_VERSION_OPTION = '_buse_version';
 
+	public static function register_hooks() {
+
+		// Run late to allow for post type registrations
+		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
+
+	}
+
 	public static function version_check() {
 
 		$last_version = get_option( self::BUSE_VERSION_OPTION );
@@ -129,16 +136,20 @@ class BU_Section_Editing_Upgrader {
 			// Convert to new structure
 			$group = $gc->add_group($groupdata);
 
-			error_log( "[buse_upgrade -> 0.4] Group upgraded: {$group->name} (#{$group->id})" );
+			error_log( "[buse_upgrade -> 0.4] Group upgraded: {$group->name}" );
+			error_log( "[buse_upgrade -> 0.4] ID changed from $old_id -> {$group->id}" );
 
-			// Migrate permissions
-			$count = $wpdb->update( 
-				$wpdb->postmeta, 
-				array( 'meta_value' => $group->id ), // New value
-				array( 'meta_key' => BU_Group_Permissions::META_KEY, 'meta_value' => $old_id )	// Old value 
-			);
+			// Grab all post IDS that have permissions set for this group
+			$post_meta_query = sprintf("SELECT post_id FROM %s WHERE meta_key = '%s' AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, $old_id );
+			$posts_to_update = $wpdb->get_col( $post_meta_query );
 
-			error_log( "[buse_upgrade -> 0.4] Group permissions migrated for group {$group->id}: $count" );
+			error_log( "[buse_upgrade -> 0.4] Migrating group permissions..." );
+
+			// Update one by one
+			foreach( $posts_to_update as $pid ) {
+				update_post_meta( $pid, BU_Group_Permissions::META_KEY, $group->id, $old_id );
+				error_log( "[buse_upgrade -> 0.4] == Post #$pid updated: $old_id -> {$group->id}" );
+			}
 
 		}
 

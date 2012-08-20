@@ -8,6 +8,12 @@
 class BU_Groups_Admin {
 
 	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
+	const EDITABLE_POST_STATUS = 'section_editable';
+	
+	const MANAGE_USERS_COLUMN = 'section_groups';
+	const MANAGE_USERS_MAX_NAME_LENGTH = 25;
+
+	const POSTS_PER_PAGE_OPTION = 'buse_posts_per_page';
 
 	public static $manage_groups_hook;
 
@@ -21,120 +27,92 @@ class BU_Groups_Admin {
 	public static function register_hooks() {
 		global $wp_version;
 
-		add_action('admin_menu', array( __CLASS__, 'admin_menus'));
-		add_action('admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
+		// Interface
+		add_action( 'admin_menu', array( __CLASS__, 'admin_menus' ) );
+		add_filter( 'set-screen-option', array( __CLASS__, 'manage_groups_set_screen_option' ), 10, 3);
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_scripts' ) );
 
-		add_action('transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
+		add_filter( 'manage_users_columns', array( __CLASS__, 'add_manage_users_column' ) );
+		add_filter( 'manage_users_custom_column', array( __CLASS__, 'manage_users_group_column' ), 10, 3 );
+		
+		// WP hooks that trigger group related state changes
+		add_action( 'transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
+		add_action( 'set_user_role', array( __CLASS__, 'user_role_switched'), 10, 2 );
 
-		// for filtering posts by editable status per user
-		// parses query to add meta_query, which was a known
-		// bug pre-3.2 -- a workaround may exist, but i
+		// For filtering posts by editable status for current user
+		// parses query to add meta_query, which was a known bug pre-3.2 -- a workaround may exist, but I
 		// haven't dug into it yet.
 		if( version_compare( $wp_version, '3.2', '>=' ) ) {
-			add_action( 'init', array( __CLASS__, 'add_edit_views' ), 20 );
-			add_filter( 'query_vars', array( __CLASS__, 'query_vars' ) );
-			add_action( 'parse_query', array( __CLASS__, 'parse_query' ) );
+			add_action( 'admin_init', array( __CLASS__, 'add_edit_views' ), 20 );
+			add_action( 'parse_query', array( __CLASS__, 'add_editable_query' ) );
 		}
 
 	}
 
 	/**
-	 * Add custom edit post bucket for editable posts to views for each supported post type
-	 *
-	 */
-	public static function add_edit_views() {
+	 * Register a custom "Section Groups" column for the manage users table
+	 */ 
+	public static function add_manage_users_column( $columns ) {
 
-		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
+		$columns[self::MANAGE_USERS_COLUMN] = 'Section Groups';
 
-			$supported_post_types = BU_Group_Permissions::get_supported_post_types('names');
+		return $columns;
 
-			foreach( $supported_post_types as $post_type ) {
-				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'section_editing_views' ) );
+	}
+
+	/**
+	 * Custom "Section Groups" column for the manage users table
+	 */ 
+	public static function manage_users_group_column( $content, $column, $user_id ) {
+
+		if( $column == self::MANAGE_USERS_COLUMN ) {
+
+			// Find groups for the current user row
+			$gc = BU_Edit_Groups::get_instance();
+			$groups = $gc->find_groups_for_user( $user_id );
+
+			if( empty( $groups ) ) {
+				
+				$content = 'None';
+
+			} else {
+
+				$group_names = array();
+				$current_length = $visible_count = $truncated_count = 0;
+
+				foreach( $groups as $group ) {
+
+					$toolong = self::MANAGE_USERS_MAX_NAME_LENGTH < ( $current_length + strlen( $group->name ) );
+
+					// Allow at least one group
+					if( 0 == $visible_count || ( 0 == $truncated_count && ! $toolong ) ) {
+
+						$group_names[] = sprintf( '<a href="%s">%s</a>', self::manage_groups_url( 'edit', array( 'id' => $group->id ) ), $group->name );
+						$current_length += strlen( $group->name );
+						$visible_count++;
+
+					} else {
+
+						$truncated_count++;
+
+					}
+
+				}
+
+				$content = implode( ', ', $group_names );
+
+				if( $truncated_count > 0 ) {
+					$content .= sprintf( ' and <a href="%s"> ' . _n( '%s other', '%s others', $truncated_count, BU_Section_Editing_Plugin::TEXT_DOMAIN ) . '</a>',
+						admin_url(self::MANAGE_GROUPS_PAGE),
+						$truncated_count );
+				}
+			
 			}
 
 		}
 
-	}
+		return $content;
 
-	/**
-	 * Custom bucket for filter posts table to display only posts editable by current user
-	 *
-	 * @todo figure out "current" class
-	 *
-	 */
-	public static function section_editing_views( $views ) {
-		global $post_type_object;
-
-		$groups = BU_Edit_Groups::get_instance();
-		$post_type = $post_type_object->name;
-		$user_id = get_current_user_id();
-
-		$class = '';
-		if( isset( $_REQUEST['editable_by'] ) )
-			$class = ' class="current"';
-
-		$edit_link = admin_url( "edit.php?post_type=$post_type&editable_by=" . $user_id );
-		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_unpublished' => true );
-		$count = $groups->get_allowed_post_count( $args );
-
-		$views['editable_by'] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
-
-		return $views;
-
-	}
-
-	/**
-	 * Add custom query var for filtering posts by editable status
-	 */
-	public static function query_vars( $query_vars ) {
-		$query_vars[] = 'editable_by';
-		return $query_vars;
-	}
-
-	/**
-	 * Query logic for filtering posts by editable status for specific user
-	 */
-	public static function parse_query( $query ) {
-
-		if( isset( $query->query_vars['editable_by'] ) ) {
-
-			$user_id = $query->query_vars['editable_by'];
-			$groups = BU_Edit_Groups::get_instance();
-			$section_groups = $groups->find_groups_for_user($user_id);
-
-			if( empty($section_groups) )
-				return;
-
-			$meta_query = array(
-				'relation' => 'OR',
-				);
-
-			foreach( $section_groups as $group ) {
-				$meta_query[] = array(
-					'key' => BU_Group_Permissions::META_KEY,
-					'value' => $group->id,
-				    	'compare' => '='
-					);
-			}
-
-			$query->set( 'meta_query', $meta_query );
-			$query->set( 'post_status', 'publish' );
-
-			// Include drafts and pending posts as well
-			add_filter( 'posts_where', array( __CLASS__, 'editable_where_clause' ) );
-
-		}
-
-	}
-
-	public static function editable_where_clause( $where ) {
-		global $wpdb;
-
-		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
-		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
-		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
-
-		return $where;
 	}
 
 	/**
@@ -204,6 +182,157 @@ class BU_Groups_Admin {
 			}
 
 		}
+
+	}
+
+	/**
+	 * Remove group members when user role has switched to role that cannot belong in section groups
+	 * 
+	 * @todo make sure this works in 3.1.4
+	 */ 
+	public static function user_role_switched( $user_id, $newrole ) {
+
+		$role = get_role( $newrole );
+
+		// @todo move this logic check to a method in classes.roles-capabilities once
+		// Gregory figures out how to handle "Section Editing"-ness
+		if( ! $role->has_cap('edit_published_in_section') ) {
+
+			// Remove members from any groups
+			$manager = BU_Edit_Groups::get_instance();
+
+			$groups = $manager->find_groups_for_user( $user_id );
+			foreach( $groups as $group ) {
+				$group->remove_user( $user_id );
+			}
+
+			// commit state
+			$manager->save();
+
+		}
+
+	}
+
+	/**
+	 * Add custom edit post bucket for editable posts to views for each supported post type
+	 * 
+	 * register_post_status API/admin UI functionality is limited as of 3.5
+	 * @see http://core.trac.wordpress.org/ticket/12706
+	 */
+	public static function add_edit_views() {
+
+		if( BU_Section_Editing_Plugin::is_allowed_user() ) {
+
+			// Most of these options don't do anything at this time, but we should keep an eye
+			// on the ticket mentioned above as this could change in future releases
+			$args = array(
+				'label' => 'Editable',
+				'label_count' => true,
+				'public' => true,
+				'show_in_admin_all' => true,
+				'publicly_queryable' => true,
+				'show_in_admin_status_list' => false,
+				'show_in_admin_all_list' => true,
+			);
+
+			// WP_Query will not recognize custom post status query vars without this
+			register_post_status( self::EDITABLE_POST_STATUS, $args );
+
+			$supported_post_types = BU_Group_Permissions::get_supported_post_types('names');
+
+			foreach( $supported_post_types as $post_type ) {
+				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
+			}
+
+		}
+
+	}
+
+	/**
+	 * Custom bucket for filter posts table to display only posts editable by current user
+	 */
+	public static function add_editable_view( $views ) {
+		global $post_type_object;
+
+		$groups = BU_Edit_Groups::get_instance();
+		$post_type = $post_type_object->name;
+		$user_id = get_current_user_id();
+
+		$class = '';
+		if( isset( $_REQUEST['post_status'] ) && $_REQUEST['post_status'] == self::EDITABLE_POST_STATUS )
+			$class = ' class="current"';
+
+		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=" . self::EDITABLE_POST_STATUS );
+
+		$args = array( 'user_id' => $user_id, 'post_type' => $post_type );
+
+		if( $post_type_object->hierarchical )
+			$args['include_unpublished'] = true;
+
+		$count = $groups->get_allowed_post_count( $args );
+
+		$views[self::EDITABLE_POST_STATUS] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
+
+		return $views;
+
+	}
+
+	/**
+	 * Query logic for filtering posts by editable status for current user
+	 */
+	public static function add_editable_query( $query ) {
+
+		if( isset( $query->query_vars['post_status'] ) && $query->query_vars['post_status'] == self::EDITABLE_POST_STATUS ) {
+
+			$user_id = get_current_user_id();
+
+			if( empty( $user_id ) )
+				return;
+
+			$groups = BU_Edit_Groups::get_instance();
+			$section_groups = $groups->find_groups_for_user($user_id);
+
+			if( empty( $section_groups ) )
+				return;
+
+			$meta_query = array(
+				'relation' => 'OR',
+				);
+
+			foreach( $section_groups as $group ) {
+				$meta_query[] = array(
+					'key' => BU_Group_Permissions::META_KEY,
+					'value' => $group->id,
+				    	'compare' => '='
+					);
+			}
+
+			$query->set( 'meta_query', $meta_query );
+			$query->set( 'post_status', 'publish' );
+
+			// Include drafts and pending posts as well
+			add_filter( 'posts_where', array( __CLASS__, 'editable_where_clause' ) );
+
+		}
+
+	}
+
+	/**
+	 * Modify the WHERE clause to include drafts and pending posts for editable queries
+	 */ 
+	public static function editable_where_clause( $where ) {
+		global $wpdb;
+
+		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
+		$pto = get_post_type_object( $post_type );
+
+		// Include drafts and pending posts for hierarchical post types
+		if( $pto->hierarchical )
+			$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
+
+		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
+
+		return $where;
 
 	}
 
@@ -292,6 +421,14 @@ class BU_Groups_Admin {
 			$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
 			$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
 			$redirect_url = '';
+
+			// Setup screen option
+			add_screen_option( 'per_page', array( 
+				'label' => 'Posts per page',
+				'default' => 10,
+				'option' => self::POSTS_PER_PAGE_OPTION 
+				) 
+			);
 
 			switch( $_REQUEST['action'] ) {
 
@@ -420,6 +557,16 @@ class BU_Groups_Admin {
 
 		// Render screen
 		include $template_path;
+
+	}
+
+	/**
+	 * Store custom "Posts per page" screen option for manage groups page in user meta
+	 */ 
+	public function manage_groups_set_screen_option( $status, $option, $value ) {
+
+		if ( self::POSTS_PER_PAGE_OPTION == $option ) return $value;
+
 	}
 
 	/**
@@ -552,229 +699,6 @@ MSG;
 
 		return $output;
 
-	}
-
-}
-
-/**
- * Centralized admin ajax routing
- *
- * @todo sanitize ALL input
- */
-class BU_Groups_Admin_Ajax {
-
-	static public function register_hooks() {
-
-		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
-		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
-		add_action('wp_ajax_buse_search_posts', array( __CLASS__, 'search_posts' ) );
-		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
-		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
-		add_action('wp_ajax_buse_can_move', array( __CLASS__, 'can_move'));
-	}
-
-	/**
-	 * Add user to current edit group screen if they are valid
-	 *
-	 * @todo add nonce
-	 */
-	static public function add_member() {
-
-		$groups = BU_Edit_Groups::get_instance();
-
-		$group_id = $_POST['group_id'];
-		$user_input = $_POST['user'];
-		$output = array();
-
-		// Should we only allow exact matches?
-		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => $user_input ) );
-
-		if( is_array( $users ) && ! empty( $users ) ) {
-
-			// Temporary ...
-			if( count( $users ) > 1 ) {
-				error_log('More than one users were returned for input: ' . $user_input );
-				die();
-			}
-
-			$user = $users[0];
-
-			$output['status'] = true;
-			$output['user_id'] = $user->ID;
-
-		} else { // User was not found
-
-			$output['status'] = false;
-
-			// Look for exact user match to tailor error message
-			$user_id = username_exists($user_input);
-
-			if( ! is_null( $user_id ) && is_user_member_of_blog( $user_id ) ) {
-				// User has incorrect role
-				$output['message'] = '<p><b>' . $user_input . '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'.admin_url('users.php?s=' . $user_input ).'">users page</a>.</p>';
-
-			} else {
-				// User does exist, but is not a member of this blog
-				$output['message'] = '<p><b>' . $user_input . '</b> is not a member of this site.  Please <a href="'.admin_url('user-new.php').'">add them to your site</a> with the "Section Editor" role.';
-
-			}
-
-		}
-
-		header("Content-type: application/json");
-		echo json_encode( $output );
-		die();
-
-	}
-
-	/**
-	 * Find valid users based on input string
-	 *
-	 * @todo add nonce
-	 */
-	static public function find_user() {
-
-		$groups = BU_Edit_Groups::get_instance();
-		$user_input = $_POST['user'];
-
-		// For now we are limiting group membership to section editors
-		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $user_input .'*' ) );
-
-		header("Content-type: application/json");
-		echo json_encode( $users );
-		die();
-	}
-
-	/**
-	 * Renders an unordered list of posts for specified post type, optionally starting at a specifc post
-	 *
-	 * @uses BU_Hierarchical_Permissions_Editor or BU_Flat_Permissions_Editor depending on post_type
-	 *
-	 * @todo add nonce
-	 */
-	static public function render_post_list() {
-
-		if( defined('DOING_AJAX') && DOING_AJAX ) {
-
-			$group_id = intval(trim($_REQUEST['group_id']));
-			$post_type = trim($_REQUEST['post_type']);
-			$query_vars = isset($_REQUEST['query']) ? $_REQUEST['query'] : array();
-
-			$post_type_obj = get_post_type_object( $post_type );
-
-			if( is_null( $post_type_obj ) ) {
-				error_log('Bad post type: ' . $post_type );
-				die();
-			}
-
-			$perm_editor = null;
-
-			if( $post_type_obj->hierarchical ) {
-
-				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
-				$perm_editor->format = 'json';
-				header("Content-type: application/json");
-
-			} else {
-
-				$perm_editor = new BU_Flat_Permissions_Editor( $group_id, $post_type_obj->name );
-
-			}
-
-			$perm_editor->query( $query_vars );
-
-
-			$perm_editor->display();
-			die();
-
-		}
-
-	}
-
-	/**
-	 * Not yet in use
-	 *
-	 * @todo implement
-	 */
-	static public function search_posts() {
-
-		if( defined('DOING_AJAX') && DOING_AJAX ) {
-
-			$group_id = intval(trim($_REQUEST['group_id']));
-			$post_type = trim($_REQUEST['post_type']);
-			$search_term = trim($_REQUEST['search']) ? $_REQUEST['search'] : '';
-
-			$post_type_obj = get_post_type_object( $post_type );
-
-			if( is_null( $post_type_obj ) ) {
-				error_log('Bad post type: ' . $post_type );
-				die();
-			}
-
-			die();
-
-		}
-
-	}
-
-
-	static public function can_move() {
-			$user_id = get_current_user_id();
-			$post_id = (int) trim($_POST['post_id']);
-			$parent_id = (int) trim($_POST['parent_id']);
-
-			if(!isset($post_id) || !isset($parent_id)) {
-				echo '-1';
-				die();
-			}
-
-			$post = get_post($post_id);
-			if($parent_id == 0 && $post->post_parent == 0) {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
-			} else {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $parent_id);
-			}
-			$response = new stdClass();
-
-			$response->post_id = $post_id;
-			$response->parent_id = $parent_id;
-			$response->can_edit = $answer;
-			$response->original_parent = $post->post_parent;
-			$response->status = $post->post_status;
-
-			header("Content-type: application/json");
-			echo json_encode( $response );
-			die();
-	}
-
-	static public function can_edit() {
-
-			$user_id = get_current_user_id();
-			$post_id = (int) trim($_POST['post_id']);
-
-
-			if(!isset($post_id)) {
-				echo '-1';
-				die();
-			}
-
-			$post = get_post($post_id);
-			if($post->post_status != 'publish')  {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post->post_parent);
-			} else {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
-			}
-
-			$response = new stdClass();
-
-			$response->post_id = $post_id;
-			$response->parent_id = $post->post_parent;
-			$response->can_edit = $answer;
-			$response->status = $post->post_status;
-
-			header("Content-type: application/json");
-			echo json_encode( $response );
-			die();
 	}
 
 }

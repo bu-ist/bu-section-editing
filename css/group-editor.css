@@ -1,7 +1,6 @@
 /* Group editor containers */
 
 #section-group-editor {
-	position:relative;
 }
 
 #section-group-editor h3.nav-tab-wrapper {
@@ -147,6 +146,7 @@
 	-webkit-border-bottom-right-radius: 3px;
 	border-bottom-left-radius: 3px;
 	border-bottom-right-radius: 3px;
+	padding: 0 6px;
 }
 
 .perm-toolbar input[type="text"] {
@@ -155,6 +155,10 @@
 
 .perm-toolbar p {
 	font-style: normal;
+}
+
+.perm-toolbar .tablenav-pages a {
+	border-color: #AAA;
 }
 
 #perm-panel-container .perm-scroll-area {
@@ -172,9 +176,13 @@
 .perm-editor.jstree li {
 }
 
-.perm-editor.jstree a > ins {
+.perm-editor.jstree a {
 	height: 18px;
-	width: 20px;
+}
+
+.perm-editor.jstree a > ins {
+	height: 20px;
+	width: 21px;
 }
 
 .perm-editor.jstree-classic a.jstree-clicked {
@@ -185,11 +193,26 @@
 /* Override default throbber while loading descendents */
 
 .perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perm_denied_desc_unknown.png');
+	background: url('../images/group_perms_sprite.png') no-repeat -100px 0;
 }
 
 .perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perm_allowed_desc_unknown.png');
+	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
+}
+
+.perm-editor.flat.loading {
+		padding: 10px 15px;	
+}
+
+.perm-editor.flat .loader {
+	padding: none;
+	background: url('../images/loading.gif') no-repeat -9999px -9999px;
+}
+
+.perm-editor.flat.loading .loader {
+	display: block;
+	background: url('../images/loading.gif') no-repeat 0 0;
+	text-indent: -9999px;
 }
 
 /* Flat Permissions */
@@ -204,24 +227,20 @@
 	outline: none;
 }
 
-.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
-	background: url('../images/group_perm_allowed.png');
-	background-repeat: no-repeat;
+.perm-editor.flat li .flat-perm-icon {
 	display: block;
 	float: left;
-	padding-right: 10px;
+	padding-right: 8px;
 	width: 15px;
 	height: 15px;
 }
 
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
+	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
+}
+
 .perm-editor.flat li[rel="denied"] .flat-perm-icon {
-	background: url('../images/group_perm_denied.png');
-	background-repeat: no-repeat;
-	display: block;
-	float: left;
-	padding-right: 10px;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
 }
 
 .perm-list {
@@ -276,16 +295,16 @@
 }
 
 .buse-overlay.allowed .buse-icon {
-	background: url('../images/group_perm_denied.png') no-repeat;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
+	width: 18px;
+	height: 20px;
 	margin: 1px 5px 0 0;
 }
 
 .buse-overlay.denied .buse-icon {
-	background: url('../images/group_perm_allowed.png') no-repeat;
-	width: 15px;
-	height: 15px;
+	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
+	width: 18px;
+	height: 20px;
 	margin: 1px 5px 0 0;
 }
 
@@ -303,7 +322,7 @@
 	padding: 10px 8px;
 	border-radius: 3px;
 	text-decoration: none;
-	width: 105px;
+	width: 108px;
 }
 
 .buse-action:hover {
