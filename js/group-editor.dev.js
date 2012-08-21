@@ -872,11 +872,11 @@ jQuery(document).ready(function($){
 					$editor.html(response.posts);
 				}
 
-				pageVars = { 
+				var pageVars = { 
 					page: response.page,
 					found_posts: response.found_posts,
 					post_count: response.post_count,
-					max_num_pages: response.max_num_pages,
+					max_num_pages: response.max_num_pages
 				};
 
 				updatePaginationForEditor( pageVars, $editor );
