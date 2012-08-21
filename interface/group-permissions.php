@@ -61,7 +61,7 @@
 								<a class="first-page" title="Go to the first page" href="#">«</a>
 								<a class="prev-page" title="Go to the previous page" href="#">‹</a>
 								<span class="paging-input">
-									<span class="current-page">1</span> of <span class="total-pages">1</span>
+									<input type="text" class="current-page" name="perm-editor-page[<?php echo $pt->name; ?>]" size="2" value="1"> of <span class="total-pages">1</span>
 								</span>
 								<a class="next-page" title="Go to the next page" href="#">›</a>
 								<a class="last-page" title="Go to the last page" href="#">»</a>

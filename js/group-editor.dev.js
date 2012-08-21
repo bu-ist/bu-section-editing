@@ -232,8 +232,9 @@ jQuery(document).ready(function($){
 
 		});
 
-		// Pagination
-		// @todo maintain search term and/or sort order on pagination
+		/* Pagination */
+
+		// Pagination using links
 		$panel.find('.pagination-links').delegate( 'a', 'click', function(e){
 			e.preventDefault();
 
@@ -241,7 +242,7 @@ jQuery(document).ready(function($){
 				return;
 
 			var target = $(this).attr('class');
-			var current = parseInt( $(this).parent().find('.current-page').text() );
+			var current = parseInt( $(this).parent().find('.current-page').val() );
 			var last = parseInt( $(this).parent().find('.total-pages').text() );
 			var paged = 1;
 
@@ -263,32 +264,32 @@ jQuery(document).ready(function($){
 					break;
 			}
 
-			var post_type = $editor.data('post-type');
-
-			var args = {
-				'post_type': post_type,
-				'query': {
-					paged: paged
-				}
-			};
-
-			// Possibly append search term to query
-			var term = $('#perm-search-' + post_type ).val();
-			if( term.length > 0 )
-				args['query']['s'] = term;
-
-			// Clear any selections
-			hideOverlay( $editor );
-
-			// Reset bulk edit toolbar
-			$panel.find('.bulk-edit-select-all').attr('checked',false );
-			$panel.find('.bulk-edit-actions select').val('none');
-
-			// Render post list
-			displayPosts( $editor, args );
+			setPageForEditor( paged, $editor );
 
 		});
 
+		// Manually advanced page using current page text input
+		$panel.delegate( 'input.current-page', 'keypress', function(e) {
+			
+			if( e.keyCode == '13' ) {
+				e.preventDefault();
+
+				var paged = $(this).val();
+				var max_page = parseInt( $(this).parent().find('.total-pages').text());
+
+				if( paged < 1 )
+					$(this).val(1);
+				else if( paged > max_page )
+					$(this).val( max_page );
+
+				paged = $(this).val();
+
+				setPageForEditor( paged, $editor );
+			}
+
+		});
+
+		// Search
 		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
 			if( e.keyCode == 13 ) {
 				e.preventDefault();
@@ -298,20 +299,24 @@ jQuery(document).ready(function($){
 
 		/* Bulk editor */
 
+		// Open editor
 		$panel.delegate( 'a.perm-editor-bulk-edit', 'click', function(e) {
 			e.preventDefault();
 			$panel.addClass('bulk-edit');
 		});
 
+		// Close editor
 		$panel.delegate( 'a.bulk-edit-close', 'click', function(e) {
 			e.preventDefault();
 			$panel.removeClass('bulk-edit');
 		});
 
+		// Select all behavior toolbar checkbox
 		$panel.delegate( '.bulk-edit-select-all', 'click', function(e) {
 			$editor.find('input[type="checkbox"]').attr( 'checked', this.checked );
 		});
 
+		// Apply bulk actions
 		$panel.delegate( '.bulk-edit-actions button', 'click', function(e) {
 			e.preventDefault();
 
@@ -334,7 +339,7 @@ jQuery(document).ready(function($){
 
 			}
 
-			// Reset bulk actions on action
+			// Reset bulk actions to default state
 			$panel.find('.bulk-edit-select-all').attr('checked',false );
 			$selector.val('none');
 			selections.attr( 'checked', false );
@@ -354,6 +359,39 @@ jQuery(document).ready(function($){
 			e.preventDefault();
 			$.jstree._reference($editor).close_all();
 		});
+
+	}
+
+	/**
+	 * Set the current page for the given flat editor
+	 */
+	var setPageForEditor = function( page, $editor ) {
+
+		var $panel = $editor.closest('.perm-panel');
+		var post_type = $editor.data('post-type');
+
+		var args = {
+			'post_type': post_type,
+			'query': {
+				paged: page
+			}
+		};
+
+		// Possibly append search term to query
+		var term = $('#perm-search-' + post_type ).val();
+
+		if( term.length > 0 )
+			args['query']['s'] = term;
+
+		// Clear any selections
+		hideOverlay( $editor );
+
+		// Reset bulk edit toolbar
+		$panel.find('.bulk-edit-select-all').attr('checked',false );
+		$panel.find('.bulk-edit-actions select').val('none');
+
+		// Render post list
+		displayPosts( $editor, args );
 
 	}
 
@@ -874,7 +912,7 @@ jQuery(document).ready(function($){
 		$total_items.text( pageVars.found_posts + noun );
 
 		// Update page counts (current page, total pages)
-		$current_page.text( pageVars.page );
+		$current_page.val( pageVars.page );
 		$total_pages.text( pageVars.max_num_pages );
 
 		// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
