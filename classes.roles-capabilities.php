@@ -44,10 +44,6 @@ class BU_Section_Editing_Roles {
 
 	}
 
-	public function add_caps() {
-		
-	}
-
 	/**
 	 * This filter is only needed for BU installations where the bu_user_management plugin is active
 	 *
@@ -59,52 +55,6 @@ class BU_Section_Editing_Roles {
 		}
 
 		return $roles;
-
-	}
-
-	/**
-	 * Placeholder function until we determine the best method to determine how
-	 * to grant users the ability to edit sections
-	 */
-	public function get_allowed_users( $query_args = array() ) {
-
-		// For now, allowed users are section editors that belong to the current blog
-		$default_args = array(
-			'role' => 'section_editor'
-			);
-
-		$query_args = wp_parse_args( $query_args, $default_args );
-
-		$wp_user_query = new WP_User_Query( $query_args );
-
-		if( isset( $query_args['count_total'] ) )
-			return $wp_user_query->get_total();
-
-		return $wp_user_query->get_results();
-
-	}
-
-	/**
-	 * Another placeholder -- checks if the given user is allowed by the plugin
-	 * to hold section editing priviliges
-	 */
-	public function is_allowed_user( $user = null, $query_args = array() ) {
-
-		if( is_null( $user ) ) {
-			$user = wp_get_current_user();
-		} else if( is_numeric( $user ) ) {
-			$user = new WP_User( intval( $user ) );
-		}
-
-		if( isset( $user->roles ) && is_array( $user->roles ) ) {
-
-			return( in_array( 'section_editor', $user->roles ) );
-
-		} else {
-
-			error_log( 'Error checking for allowed user: ' . print_r($user,true) );
-			return false;
-		}
 
 	}
 
@@ -189,15 +139,16 @@ class BU_Section_Capabilities {
 	public function map_meta_cap($caps, $cap, $user_id, $args) {
 		global $post_ID;
 		
-		// avoid infinite loop
-		remove_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
 		
 		$user = new WP_User( intval( $user_id ) );
+		
+		// avoid infinite loop
+		remove_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
 		
 		// if user alread has the caps as passed by map_meta_cap() pre-filter or 
 		// the user doesn't have the main "section editing" cap
 		if( $this->has_caps( $user, $caps ) || ! user_can( $user, 'edit_in_section' ) ) {
-			add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );	
+			add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
 			return $caps; // bail early
 		}
 		
@@ -216,9 +167,8 @@ class BU_Section_Capabilities {
 			$caps = $this->_override_publish_caps( $user, $post_ID, $caps );
 		}
 		
-		// add the filter that was removed
-		add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );	
 		
+		add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
 		return $caps;
 	}
 	
@@ -358,7 +308,12 @@ class BU_Section_Capabilities {
 
 		return true;
 	}
-
+	
+	/**
+	 * Get post types and store them in a property.
+	 *
+	 * @return Array
+	 **/
 	public function get_post_types() {
 		if( ! isset( $this->post_types ) ) {
 			$this->post_types = get_post_types(null, 'objects');
