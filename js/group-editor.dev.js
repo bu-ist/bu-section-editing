@@ -280,6 +280,10 @@ jQuery(document).ready(function($){
 			// Clear any selections
 			hideOverlay( $editor );
 
+			// Reset bulk edit toolbar
+			$panel.find('.bulk-edit-select-all').attr('checked',false );
+			$panel.find('.bulk-edit-actions select').val('none');
+
 			// Render post list
 			displayPosts( $editor, args );
 
@@ -331,9 +335,9 @@ jQuery(document).ready(function($){
 			}
 
 			// Reset bulk actions on action
-			$('.bulk-edit-select-all').attr('checked',false );
-			selections.attr( 'checked', false );
+			$panel.find('.bulk-edit-select-all').attr('checked',false );
 			$selector.val('none');
+			selections.attr( 'checked', false );
 
 		});
 

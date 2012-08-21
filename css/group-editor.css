@@ -286,7 +286,7 @@
 	display: block;
 	border-top: 1px solid #aaa;
 	border-bottom: 1px solid #aaa;
-	padding: 3px 15px;
+	padding: 4px 15px;
 	background-color: #ECECEC;
 	line-height: 2em;
 	background-image: -ms-linear-gradient(top,#ECECEC,#DFDFDF);
@@ -311,11 +311,12 @@
 	text-decoration: none;
 	font-style: normal;
 	padding-left: 20px;
-	background: url('../images/close_icon.png') no-repeat 0px 0px;
+	background: url('../images/close_icons.png') no-repeat 0px 0px;
+	line-height: 16px;
 }
 
 .bulk-edit-close:hover {
-	background: url('../images/close_icon.png') no-repeat 0 -24px;    
+	background: url('../images/close_icons.png') no-repeat 0 -24px;    
 }
 
 /* Overlay */
