@@ -292,6 +292,53 @@ jQuery(document).ready(function($){
 			}
 		});
 
+		/* Bulk editor */
+
+		$panel.delegate( 'a.perm-editor-bulk-edit', 'click', function(e) {
+			e.preventDefault();
+			$panel.addClass('bulk-edit');
+		});
+
+		$panel.delegate( 'a.bulk-edit-close', 'click', function(e) {
+			e.preventDefault();
+			$panel.removeClass('bulk-edit');
+		});
+
+		$panel.delegate( '.bulk-edit-select-all', 'click', function(e) {
+			$editor.find('input[type="checkbox"]').attr( 'checked', this.checked );
+		});
+
+		$panel.delegate( '.bulk-edit-actions button', 'click', function(e) {
+			e.preventDefault();
+
+			var $selector = $(this).siblings('select');
+			var action = $selector.val();
+			var selections = $editor.find('input[type="checkbox"]:checked');
+
+			if( selections.length > 0 ) {
+
+				if( action == 'allowed' || action == 'denied' ) {
+
+					selections.each( function() {
+						var $post = $(this).parents('li');
+						$post.attr('rel', action );
+						setPostPermissions( action, $post, $editor );
+
+					});
+
+				}
+
+			}
+
+			// Reset bulk actions on action
+			$('.bulk-edit-select-all').attr('checked',false );
+			selections.attr( 'checked', false );
+			$selector.val('none');
+
+		});
+
+		/* Hierarchical editor */
+
 		// Expand all
 		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
 			e.preventDefault();
@@ -451,8 +498,11 @@ jQuery(document).ready(function($){
 				
 				$editor.find('.perm-item-selected').each(function(){
 
+					var $post = $(this);
+					var state = toggleState( $post );
+
 					// Update permissions
-					updatePostPermissions( $(this), $editor );
+					setPostPermissions( state, $post, $editor );
 
 					// Deselect
 					$(this).removeClass('perm-item-selected');
@@ -589,11 +639,14 @@ jQuery(document).ready(function($){
 				
 				$editor.jstree( 'get_selected' ).each( function(){
 
+					var $post = $(this);
+					var state = toggleState( $post );
+
 					// Update permissions
-					updatePostPermissions( $(this), $editor );
+					setPostPermissions( state, $(this), $editor );
 
 					// Deselect
-					$editor.jstree('deselect_node', $(this) );
+					$editor.jstree('deselect_node', $post );
 
 				});
 
@@ -841,7 +894,10 @@ jQuery(document).ready(function($){
 	/**
 	 * The user has allowed/denied a specific node
 	 */
-	var updatePostPermissions = function( $post, $editor ) {
+	var setPostPermissions = function( state, $post, $editor ) {
+
+		// Set visual state
+		$post.attr( 'rel', state );
 
 		// Hierarchical post types
 		if( $editor.hasClass('hierarchical') ) {
@@ -856,21 +912,15 @@ jQuery(document).ready(function($){
 					// Open all children to expose permissions cascade
 					$jstree.open_all( $post );
 
-					// Toggle state
-					toggleState( $post );
-
 					// Diff the changes
-					processUpdatesForPost( $post, $editor );
+					processUpdatesForPost( state, $post, $editor );
 
 				});
 
 			} else {
 
-					// Toggle state
-					toggleState( $post );
-
 					// Diff the changes
-					processUpdatesForPost( $post, $editor );
+					processUpdatesForPost( state, $post, $editor );
 
 			}
 
@@ -879,51 +929,34 @@ jQuery(document).ready(function($){
  		// Flat post types
 		if( $editor.hasClass('flat') ) { 
 			
-			// Toggle state
-			toggleState( $post );
-			
 			// Diff the changes
-			processUpdatesForPost( $post, $editor );
+			processUpdatesForPost( state, $post, $editor );
 		
 		}
 
 	}
 
 	/**
-	 * Toggles the visual state of a given node
+	 * Returns the toggled state for the given node 
 	 */
 	var toggleState = function( $node ) {
 		
-		var previous = $node.attr('rel');
+		var previous = $node.data('perm');
+		var state = '';
 
-		// Look at previous value to determine new one
-		switch( previous ) {
+		if( previous == 'allowed' ) return 'denied';
+		if( previous == 'denied' ) return 'allowed';
 
-			// Previously allowed: denied
-			case 'allowed':
-			case 'allowed-desc-denied':
-			case 'allowed-desc-unknown':
-				$node.attr('rel', 'denied');
-				break;
-
-			// Previously denied: allowed
-			case 'denied':
-			case 'denied-desc-allowed':
-			case 'denied-desc-unknown':
-				$node.attr('rel', 'allowed' );
-				break;
-
-		}
+		return 'denied';
 
 	}
 
 	/**
-	 * Update post permissions status and add to pending edits
+	 * Update post permissions state and add to pending edits
 	 */
-	var processUpdatesForPost = function( $post, $editor ) {
+	var processUpdatesForPost = function( state, $post, $editor ) {
 
 		var id = $post.attr('id').substr(1);
-		var status = $post.attr('rel');
 		var post_type = $editor.data('post-type');
 
 		// Track changes
@@ -931,11 +964,14 @@ jQuery(document).ready(function($){
 		var count = 0;
 
 		// Set our persistent data attr first
-		$post.data('perm',status);
-		edits[id] = status;
+		prev_state = $post.data('perm');
+		$post.data('perm',state);
+		edits[id] = state;
 
-		if( status == 'allowed' ) count += 1;
-		else count -= 1;
+		if( prev_state != state ) {
+			if( state == 'allowed' ) count +=1;
+			else count -= 1;
+		}
 
 		// Hierarchical post types need extra love
 		if( $editor.hasClass('hierarchical') ) {
@@ -949,19 +985,19 @@ jQuery(document).ready(function($){
 				var existing_perm = $(child).data('perm');
 				var child_id = $(this).attr('id').substr(1);
 
-				// Note incoming edit if status changed
-				if( existing_perm != status ) {
+				// Note incoming edit if state changed
+				if( existing_perm != state ) {
 
-					$(child).data('perm', status);
-					edits[child_id] = status;
+					$(child).data('perm', state);
+					edits[child_id] = state;
 
-					if( status == 'allowed' ) count += 1;
+					if( state == 'allowed' ) count += 1;
 					else count -= 1;
 
 				}
 
 				// Change icon no matter what
-				$(child).attr('rel', status);
+				$(child).attr('rel', state);
 
 			});
 
