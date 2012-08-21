@@ -263,6 +263,62 @@
 	margin-right: 10px;
 }
 
+/* Bulk Edit */
+.perm-panel.bulk-edit .perm-editor-bulk-edit {
+	display: none;
+}
+
+.perm-panel.bulk-edit input[type="checkbox"] {
+	display: inline;
+	vertical-align: middle;
+}
+
+.perm-panel.bulk-edit li input[type="checkbox"] {
+	float: left;
+	margin-top: 2px;
+}
+
+.perm-editor-bulk-edit-panel {
+	display: none;
+}
+
+.perm-panel.bulk-edit .perm-editor-bulk-edit-panel {
+	display: block;
+	border-top: 1px solid #aaa;
+	border-bottom: 1px solid #aaa;
+	padding: 4px 15px;
+	background-color: #ECECEC;
+	line-height: 2em;
+	background-image: -ms-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -moz-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -o-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: -webkit-gradient(linear,left top,left bottom,from(#ECECEC),to(#DFDFDF));
+	background-image: -webkit-linear-gradient(top,#ECECEC,#DFDFDF);
+	background-image: linear-gradient(top,#ECECEC,#DFDFDF);
+}
+
+.perm-editor-bulk-edit-panel input[type="checkbox"] {
+	margin-right: 10px;
+}
+
+.bulk-edit-actions select {
+	width: 150px;   
+}
+
+.bulk-edit-close {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+	font-style: normal;
+	padding-left: 20px;
+	background: url('../images/close_icons.png') no-repeat 0px 0px;
+	line-height: 16px;
+}
+
+.bulk-edit-close:hover {
+	background: url('../images/close_icons.png') no-repeat 0 -24px;    
+}
+
 /* Overlay */
 
 .buse-overlay:before {
@@ -518,8 +574,8 @@
 /* IE7 friendly clearing */
 
 #section-group-editor .clearfix {
-  _height:1%;
-  overflow:auto;
+	_height:1%;
+	overflow:auto;
 }
 
 /* Con javascript */

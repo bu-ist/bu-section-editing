@@ -26,8 +26,27 @@
 						<input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo $hiearchical_class; ?>" > 
 						<button class="perm-search flat button-secondary">Search <?php echo $pt->label; ?></button>
 					</p>
+					<p class="alignright">
+						<a class="perm-editor-bulk-edit" href="#" title="Enter bulk edit mode">Bulk Edit</a>
+					</p>
 					<?php endif; ?>
 				</div><!-- .perm-tooblar.top -->
+				<?php if( ! $hierarchical ): ?>
+				<div class="perm-editor-bulk-edit-panel">
+					<input type="checkbox" class="bulk-edit-select-all" name="perm-ed-bulk-edit[select-all]" value="1">
+					<span class="bulk-edit-actions">
+						<select name="perm-ed-bulk-edit[action]">
+							<option value="none">Bulk Actions</option>
+							<option value="allowed">Allow selected</option>
+							<option value="denied">Deny selected</option>
+						</select>
+						<button class="button-secondary">Apply</button>
+					</span>
+					<p class="alignright">
+						<a href="#" class="bulk-edit-close">Close Bulk Edit</a>
+					</p>
+				</div>
+				<?php endif; ?>
 				<div class="perm-scroll-area">
 					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
 					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>">
@@ -42,7 +61,7 @@
 								<a class="first-page" title="Go to the first page" href="#">«</a>
 								<a class="prev-page" title="Go to the previous page" href="#">‹</a>
 								<span class="paging-input">
-									<span class="current-page">1</span> of <span class="total-pages">1</span>
+									<input type="text" class="current-page" name="perm-editor-page[<?php echo $pt->name; ?>]" size="2" value="1"> of <span class="total-pages">1</span>
 								</span>
 								<a class="next-page" title="Go to the next page" href="#">›</a>
 								<a class="last-page" title="Go to the last page" href="#">»</a>

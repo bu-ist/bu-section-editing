@@ -387,6 +387,12 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		}
 
+		// Bulk Edit Checkbox
+		$checkbox = sprintf("<input type=\"checkbox\" name=\"bulk-edit[%s][%s]\" value=\"1\">",
+			$this->post_type,
+			$p['metadata']['post_id']
+			);
+
 		// Anchor
 		$a = sprintf( "<a href=\"#\">%s %s%s</a>",
 			$icon,
@@ -395,10 +401,12 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		 );
 
 		// Post list item
-		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\">%s</li>\n", 
+		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-perm=\"%s\">%s %s</li>\n", 
 			$p['attr']['id'],
 			$p['attr']['class'],
 			$p['attr']['rel'],
+			$p['attr']['data-perm'],
+			$checkbox,
 			$a
 			);
 
