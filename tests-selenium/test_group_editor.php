@@ -179,6 +179,8 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		$perms_panel->loadPostTypeEditor( 'page' );
 		$perms_panel->expandAll();
 
+		sleep(2);
+
 		// Verify initial state
 		$this->assertEquals( BUSE_EditGroupPermissions::STATE_DENIED, $perms_panel->getPostState( $pid_one ) );
 		$this->assertEquals( BUSE_EditGroupPermissions::STATE_DENIED, $perms_panel->getPostState( $pid_two ) );
