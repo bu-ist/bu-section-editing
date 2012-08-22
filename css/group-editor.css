@@ -301,11 +301,16 @@
 	margin-right: 10px;
 }
 
+.bulk-edit-actions {
+	float: left;
+}
+
 .bulk-edit-actions select {
 	width: 150px;   
 }
 
 .bulk-edit-close {
+	float: right;
 	display: block;
 	color: inherit;
 	text-decoration: none;

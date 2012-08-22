@@ -32,25 +32,22 @@
 					<?php endif; ?>
 				</div><!-- .perm-tooblar.top -->
 				<?php if( ! $hierarchical ): ?>
-				<div class="perm-editor-bulk-edit-panel">
-					<input type="checkbox" class="bulk-edit-select-all" name="perm-ed-bulk-edit[select-all]" value="1">
-					<span class="bulk-edit-actions">
+				<div class="perm-editor-bulk-edit-panel clearfix">
+					<a href="#" class="bulk-edit-close">Close Bulk Edit</a>
+					<div class="bulk-edit-actions">
+						<input type="checkbox" class="bulk-edit-select-all" name="perm-ed-bulk-edit[select-all]" value="1">
 						<select name="perm-ed-bulk-edit[action]">
 							<option value="none">Bulk Actions</option>
 							<option value="allowed">Allow selected</option>
 							<option value="denied">Deny selected</option>
 						</select>
 						<button class="button-secondary">Apply</button>
-					</span>
-					<p class="alignright">
-						<a href="#" class="bulk-edit-close">Close Bulk Edit</a>
-					</p>
+					</div>
 				</div>
 				<?php endif; ?>
 				<div class="perm-scroll-area">
 					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
-					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>">
-					</div><!-- perm-editor-<?php echo $pt->name; ?> -->
+					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>"></div><!-- perm-editor-<?php echo $pt->name; ?> -->
 				</div>
 				<?php if( ! $hierarchical ): // Flat post editors get pagination ?>
 				<div class="perm-toolbar bottom clearfix">
