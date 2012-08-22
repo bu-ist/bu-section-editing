@@ -11,7 +11,7 @@ class BU_Groups_Admin {
 	const EDITABLE_POST_STATUS = 'section_editable';
 	
 	const MANAGE_USERS_COLUMN = 'section_groups';
-	const MANAGE_USERS_MAX_NAME_LENGTH = 25;
+	const MANAGE_USERS_MAX_NAME_LENGTH = 60;
 
 	const POSTS_PER_PAGE_OPTION = 'buse_posts_per_page';
 
@@ -455,6 +455,9 @@ class BU_Groups_Admin {
 						wp_redirect($redirect_url);
 						return;
 					}
+
+					if( strlen( $group_data['name'] ) >= BU_Edit_Group::MAX_NAME_LENGTH )
+						$group_data['name'] = substr( $group_data['name'], 0, BU_Edit_Group::MAX_NAME_LENGTH - 1 );
 
 					$post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
 

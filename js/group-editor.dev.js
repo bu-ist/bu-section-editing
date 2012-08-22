@@ -23,8 +23,18 @@ jQuery(document).ready(function($){
 	});
 
 	// _______________________ Group Name ________________________
+
+	var GROUP_NAME_MAX_LENGTH = 60;
 	
 	$('#edit-group-name').blur(function(e){
+
+		var name = $(this).val()
+
+		// Auto truncate name field
+		if( name.length > GROUP_NAME_MAX_LENGTH ) {
+			$(this).val( name.slice( 0, GROUP_NAME_MAX_LENGTH - 1 ) );
+		}
+
 		$('#group-stats-name').html($(this).val());
 	});
 
@@ -1248,8 +1258,14 @@ jQuery(document).ready(function($){
 	$('#group-edit-form').submit(function(e){
 		window.onbeforeunload = null;
 
-		//@todo client-side validation
-		// - Does this group have a name?
+		// Name
+		var name = $('#edit-group-name').val();
+
+		if( name.length < 1 ) {
+			errorOut( 'Please give your group a name before saving.');
+			return false;
+		}
+
 	});
 
 	/**
@@ -1270,6 +1286,29 @@ jQuery(document).ready(function($){
 		}
 				
 	});
+
+	/**
+	 * Present the user with an error message
+	 */ 
+	var errorOut = function( msg ) {
+
+		var $container = $('#message');
+
+		if( $container.length ) {
+
+			$container.attr('class','error');
+			$container.html( '<p>' + msg + '</p>' );
+
+		} else {
+
+			$container = $('<div id="message" class="error">');
+			$container.html( '<p>' + msg + '</p>' );
+
+			$('.form-wrap').before( $container );
+
+		}
+
+	}
 
 	// ___________________ ON PAGE LOAD _____________________
 
