@@ -118,7 +118,7 @@ class BU_Section_Editing_Plugin {
 			return $links;
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
+		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">Manage Groups</a>" );
 
 		return $links;
 	}
