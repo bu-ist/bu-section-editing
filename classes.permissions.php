@@ -36,6 +36,40 @@ class BU_Group_Permissions {
 	}
 
 	/**
+	 * Relocated from BU_Section_Capabilities in classes.roles-capabilities.php
+	 * 
+	 * @todo think about how this would 
+	 */ 
+	public static function can_edit_section( WP_User $user, $post_id ) {
+
+		$user_id = $user->ID;
+
+		if( $user_id == 0 ) return false;
+		if( $post_id == 0 ) return false;
+
+		// Get all groups for this user
+		$edit_groups_o = BU_Edit_Groups::get_instance();
+		$groups = $edit_groups_o->find_groups_for_user( $user_id );
+
+		if(empty($groups)) {
+			return false;
+		}
+
+		foreach( $groups as $key => $group ) {
+
+			// This group is good, bail here
+			if( self::group_can_edit( $group->id, $post_id ) ) {
+				return true;
+			}
+
+		}
+
+		// User is section editor, but not allowed for this section
+		return false;
+
+	}
+
+	/**
 	 * Update permissions for a group
 	 * 
 	 * @param int $group_id ID of group to modify ACL for
@@ -144,7 +178,7 @@ class BU_Group_Permissions {
 	/**
 	 * Can this group edit a particular post
 	 */ 
-	public function group_can_edit( $group_id, $post_id ) {
+	public static function group_can_edit( $group_id, $post_id ) {
 		
 		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
 

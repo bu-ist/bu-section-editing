@@ -63,42 +63,6 @@ class BU_Section_Editing_Roles {
 class BU_Section_Capabilities {
 
 	/**
-	 * @todo this should be part of the edit groups bit.
-	 *   
-	 *
-	 * @param WP_User $user
-	 * @param int $post_id
-	 */
-	 private function can_edit_section( WP_User $user, $post_id )  {
-		
-		$user_id = $user->ID;
-
-		if( $user_id == 0 ) return false;
-		if( $post_id == 0 ) return false;
-
-		// Get all groups for this user
-		$edit_groups_o = BU_Edit_Groups::get_instance();
-		$groups = $edit_groups_o->find_groups_for_user( $user_id );
-
-		if(empty($groups)) {
-			return false;
-		}
-
-		foreach( $groups as $key => $group ) {
-
-			// This group is good, bail here
-			if( BU_Group_Permissions::group_can_edit( $group->id, $post_id ) ) {
-				return true;
-			}
-
-		}
-
-		// User is section editor, but not allowed for this section
-		return false;
-	}
-	
-
-	/**
 	 * Get all Section Editing caps for the registered post types.
 	 *
 	 * @return array $caps
@@ -191,7 +155,7 @@ class BU_Section_Capabilities {
 		$post_type = get_post_type_object( $post->post_type );
 
 		if( $post_type->hierarchical != true ) {
-			if( $this->can_edit_section( $user, $post_id ) ) {
+			if( BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		} else {
@@ -199,12 +163,12 @@ class BU_Section_Capabilities {
 			if( $this->is_parent_changing( $post ) ) {
 				$parent_id = $this->get_new_parent( $post );
 
-				if( $post->post_status == 'publish' && $this->can_edit_section( $user, $parent_id ) ) {
+				if( $post->post_status == 'publish' && BU_Group_Permissions::can_edit_section( $user, $parent_id ) ) {
 					$caps = array($this->get_section_cap('edit', $post->post_type));
 				}
 			}
 
-			if( $id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
+			if( $post_id && $post->post_status == 'publish' && BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		}
@@ -218,11 +182,11 @@ class BU_Section_Capabilities {
 		$post_type = get_post_type_object( $post->post_type );
 
 		if( $post_type->hierarchical != true ) {
-			if( $this->can_edit_section( $user, $post_id ) ) {
+			if( BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		} else {
-			if( $post_id && $post->post_status == 'publish' && $this->can_edit_section( $user, $post_id ) ) {
+			if( $post_id && $post->post_status == 'publish' && BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		}
@@ -251,7 +215,7 @@ class BU_Section_Capabilities {
 		}
 
 		if( $post_type->hierarchical != true && $is_alt != true ) {
-			if( $this->can_edit_section( $user, $post_id ) ) {
+			if( BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('publish', $post->post_type));
 			}
 		} else {
@@ -261,12 +225,12 @@ class BU_Section_Capabilities {
 				$parent_id = $this->get_new_parent( $post );
 
 				// Can't move published posts under sections they can't edit
-				if( $this->can_edit_section( $user, $parent_id ) ) {
+				if( BU_Group_Permissions::can_edit_section( $user, $parent_id ) ) {
 					$caps = array($this->get_section_cap('publish', $post->post_type));
 				}
 
 			} else {
-				if ( isset( $post_id ) && $this->can_edit_section( $user, $post->post_parent ) ) {
+				if ( isset( $post_id ) && BU_Group_Permissions::can_edit_section( $user, $post->post_parent ) ) {
 					$caps = array($this->get_section_cap('publish', $post->post_type));
 				}
 			}
