@@ -2,56 +2,29 @@
 
 class BU_Section_Editing_Upgrader {
 
-	const BUSE_VERSION_OPTION = '_buse_version';
-
-	public static function register_hooks() {
-
-		// Run late to allow for post type registrations
-		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
-
-	}
-
-	public static function version_check() {
-
-		$last_version = get_option( self::BUSE_VERSION_OPTION );
-
-		// Check if plugin has been updated (or just installed) and store current version
-		if( $last_version === false || $last_version != BU_Section_Editing_Plugin::BUSE_VERSION ) {
-
-			if( $last_version )
-				self::upgrade( $last_version );
-
-			update_option( self::BUSE_VERSION_OPTION, BU_Section_Editing_Plugin::BUSE_VERSION );
-
-		}
-
-	}
-
 	/**
 	 * Perform any data modifications as needed based on version diff
 	 */
-	public static function upgrade( $last_version ) {
-
-		$current_version = BU_Section_Editing_Plugin::BUSE_VERSION;
+	public function upgrade( $existing_version ) {
 
 		// @todo Delete these before final release
-		if( version_compare( $last_version, '0.2', '<' ) && version_compare( $current_version, '0.2', '>=' ) )
-			self::upgrade_02();
+		if( version_compare( $existing_version, '0.2', '<' ) )
+			$this->upgrade_02();
 
-		if( version_compare( $last_version, '0.3', '<' ) && version_compare( $current_version, '0.3', '>=' ) )
-			self::upgrade_03();
+		if( version_compare( $existing_version, '0.3', '<' ) )
+			$this->upgrade_03();
 
 		// Post alpha release
 
-		if( version_compare( $last_version, '0.4', '<' ) && version_compare( $current_version, '0.4', '>=' ) )
-			self::upgrade_04();
+		if( version_compare( $existing_version, '0.4', '<' ) )
+			$this->upgrade_04();
 
 	}
 
 	/**
 	 * Switched data structure for perms
 	 */ 
-	private static function upgrade_02() {
+	private function upgrade_02() {
 		global $wpdb;
 
 		// Upgrade (0.1 -> 0.2)
@@ -73,7 +46,7 @@ class BU_Section_Editing_Upgrader {
 	/**
 	 * Switched data structure for perms (again)
 	 */ 
-	private static function upgrade_03() {
+	private function upgrade_03() {
 		global $wpdb;
 
 		// Upgrade (0.2 -> 0.3)
@@ -110,7 +83,7 @@ class BU_Section_Editing_Upgrader {
 	/**
 	 * Switched from options -> custom post type posts for group storage
 	 */ 
-	private static function upgrade_04() {
+	private function upgrade_04() {
 		global $wpdb;
 
 		error_log( "[buse_upgrade -> 0.4] BU Section Editing plugin upgrading from 0.3 -> 0.4" );

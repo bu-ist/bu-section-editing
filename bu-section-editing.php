@@ -54,14 +54,18 @@ class BU_Section_Editing_Plugin {
 	
 	public static $caps;
 	public static $roles;
+	public static $upgrader;
 
 	const BUSE_VERSION = '0.5';
+	const BUSE_VERSION_OPTION = '_buse_version';
+
 	const TEXT_DOMAIN = 'bu_section_editing';
 
 	public static function register_hooks() {
 
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
+		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
 
 		BU_Edit_Groups::register_hooks();
 
@@ -92,7 +96,6 @@ class BU_Section_Editing_Plugin {
 				require_once(dirname(__FILE__) . '/admin.groups.php');
 
 				BU_Groups_Admin::register_hooks();
-				BU_Section_Editing_Upgrader::register_hooks();
 
 				add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
@@ -126,6 +129,34 @@ class BU_Section_Editing_Plugin {
 		array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
 
 		return $links;
+	}
+
+	/**
+	 * Checks currently installed plugin version against last version stored in DB,
+	 * performing upgrades as needed.
+	 */ 
+	public static function version_check() {
+
+		$existing_version = get_option( self::BUSE_VERSION_OPTION );
+
+		// Check if plugin has been updated (or just installed) and store current version
+		if( $existing_version === false || $existing_version != self::BUSE_VERSION ) {
+
+			// Perform upgrade(s) based on previously installed version
+			if( $existing_version ) {
+
+				require_once( dirname(__FILE__) . '/classes.upgrade.php' );
+				self::$upgrader = new BU_Section_Editing_Upgrader();
+
+				self::$upgrader->upgrade( $existing_version );
+
+			}
+
+			// Store new version
+			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
+
+		}
+
 	}
 
 	/**
