@@ -55,12 +55,34 @@ jQuery(document).ready(function($){
 
 	});
 
+	// Get ID's for users that belong to the current group
+	var get_active_member_ids = function() {
+
+		return $.map( $('li.member.active input[type="checkbox"]'), function(o) { return o.value } );
+
+	}
 
 	/**
-	 * Autocompletion from site's section editors for add user text input
+	 * Find users tool - autocomplete from current site's pool of section editors
+	 *
+	 * Modeled after user input on wp-admin/user-new.php post-WP 3.3
+	 * @uses jquery-ui-autocomplete
 	 */
-	$( '.buse-suggest-user' ).autocomplete({
-		source:    ajaxurl + '?action=buse_find_user',
+	var add_member_input = $( '.buse-suggest-user' ).autocomplete({
+		source: function( request, response) {
+			return $.ajax({
+					url: ajaxurl,
+					dataType: 'json',
+					data: {
+						action: 'buse_find_user',
+						term: request.term,
+						exclude: get_active_member_ids().join(',')
+					},
+					success: function( data ) {
+						response(data);
+					}
+				});
+		},
 		delay:     500,
 		minLength: 2,
 		position:  ( 'undefined' !== typeof isRtl && isRtl ) ? { my: 'right top', at: 'right bottom', offset: '0, -1' } : { offset: '0, -1' },
@@ -77,7 +99,6 @@ jQuery(document).ready(function($){
 	});
 
 	$('#user_login').keypress( function(e) {
-
 		// Enter key
 		if( e.keyCode == '13' ) {
 			e.preventDefault();
@@ -88,10 +109,21 @@ jQuery(document).ready(function($){
 
 	var add_member = function() {
 
+		var user_input = $.trim($('#user_login').val());
+
+		// Check for empty or white-space only strings first
+		if( ! user_input ) {
+			$('#user_login').val('');
+			return;
+		}
+
+		// Clear any autocomplete results
+		add_member_input.autocomplete('search','');
+
 		var userData = {
 			action: 'buse_add_member',
 			group_id: $('#group_id').val(),
-			user: $('#user_login').val()
+			user: user_input
 		}
 
 		$.ajax({

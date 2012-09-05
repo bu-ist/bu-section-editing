@@ -81,12 +81,20 @@ class BU_Groups_Admin_Ajax {
 
 		$return = array();
 		$term = trim( $_REQUEST['term'] );
+		$exclude = trim( $_REQUEST['exclude'] );
 
 		if( empty( $term ) )
 			wp_die(-1);
 
+		$query_args = array(
+			'search' => '*' . $term . '*'
+			);
+
+		if( ! empty( $exclude ) )
+			$query_args['exclude'] = explode( ',', $exclude );
+
 		// Get users capable of section editing for this blog
-		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $term . '*' ) );
+		$users = BU_Section_Editing_Plugin::get_allowed_users( $query_args );
 
 		// Format output
 		foreach ( $users as $user ) {
