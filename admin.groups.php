@@ -376,8 +376,10 @@ class BU_Groups_Admin {
 		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
 	
 		if( $hook == self::$manage_groups_hook ) {
+
 			wp_enqueue_script('json2');
 			//@todo do we need jquery-cookie?
+
 			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree' . $suffix . '.js' ), array('jquery'), '1.0-rc3' );
 
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
@@ -388,9 +390,8 @@ class BU_Groups_Admin {
 			// jQuery UI Autocomplete does not exist prior to WP 3.3, so add it here if it's not already registered
 			if( ! wp_script_is( 'jquery-ui-autocomplete', 'registered' ) ) {
 
-				// Register local copy of autocomplete w/ styles to mimic WP user-new.php 
+				// Register local fallback copy of autocomplete
 				wp_register_script( 'jquery-ui-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.autocomplete'.$suffix.'.js' ), array('jquery-ui-core', 'jquery-ui-widget', 'bu-jquery-ui-position' ), '1.8.23' );
-				wp_enqueue_style( 'group-editor-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor-ui-autocomplete.css' ) );
 
 			}
 
