@@ -94,13 +94,14 @@ class BU_Groups_Admin_Ajax {
 			$email = ! empty( $user->user_email ) ? " ({$user->user_email})" : '';
 
 			$return[] = array(
-				'label' => sprintf( __( '%1$s%2$s' ), $user->user_login, $email ),
+				'label' => sprintf( __( '%1$s%2$s' ), $user->display_name, $email ),
 				'value' => $user->user_login,
 			);
 		}
 
 		header("Content-type: application/json");
-		wp_die( json_encode( $return ) );
+		echo json_encode( $return );
+		die();
 
 	}
 
