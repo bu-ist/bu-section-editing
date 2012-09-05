@@ -1,14 +1,4 @@
-input[type="text"].ui-autocomplete-loading {
-	background: transparent url('../images/loading.gif') no-repeat right center;
-	visibility: visible;
-}
-
-.ui-autocomplete-input.open {
-	border-bottom-right-radius: 0;
-	border-bottom-left-radius: 0;
-}
-
-.ui-autocomplete {
+body.users_page_manage_groups .ui-autocomplete {
 	padding: 0;
 	margin: 0;
 	list-style: none;
@@ -18,20 +8,34 @@ input[type="text"].ui-autocomplete-loading {
 	border-bottom-left-radius: 3px;
 	border-width: 1px;
 	border-style: solid;
+	background-color: #fff;
+	border-color: #bbb;
 }
 
-.ui-autocomplete li {
+body.users_page_manage_groups .ui-autocomplete li {
 	margin-bottom: 0;
 	white-space: nowrap;
 	text-align: left;
 }
 
-.ui-autocomplete li a {
+body.users_page_manage_groups .ui-autocomplete li a {
 	display: block;
 	height: 100%;
 	padding: 4px 10px;
+	color: #333;
 }
 
-.ui-autocomplete li a.ui-state-hover {
+body.users_page_manage_groups .ui-autocomplete li a.ui-state-hover {
 	cursor: pointer;
+	background-color: #ddd;
+}
+
+#section-group-editor input[type="text"].ui-autocomplete-loading {
+	background: transparent url('../images/loading.gif') no-repeat right center;
+	visibility: visible;
+}
+
+#section-group-editor .ui-autocomplete-input.open {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 }
