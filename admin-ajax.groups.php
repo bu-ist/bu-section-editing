@@ -73,21 +73,35 @@ class BU_Groups_Admin_Ajax {
 	}
 
 	/**
-	 * Find valid users based on input string
+	 * Find capable section editors for this blog based on input string
 	 *
 	 * @todo add nonce
 	 */
 	static public function find_user() {
 
-		$groups = BU_Edit_Groups::get_instance();
-		$user_input = $_POST['user'];
+		$return = array();
+		$term = trim( $_REQUEST['term'] );
 
-		// For now we are limiting group membership to section editors
-		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $user_input .'*' ) );
+		if( empty( $term ) )
+			wp_die(-1);
+
+		// Get users capable of section editing for this blog
+		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => '*' . $term . '*' ) );
+
+		// Format output
+		foreach ( $users as $user ) {
+
+			$email = ! empty( $user->user_email ) ? " ({$user->user_email})" : '';
+
+			$return[] = array(
+				'label' => sprintf( __( '%1$s%2$s' ), $user->user_login, $email ),
+				'value' => $user->user_login,
+			);
+		}
 
 		header("Content-type: application/json");
-		echo json_encode( $users );
-		die();
+		wp_die( json_encode( $return ) );
+
 	}
 
 	/**

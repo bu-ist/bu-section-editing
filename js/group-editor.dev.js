@@ -55,30 +55,18 @@ jQuery(document).ready(function($){
 
 	});
 
-	/* Find Users - not yet implemented */
 
-	$('#find_user').click( function(e) {
-
-		var userData = {
-			action: 'buse_find_user',
-			user: $('#user_login').val()
-		}
-
-		$.ajax({
-			url: ajaxurl,
-			data: userData,
-			cache: false,
-			type: 'POST',
-			success: function(response) {
-				// console.log(response);
-			},
-			error: function(response) {
-				// console.log(response);
-			}
-		});
-
-		e.preventDefault();
-	})
+	/**
+	 * Autocompletion from site's section editors for add user text input
+	 */
+	$( '.buse-suggest-user' ).autocomplete({
+		source:    ajaxurl + '?action=buse_find_user',
+		delay:     500,
+		minLength: 2,
+		position:  ( 'undefined' !== typeof isRtl && isRtl ) ? { my: 'right top', at: 'right bottom', offset: '0, -1' } : { offset: '0, -1' },
+		open:      function() { $(this).addClass('open'); },
+		close:     function() { $(this).removeClass('open'); }
+	});
 
 	/* Add Members */
 
