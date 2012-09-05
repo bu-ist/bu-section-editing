@@ -124,32 +124,37 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
-	 * Placeholder function until we determine the best method to determine how
-	 * to grant users the ability to edit sections
+	 * Query for all users with the cability to be added to section groups
 	 */
 	public static function get_allowed_users( $query_args = array() ) {
 
-		// For now, allowed users are section editors that belong to the current blog
-		$default_args = array(
-			'role' => 'section_editor'
+		$defaults = array(
+			'search_columns' => array( 'user_login', 'user_nicename', 'user_email' ),
 			);
 
-		$query_args = wp_parse_args( $query_args, $default_args );
-
+		$query_args = wp_parse_args( $query_args, $defaults );
 		$wp_user_query = new WP_User_Query( $query_args );
 
-		if( isset( $query_args['count_total'] ) )
-			return $wp_user_query->get_total();
+		$allowed_users = array();
 
-		return $wp_user_query->get_results();
+		// Filter blog users by section editing status
+		foreach( $wp_user_query->get_results() as $user ) {
+
+			if( self::is_allowed_user( $user->ID ) )
+				$allowed_users[] = $user;
+
+		}
+
+		return $allowed_users;
 
 	}
 
 	/**
-	 * Another placeholder -- checks if the given user is allowed by the plugin
-	 * to hold section editing priviliges
+	 * Check if a user has the capability to be added to section groups
+	 * 
+	 * @todo switch cap check to edit_in_section after caps branch is merged
 	 */
-	public static function is_allowed_user( $user = null, $query_args = array() ) {
+	public static function is_allowed_user( $user = null ) {
 
 		if( is_null( $user ) ) {
 			$user = wp_get_current_user();
@@ -157,15 +162,21 @@ class BU_Section_Editing_Plugin {
 			$user = new WP_User( intval( $user ) );
 		}
 
+		// Iterate over ALL roles for this user
 		if( isset( $user->roles ) && is_array( $user->roles ) ) {
 
-			return( in_array( 'section_editor', $user->roles ) );
+			foreach( $user->roles as $role ) {
+				$role = get_role( $role );
 
-		} else {
+				// Return true if any role is section editing-enabled
+				if( $role->has_cap( 'edit_published_in_section' ) )
+					return true;
+			
+			}
 
-			error_log( 'Error checking for allowed user: ' . print_r($user,true) );
-			return false;
 		}
+
+		return false;
 
 	}
 
