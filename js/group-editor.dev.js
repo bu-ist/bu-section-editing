@@ -101,13 +101,13 @@ jQuery(document).ready(function($){
 	var _remove_existing_members = function( list ) {
 
 		return $.grep( list, function( el, i ) {
-			return ! _is_existing_member( el );
+			return ! _is_existing_member( el.user );
 		});
 
 	}
 
 	var _is_existing_member = function( user ) {
-
+		
 		var existing_ids = get_active_member_ids();
 		return $.inArray( user.id, existing_ids ) > -1;
 
