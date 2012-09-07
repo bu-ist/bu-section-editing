@@ -191,7 +191,9 @@ jQuery(document).ready(function($){
 	/**
 	 * Helper function for adding errors while attempting to add group members
 	 */
-	var add_member_error = function( message, message_class = 'error' ) {
+	var add_member_error = function( message, message_class ) {
+		
+		if( typeof message_class === "undefined" ) message_class = 'error';
 
 		$('#members-message').attr('class', message_class ).html('<p>' + message + '</p>').fadeIn();
 
