@@ -107,7 +107,7 @@ jQuery(document).ready(function($){
 	}
 
 	var _is_existing_member = function( user ) {
-		
+
 		var existing_ids = get_active_member_ids();
 		return $.inArray( user.id, existing_ids ) > -1;
 
@@ -164,7 +164,6 @@ jQuery(document).ready(function($){
 		position:  ( 'undefined' !== typeof isRtl && isRtl ) ? { my: 'right top', at: 'right bottom', offset: '0, -1' } : { offset: '0, -1' },
 		open:      function() { $(this).addClass('open'); },
 		close:     function() { $(this).removeClass('open'); }
-
 	});
 
 	/* Add Members */
@@ -232,7 +231,7 @@ jQuery(document).ready(function($){
 
 					// User is not capable of being added to section editing groups
 					// @todo rethink this error message...
-					url += '?s=' + input;
+					url += '?s=' + user.login;
 					add_member_error('<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.')
 
 				} else if( _is_existing_member( user ) ) {
