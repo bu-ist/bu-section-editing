@@ -52,7 +52,7 @@ class BU_Groups_Admin_Ajax {
 
 		}
 
-		header("Content-type: application/javascript");
+		header("Content-type: application/x-javascript");
 		echo 'var buse_site_users = ' . json_encode( $return );
 		die();
 
