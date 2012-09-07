@@ -395,17 +395,22 @@ class BU_Groups_Admin {
 
 			}
 
+			// Dynamic js file that contains a variable with all users for the current site
+			// Used to keep the autocomplete & add member functionality client-side
+			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+
 			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete'), '0.3' );
-
-			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
-			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
-
 			$buse_config = array(
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
-				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH )
+				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
+				'usersUrl' => admin_url('users.php'),
+				'userNewUrl' => admin_url('user-new.php')
 				);
 
 			wp_localize_script( 'group-editor', 'buse_config', $buse_config );
+
+			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
+			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
 
 		}
 

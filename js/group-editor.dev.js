@@ -63,6 +63,80 @@ jQuery(document).ready(function($){
 	}
 
 	/**
+	 * Compare user input to site section editors
+	 *
+	 * Returns the original list filtered to include only valid section editors that match
+	 * the search term.
+	 */
+	var _match_section_editors_with_term = function( list, term ) {
+
+
+		return $.grep( list, function( el, i ) {
+
+			term = term.toLowerCase();
+
+			// Search for term in applicable fields
+			return ( 
+				el.user.is_section_editor &&
+				( 
+					el.user.display_name.toLowerCase().indexOf( term ) != -1 ||
+					el.user.login.toLowerCase().indexOf( term ) != -1 ||
+					el.user.nicename.toLowerCase().indexOf( term ) != -1 ||
+					el.user.email.toLowerCase().indexOf( term ) != -1
+				)
+			);
+
+		});
+
+	}
+
+	/**
+	 * Removes users from a list if they are already a member of the current group
+	 */
+	var _remove_existing_members = function( list ) {
+
+		return $.grep( list, function( el, i ) {
+			return ! _is_existing_member( el );
+		});
+
+	}
+
+	var _is_existing_member = function( user ) {
+
+		var existing_ids = get_active_member_ids();
+		return $.inArray( user.id, existing_ids ) > -1;
+
+	}
+
+	/**
+	 * Match user input string to existing user for this site
+	 */
+	var _translate_input_to_user = function( input ) {
+
+		var results = $.grep( buse_site_users, function( el, i ) {
+
+			var match = input.toLowerCase();
+
+			// Search for term in applicable fields
+			return ( 
+				el.user.display_name.toLowerCase() == match ||
+				el.user.login.toLowerCase()  == match  ||
+				el.user.nicename.toLowerCase()  == match ||
+				el.user.email.toLowerCase() == match
+				);
+
+		});
+
+
+		// Not a valid user -- pass through input
+		if( results.length > 1 || results.length == 0 )
+			return false;
+
+		return results[0].user;
+		
+	}
+
+	/**
 	 * Find users tool - autocomplete from current site's pool of section editors
 	 *
 	 * Modeled after user input on wp-admin/user-new.php post-WP 3.3
@@ -70,113 +144,135 @@ jQuery(document).ready(function($){
 	 */
 	var add_member_input = $( '.buse-suggest-user' ).autocomplete({
 		source: function( request, response) {
-			return $.ajax({
-					url: ajaxurl,
-					dataType: 'json',
-					data: {
-						action: 'buse_find_user',
-						term: request.term,
-						exclude: get_active_member_ids().join(',')
-					},
-					success: function( data ) {
-						response(data);
-					}
-				});
+
+			// Filter section editors based on term
+			var filtered = _match_section_editors_with_term( buse_site_users, request.term );
+			var filtered = _remove_existing_members( filtered );
+			var results = $.map( filtered, function(o) { return o.autocomplete; });
+
+			// Let autocomplete process valid results
+			response( results );
+
 		},
 		delay:     500,
 		minLength: 2,
 		position:  ( 'undefined' !== typeof isRtl && isRtl ) ? { my: 'right top', at: 'right bottom', offset: '0, -1' } : { offset: '0, -1' },
 		open:      function() { $(this).addClass('open'); },
 		close:     function() { $(this).removeClass('open'); }
+
 	});
 
 	/* Add Members */
 
 	$('#add_member').bind( 'click', function(e){
-		e.preventDefault();
 
-		add_member();
+		e.preventDefault();
+		handle_member_add();
+
 	});
 
 	$('#user_login').keypress( function(e) {
+
 		// Enter key
 		if( e.keyCode == '13' ) {
-			e.preventDefault();
 
-			add_member();
+			e.preventDefault();
+			handle_member_add();
+
 		}
+
 	});
 
-	var add_member = function() {
+	/**
+	 * Helper function for adding errors while attempting to add group members
+	 */
+	var add_member_error = function( message, message_class = 'error' ) {
 
-		var user_input = $.trim($('#user_login').val());
+		$('#members-message').attr('class', message_class ).html('<p>' + message + '</p>').fadeIn();
 
-		// Check for empty or white-space only strings first
-		if( ! user_input ) {
-			$('#user_login').val('');
-			return;
-		}
+	}
 
-		// Clear any autocomplete results
-		add_member_input.autocomplete('search','');
+	/**
+	 * Helper function for removing error messages from members panel
+	 */
+	var remove_member_error = function() {
 
-		var userData = {
-			action: 'buse_add_member',
-			group_id: $('#group_id').val(),
-			user: user_input
-		}
+		$('#members-message').fadeOut('fast', function(e){$(this).attr('class','').html('');});	
 
-		$.ajax({
-			url: ajaxurl,
-			data: userData,
-			cache: false,
-			type: 'POST',
-			success: function(response) {
+	}
 
-				if( response.status ) {
+	/**
+	 * Processes input for adding users to group
+	 */
+	var handle_member_add = function() {
 
-					var user_id = response.user_id;
-					var user_login = userData.user;
+		// Remove extra white-space
+		var input = $.trim($('#user_login').val());
 
-					var already_added = $('.member input[value="' + user_id + '"]').is(':checked');
+		if( input ) {
 
-					if( already_added ) {
-					
-						$('#members-message').attr('class','error').html( '<p>' + user_login +' has already been added to the group member list.</p>' ).fadeIn();
-					
-					} else {
+			// Clear any autocomplete results
+			add_member_input.autocomplete('search','');
 
-						// Remove any errors
-						$('#members-message').fadeOut('fast', function(e){$(this).attr('class','').html('');});
+			// Attempt to translate user input to valid login
+			var user = _translate_input_to_user( input );
+			var url = buse_config.usersUrl;
 
-						$('#member_' + response.user_id ).attr('checked','checked')
-							.parent('.member')
-							.addClass('active')
-							.appendTo($members_list)
-							.slideDown('fast');
+			// Add member to this group
+			if( user ) {
+				
+				if( ! user.is_section_editor ) {
 
-						updateMemberCount();
-					}
+					// User is not capable of being added to section editing groups
+					// @todo rethink this error message...
+					url += '?s=' + input;
+					add_member_error('<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.')
+
+				} else if( _is_existing_member( user ) ) {
+
+					// User is already a member
+					add_member_error('<b>' + user.display_name + '</b> is already a member of this group.')
 
 				} else {
+					
+					// Remove any existing errors
+					remove_member_error();
 
-					$('#members-message').attr('class', 'error').html( response.message ).fadeIn();
-
+					// Add the member
+					add_member( user );
+			
 				}
 
-			},
-			error: function(response) {
+			} else {
 
-				// @todo handle ajax errors more gracefully
-				// console.log(response);
-				//$('#members-message').attr('class', 'error').html( response ).fadeIn();
+				// No user exists on this site
+				// @todo rethink this error message...
+				url = buse_config.userNewUrl;
+				add_member_error('<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.')
 			
 			}
 
-		});
+		}
 
-		// For quick member entry (should this only run on successful add?)
+		// Clear login input, keep focus
 		$('#user_login').val('').focus();
+
+	}
+
+	/**
+	 * Updates member list with new member data
+	 */
+	var add_member = function( user ) {
+
+		// Add member
+		$('#member_' + user.id ).attr('checked','checked')
+			.parent('.member')
+			.addClass('active')
+			.appendTo($members_list)
+			.slideDown('fast');
+
+		// Update counts
+		updateMemberCount();
 
 	}
 	

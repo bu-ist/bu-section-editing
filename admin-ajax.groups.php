@@ -10,91 +10,25 @@ class BU_Groups_Admin_Ajax {
 
 	static public function register_hooks() {
 
-		add_action('wp_ajax_buse_add_member', array( __CLASS__, 'add_member' ) );
-		add_action('wp_ajax_buse_find_user', array( __CLASS__, 'find_user' ) );
+		add_action('wp_ajax_buse_site_users_script', array( __CLASS__, 'site_users_script' ) );
 		add_action('wp_ajax_buse_search_posts', array( __CLASS__, 'search_posts' ) );
 		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
 		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
 		add_action('wp_ajax_buse_can_move', array( __CLASS__, 'can_move'));
-	}
-
-	/**
-	 * Add user to current edit group screen if they are valid
-	 *
-	 * @todo add nonce
-	 */
-	static public function add_member() {
-
-		$groups = BU_Edit_Groups::get_instance();
-
-		$group_id = $_POST['group_id'];
-		$user_input = $_POST['user'];
-		$output = array();
-
-		// Should we only allow exact matches?
-		$users = BU_Section_Editing_Plugin::get_allowed_users( array( 'search' => $user_input ) );
-
-		if( is_array( $users ) && ! empty( $users ) ) {
-
-			// Temporary ...
-			if( count( $users ) > 1 ) {
-				error_log('More than one users were returned for input: ' . $user_input );
-				die();
-			}
-
-			$user = $users[0];
-
-			$output['status'] = true;
-			$output['user_id'] = $user->ID;
-
-		} else { // User was not found
-
-			$output['status'] = false;
-
-			// Look for exact user match to tailor error message
-			$user_id = username_exists($user_input);
-
-			if( ! is_null( $user_id ) && is_user_member_of_blog( $user_id ) ) {
-				// User has incorrect role
-				$output['message'] = '<p><b>' . $user_input . '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'.admin_url('users.php?s=' . $user_input ).'">users page</a>.</p>';
-
-			} else {
-				// User does exist, but is not a member of this blog
-				$output['message'] = '<p><b>' . $user_input . '</b> is not a member of this site.  Please <a href="'.admin_url('user-new.php').'">add them to your site</a> with the "Section Editor" role.';
-
-			}
-
-		}
-
-		header("Content-type: application/json");
-		echo json_encode( $output );
-		die();
 
 	}
 
 	/**
-	 * Find capable section editors for this blog based on input string
-	 *
-	 * @todo add nonce
+	 * Generates a Javscript file that contains a variable with all site users and relevant meta
+	 * 
+	 * The variable is used for autocompletion (find user tool) and while adding members
 	 */
-	static public function find_user() {
+	static public function site_users_script() {
 
 		$return = array();
-		$term = trim( $_REQUEST['term'] );
-		$exclude = trim( $_REQUEST['exclude'] );
 
-		if( empty( $term ) )
-			wp_die(-1);
-
-		$query_args = array(
-			'search' => '*' . $term . '*'
-			);
-
-		if( ! empty( $exclude ) )
-			$query_args['exclude'] = explode( ',', $exclude );
-
-		// Get users capable of section editing for this blog
-		$users = BU_Section_Editing_Plugin::get_allowed_users( $query_args );
+		// Get all users of the current site
+		$users = get_users();
 
 		// Format output
 		foreach ( $users as $user ) {
@@ -102,13 +36,24 @@ class BU_Groups_Admin_Ajax {
 			$email = ! empty( $user->user_email ) ? " ({$user->user_email})" : '';
 
 			$return[] = array(
-				'label' => sprintf( __( '%1$s%2$s' ), $user->display_name, $email ),
-				'value' => $user->user_login,
+				'autocomplete' => array(
+					'label' => sprintf( __( '%1$s%2$s' ), $user->display_name, $email ),
+					'value' => $user->user_login
+				),
+				'user' => array(
+					'id' => $user->ID,
+					'login' => $user->user_login,
+					'nicename' => $user->user_nicename,
+					'display_name' => $user->display_name,
+					'email' => $user->user_email,
+					'is_section_editor' => BU_Section_Editing_Plugin::is_allowed_user( $user->ID )
+				)
 			);
+
 		}
 
-		header("Content-type: application/json");
-		echo json_encode( $return );
+		header("Content-type: application/javascript");
+		echo 'var buse_site_users = ' . json_encode( $return );
 		die();
 
 	}
