@@ -47,10 +47,15 @@ jQuery(document).ready(function($){
 		e.preventDefault();
 
 		$(this).parent('.member').removeClass('active').slideUp( 'fast', function() {
-			$(this).appendTo('#inactive-members')
-			.find('input[type="checkbox"]').removeAttr('checked');
+			
+			// Move to #inactive-members bucket
+			$(this)
+				.appendTo('#inactive-members')
+				.find('input[type="checkbox"]').removeAttr('checked');
 
+			// Update member count
 			updateMemberCount();
+
 		});
 
 	});
