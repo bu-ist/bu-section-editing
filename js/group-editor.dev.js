@@ -616,7 +616,7 @@ jQuery(document).ready(function($){
 				data : function(n) {
 					return {
 						action : 'buse_render_post_list',
-						group_id : $('#group_id').val(),
+						group_id : $('#group_id').val() || -1,
 						post_type : post_type,
 						query: {
 							child_of : n.attr ? n.attr('id').substr(1) : 0
@@ -843,7 +843,7 @@ jQuery(document).ready(function($){
 
 		var editorData = {
 			action : 'buse_render_post_list',
-			group_id : $('#group_id').val(),
+			group_id : $('#group_id').val() || -1,
 			query : {}
 		}
 

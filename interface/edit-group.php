@@ -1,6 +1,6 @@
 <div id="section-group-editor" class="wrap">
-	<?php screen_icon(); ?>
-	<h2>Edit Section Group <a href="<?php echo esc_attr(BU_Groups_Admin::manage_groups_url( 'add' ));?>" class="button add-new-h2">Add New</a></h2>
+	<?php screen_icon('users'); ?>
+	<h2><?php echo $page_title; ?> <a href="<?php echo esc_attr(BU_Groups_Admin::manage_groups_url( 'add' ));?>" class="button add-new-h2">Add New</a></h2>
 	<div class="form-wrap">
 		<!-- Tab Interface -->
 		<h3 class="nav-tab-wrapper">
@@ -9,11 +9,16 @@
 			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-link nav-tab <?php if($tab == 'permissions') echo 'nav-tab-active'; ?>" data-target="permissions" >Permissions</a>
 		</h3>
 		<form name="group-edit-form" id="group-edit-form" method="post">
+			<?php if( -1 == $group_id ): ?>
+			<input type="hidden" name="action" value="add"/>
+			<?php else: ?>
 			<input type="hidden" name="action" value="update"/>
 			<input type="hidden" id="group_id" name="id" value="<?php echo $group_id; ?>" />
+			<?php endif; ?>
 			<input type="hidden" id="tab" name="tab" value="<?php echo $tab; ?>" />
 			<input type="hidden" id="perm_panel" name="perm_panel" value="<?php echo $perm_panel; ?>" />
-			<?php wp_nonce_field( 'update_section_editing_group' ); ?>
+			<?php wp_nonce_field( 'save_section_editing_group' ); ?>
+
 			<div id="stats-container">
 				<?php include "group-stats.php"; ?>
 			</div>

@@ -1,5 +1,5 @@
 <div class="wrap">
-	<?php screen_icon(); ?>
+	<?php screen_icon('users'); ?>
 	<h2>Section Groups</h2>
 	<p><a href="<?php echo BU_Groups_Admin::manage_groups_url( 'add' ); ?>" class="button-secondary">Add an Editor Group</a></p>
 	<table id="section-groups" class="wp-list-table widefat">

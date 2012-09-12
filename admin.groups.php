@@ -7,7 +7,12 @@
 
 class BU_Groups_Admin {
 
-	const MANAGE_GROUPS_PAGE = 'users.php?page=manage_groups';
+	const MANAGE_GROUPS_SLUG = 'buse_edit_groups';
+	const MANAGE_GROUPS_PAGE = 'admin.php?page=buse_edit_groups';
+
+	const NEW_GROUP_SLUG = 'buse_new_group';
+	const NEW_GROUP_PAGE = 'admin.php?page=buse_new_group';
+
 	const EDITABLE_POST_STATUS = 'section_editable';
 	
 	const MANAGE_USERS_COLUMN = 'section_groups';
@@ -15,7 +20,7 @@ class BU_Groups_Admin {
 
 	const POSTS_PER_PAGE_OPTION = 'buse_posts_per_page';
 
-	public static $manage_groups_hook;
+	public static $manage_groups_hooks;
 
 	private static $notices = array();
 
@@ -337,36 +342,6 @@ class BU_Groups_Admin {
 	}
 
 	/**
-	 * Add manage groups page
-	 *
-	 * @hook admin_menus
-	 */
-	public static function admin_menus() {
-
-		$hook = add_users_page('Section Groups', 'Section Groups', 'promote_users', 'manage_groups', array('BU_Groups_Admin', 'manage_groups_screen'));
-		self::$manage_groups_hook = $hook;
-
-		add_action('load-' . $hook, array( __CLASS__, 'load_manage_groups'), 1);
-
-	}
-
-	public static function admin_notices() {
-
-		if( isset( self::$notices['error'] ) ) {
-			foreach( self::$notices['error'] as $msg ) {
-				printf( '<div id="message" class="error">%s</div>', $msg );
-			}
-		}
-
-		if( isset( self::$notices['update'] ) ) {
-			foreach( self::$notices['update'] as $msg ) {
-				printf( '<div id="message" class="updated fade">%s</div>', $msg );
-			}
-		}
-
-	}
-
-	/**
 	 * Register manage group css/js
 	 *
 	 * @hook admin_enqueue_scripts
@@ -374,8 +349,9 @@ class BU_Groups_Admin {
 	public static function admin_scripts( $hook ) {
 
 		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
-	
-		if( $hook == self::$manage_groups_hook ) {
+		
+		if( in_array( $hook, self::$manage_groups_hooks ) ) {
+
 			wp_enqueue_script('json2');
 			//@todo do we need jquery-cookie?
 			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree' . $suffix . '.js' ), array('jquery'), '1.0-rc3' );
@@ -406,166 +382,71 @@ class BU_Groups_Admin {
 	}
 
 	/**
-	 * Handle page load for manage groups, pre-headers send
+	 * Add section group management pages
 	 *
-	 * @hook load-users_page_manage_groups
-	 *
-	 * This method handles $_REQUEST data and redirection before page is loaded
+	 * @hook admin_menus
 	 */
-	static function load_manage_groups() {
+	public static function admin_menus() {
 
-		if( isset($_REQUEST['action']) ) {
-
-			$groups = BU_Edit_Groups::get_instance();
-			$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
-			$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
-			$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
-			$redirect_url = '';
-
-			// Setup screen option
-			add_screen_option( 'per_page', array( 
-				'label' => 'Posts per page',
-				'default' => 10,
-				'option' => self::POSTS_PER_PAGE_OPTION 
-				) 
+		$groups_manage = add_menu_page(
+			'Section Groups',
+			'Section Groups',
+			'promote_users',
+			self::MANAGE_GROUPS_SLUG,
+			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
+			'',	// icon
+			73	// position
+			);
+		
+		add_submenu_page( 
+			self::MANAGE_GROUPS_SLUG,
+			'Section Groups',
+			'All Groups',
+			'promote_users',
+			self::MANAGE_GROUPS_SLUG,
+			array( 'BU_Groups_Admin', 'manage_groups_screen' )
 			);
 
-			switch( $_REQUEST['action'] ) {
+		$groups_edit = add_submenu_page( 
+			self::MANAGE_GROUPS_SLUG,
+			'Edit Section Group',
+			'Add New',
+			'promote_users',
+			self::NEW_GROUP_SLUG,
+			array( 'BU_Groups_Admin', 'manage_groups_screen' ) 
+			);
 
-				case 'edit':
-					$group = $groups->get( $group_id );
+		// Keep track of hooks
+		self::$manage_groups_hooks = array( $groups_manage, $groups_edit );
 
-					if( $group === false )
-						wp_die("The requested section editing group ($group_id) does not exists");
-					break;
+		foreach( self::$manage_groups_hooks as $hook ) {
 
-				case 'update':
-					if( ! check_admin_referer( 'update_section_editing_group' ) )
-						wp_die('Cheatin, uh?');
+			add_action( 'load-' . $hook, array( __CLASS__ , 'load_manage_groups' ), 1 );
 
-					// Process input
-					$group_data = $_POST['group'];
-
-					// if no users are set, array key for users won't exist
-					if( ! isset($group_data['users']) ) $group_data['users'] = array();
-					if( ! isset($group_data['perms'] ) ) $group_data['perms'] = array();
-
-					if( ! isset($group_data['name']) || empty( $group_data['name'] ) ) {
-						$redirect_url = add_query_arg( array( 'status' => 1 ) );
-						wp_redirect($redirect_url);
-						return;
-					}
-
-					$post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
-
-					foreach( $post_types as $post_type ) {
-
-						// flat permission type use checkboxes, need to add empty array for post type
-						if( ! isset( $group_data['perms'][$post_type] ) )
-							$group_data['perms'][$post_type] = array();
-
-						$data = $group_data['perms'][$post_type];
-
-						// Convert JSON strings to arrays
-						if( is_string( $data ) ) {
-							$post_ids = json_decode( stripslashes( $data ), true );
-
-							if( is_null( $post_ids ) )
-								$post_ids = array();
-
-							$group_data['perms'][$post_type] = $post_ids;
-
-						}
-
-					}
-
-					$status = 0;
-
-					if( $group_id == -1 ) {
-						$group = $groups->add_group($group_data);
-						$group_id = $group->id;
-						$status = 2;
-					} else {
-						$groups->update_group($group_id, $group_data);
-						$status = 3;
-					}
-
-					$redirect_url = add_query_arg( array( 'id' => $group_id, 'action' => 'edit', 'status' => $status, 'tab' => $tab, 'perm_panel' => $perm_panel ) );
-					break;
-
-				case 'delete':
-					if( ! check_admin_referer( 'delete_section_editing_group' ) )
-						wp_die('Cheatin, uh?');
-
-					// @todo check for valid delete
-					$groups->delete_group( $group_id );
-
-					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
-					$redirect_url = add_query_arg( array( 'status' => 4 ), $redirect_url );
-					break;
-
-			}
-
-			if( $redirect_url )
-				wp_redirect($redirect_url);
-
-		}
-
-		// Generate admin notices
-		self::$notices = self::get_notices();
-
-		if( ! empty( self::$notices ) ) {
-			add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 		}
 
 	}
 
 	/**
-	 * Display the manage groups admin screen
-	 *
-	 * Attached on add_users_page, called during admin_menus
-	 */
-	static function manage_groups_screen() {
-
-		$groups = BU_Edit_Groups::get_instance();
-
-		$group_id = isset( $_REQUEST['id'] ) ? (int) $_REQUEST['id'] : -1;
-		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
-		$tab = isset( $_REQUEST['tab'] ) ? $_REQUEST['tab'] : 'properties';
-		$perm_panel = isset( $_REQUEST['perm_panel'] ) ? $_REQUEST['perm_panel'] : 'page';
-
-		$template_path = 'interface/groups.php';
-
-		switch( $action ) {
-
-			case 'add':
-				$template_path = 'interface/edit-group.php';
-				$group = new BU_Edit_Group();
-				break;
-
-			case 'edit':
-				$template_path = 'interface/edit-group.php';
-				$group = $groups->get( $group_id );
-				break;
-
-			default:
-				$template_path = 'interface/groups.php';
-				$group_list = new BU_Groups_List();
-				break;
-
-		}
-
-		// Render screen
-		include $template_path;
-
-	}
-
-	/**
-	 * Store custom "Posts per page" screen option for manage groups page in user meta
+	 * Display errors and notices that occur during section group management
+	 * 
+	 * @hook admin_notices
 	 */ 
-	public function manage_groups_set_screen_option( $status, $option, $value ) {
+	public static function admin_notices() {
 
-		if ( self::POSTS_PER_PAGE_OPTION == $option ) return $value;
+		$notices = self::get_notices();
+
+		if( isset( $notices['error'] ) ) {
+			foreach( $notices['error'] as $msg ) {
+				printf( '<div id="message" class="error">%s</div>', $msg );
+			}
+		}
+
+		if( isset( $notices['update'] ) ) {
+			foreach( $notices['update'] as $msg ) {
+				printf( '<div id="message" class="updated fade">%s</div>', $msg );
+			}
+		}
 
 	}
 
@@ -605,6 +486,7 @@ class BU_Groups_Admin {
 
 		}
 
+		// @todo move this logic out of here in to a dedicated method
 		$count_user_args = array(
 			'count_total' => true,
 			'fields' => 'ID',
@@ -629,6 +511,221 @@ MSG;
 
 	}
 
+	/**
+	 * Handle form submission for manage_groups_edit page
+	 * 
+	 * Also handles adding of admin notices and screen options
+	 */
+	static function load_manage_groups() {
+
+		$groups = BU_Edit_Groups::get_instance();
+		$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
+		$redirect_url = '';
+
+		// Handle all $_GET actions
+		if( isset( $_GET['action'] ) ) {
+
+			switch( $_GET['action'] ) {
+
+				case 'delete':
+					if( ! check_admin_referer( 'delete_section_editing_group' ) )
+						wp_die('Cheatin, uh?');
+
+					// @todo check for valid delete
+					$groups->delete_group( $group_id );
+
+					$redirect_url = remove_query_arg( array('action','_wpnonce','id','tab'));
+					$redirect_url = add_query_arg( array( 'status' => 4 ), $redirect_url );
+					break;
+
+			}
+
+		}
+
+		// Handle all possible $_POST actions
+		if( isset( $_POST['action'] ) && in_array( $_POST['action'], array( 'add', 'update' ) ) ) {
+
+			if( ! check_admin_referer( 'save_section_editing_group' ) )
+				wp_die('Cheatin, uh?');
+
+			// Maintain panel/tab state across submissions
+			$tab = isset( $_POST['tab'] ) ? $_POST['tab'] : 'properties';
+			$perm_panel = isset( $_POST['perm_panel'] ) ? $_POST['perm_panel'] : 'page';
+			$redirect_url = '';
+			$status = 0;
+
+			// Sanitize and validate group form data
+			$results = self::clean_group_form( $_POST['group'] );
+
+			// Commit group data on valid submission
+			if( $results['valid'] ) {
+
+				$clean_data = $results['data'];
+
+				switch( $_POST['action'] ) {
+
+					case 'add':
+						$group = $groups->add_group( $clean_data );
+						$group_id = $group->id;
+						$status = 2;
+						break;
+
+					case 'update':
+						$groups->update_group( $group_id, $clean_data );
+						$status = 3;
+						break;
+
+				}
+				
+				// Redirect on successful save
+				$args = array( 'id' => $group_id, 'status' => $status, 'tab' => $tab, 'perm_panel' => $perm_panel );
+				$redirect_url = self::manage_groups_url( 'edit', $args );
+
+			} else {
+				
+				// Redirect with validation errors
+				$redirect_url = add_query_arg( 'status', $results['errorcode'] );
+			
+			}
+
+		}
+
+		// Redirect if we have one
+		if( $redirect_url ) {
+			wp_redirect( $redirect_url );
+			die();
+		}
+
+		// Stop attempts to edit non-existant groups
+		if( $group_id > 0 ) {
+
+			$group = $groups->get( $group_id );
+
+			if( empty( $group ) )
+				wp_die('No section editing group exists with an ID of : ' . $group_id );
+
+		}
+
+		// Generate admin notices
+		if( self::get_notices() ) {
+			add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
+		}
+
+		// Add screen option when adding or editing a group
+		if( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
+
+			add_screen_option( 'per_page', array( 
+				'label' => 'Posts per page',
+				'default' => 10,
+				'option' => self::POSTS_PER_PAGE_OPTION 
+				) 
+			);
+
+		}
+
+	}
+
+	/**
+	 * Sanitizes and validates edit group form submission data
+	 * 
+	 * @param array $group_data an array of unclean group data
+	 * @return array a custom results array depending on validation
+	 */ 
+	static function clean_group_form( $group_data ) {
+
+		// if no users are set, array key for users won't exist
+		if( ! isset($group_data['users']) ) $group_data['users'] = array();
+		if( ! isset($group_data['perms'] ) ) $group_data['perms'] = array();
+
+		// Require valid name
+		if( ! isset($group_data['name']) || empty( $group_data['name'] ) ) {
+			return array( 'valid' => false, 'errorcode' => 1 );
+		}
+
+		// Convert permission JSON strings to PHP arrays
+		$post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
+
+		foreach( $post_types as $post_type ) {
+
+			// flat permission type use checkboxes, need to add empty array for post type
+			if( ! isset( $group_data['perms'][$post_type] ) )
+				$group_data['perms'][$post_type] = array();
+
+			$data = $group_data['perms'][$post_type];
+
+			if( is_string( $data ) ) {
+				$post_ids = json_decode( stripslashes( $data ), true );
+
+				if( is_null( $post_ids ) )
+					$post_ids = array();
+
+				$group_data['perms'][$post_type] = $post_ids;
+
+			}
+
+		}
+
+		return array( 'valid' => true, 'data' => $group_data );
+
+	}
+
+	/**
+	 * Display the manage groups admin screen
+	 *
+	 * Attached on add_users_page, called during admin_menus
+	 */
+	static function manage_groups_screen() {
+
+		$groups = BU_Edit_Groups::get_instance();
+
+		$page = $_GET['page'] ? $_GET['page'] : self::MANAGE_GROUPS_SLUG;
+
+		$group_id = isset( $_GET['id'] ) ? (int) $_GET['id'] : -1;
+		$group_list = array();
+
+		$tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'properties';
+		$perm_panel = isset( $_GET['perm_panel'] ) ? $_GET['perm_panel'] : 'page';
+
+		switch( $page ) {
+
+			// Manage groups and edit group page, depending on action
+			case self::MANAGE_GROUPS_SLUG:
+
+				if( $group_id > 0 ) {
+				
+					$group = $groups->get( $group_id );
+					$page_title = __( 'Edit Section Group', BU_Section_Editing_Plugin::TEXT_DOMAIN );
+					$template_path = 'interface/edit-group.php';
+				
+				} else {
+
+					$group_list = new BU_Groups_List();
+					$template_path = 'interface/groups.php';
+
+				}
+				break;
+
+			// New group page
+			case self::NEW_GROUP_SLUG:
+				$group = new BU_Edit_Group();
+				$page_title = __( 'Add Section Group', BU_Section_Editing_Plugin::TEXT_DOMAIN );
+				$template_path = 'interface/edit-group.php';
+				break;
+		}
+
+		// Render screen
+		include $template_path;
+
+	}
+
+	/**
+	 * Store custom "Posts per page" screen option for manage groups page in user meta
+	 */ 
+	public function manage_groups_set_screen_option( $status, $option, $value ) {
+
+		if ( self::POSTS_PER_PAGE_OPTION == $option ) return $value;
+
+	}
 
 	/**
 	 * Generates query string for manage groups page request
@@ -638,16 +735,32 @@ MSG;
 	 * @return string $url
 	 */
 	static function manage_groups_url( $action, $extra_args = array() ) {
+
 		$page = admin_url( self::MANAGE_GROUPS_PAGE );
+		$args = array();
 
-		$args = array_merge( array( 'action' => $action ), $extra_args );
+		switch( $action ) {
+			
+			case 'add':
+				$page = admin_url( self::NEW_GROUP_PAGE );
+				break;
 
+			case 'delete':
+				$args['action'] = $action;
+
+		}
+
+		$args = wp_parse_args( $args, $extra_args );
+
+		// Generate URL depending on action and extra query args
 		$url = add_query_arg( $args, $page );
 
+		// Extra logic required for delete via $_GET
 		if( $action == 'delete' )
 			$url = wp_nonce_url( $url, 'delete_section_editing_group' );
 
 		return $url;
+
 	}
 
 	/**
