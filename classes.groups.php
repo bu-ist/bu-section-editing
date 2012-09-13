@@ -667,6 +667,8 @@ class BU_Edit_Group {
 	private $created = null;
 	private $modified = null;
 
+	const MAX_NAME_LENGTH = 60;
+
 	/**
 	 * Instantiate new edit group
 	 * 

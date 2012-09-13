@@ -84,24 +84,14 @@ class BU_Section_Editing_Plugin {
 		// Admin requests
 		if( is_admin() ) {
 			
-			// AJAX
-			if( defined('DOING_AJAX') && DOING_AJAX ) {
+			require_once(dirname(__FILE__) . '/admin.groups.php');
+			require_once(dirname(__FILE__) . '/admin-ajax.groups.php');
+			
+			BU_Groups_Admin::register_hooks();
+			BU_Groups_Admin_Ajax::register_hooks();
 
-				require_once(dirname(__FILE__) . '/admin-ajax.groups.php');
-				
-				BU_Groups_Admin_Ajax::register_hooks();
+			add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
-			} else {
-
-				require_once(dirname(__FILE__) . '/classes.upgrade.php');
-				require_once(dirname(__FILE__) . '/admin.groups.php');
-
-				BU_Groups_Admin::register_hooks();
-
-				add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
-
-			}
-		
 			if( function_exists( 'bu_navigation_get_pages' ) ) {
 				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation.php' );
 			}
@@ -142,7 +132,7 @@ class BU_Section_Editing_Plugin {
 			return $links;
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift($links, "<a href=\"$groups_url\" title=\"Section Editing Settings\" class=\"edit\">Settings</a>" );
+		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">Manage Groups</a>" );
 
 		return $links;
 	}

@@ -16,7 +16,7 @@ class BU_Groups_Admin {
 	const EDITABLE_POST_STATUS = 'section_editable';
 	
 	const MANAGE_USERS_COLUMN = 'section_groups';
-	const MANAGE_USERS_MAX_NAME_LENGTH = 25;
+	const MANAGE_USERS_MAX_NAME_LENGTH = 60;
 
 	const POSTS_PER_PAGE_OPTION = 'buse_posts_per_page';
 
@@ -358,6 +358,7 @@ class BU_Groups_Admin {
 
 			wp_enqueue_script('json2');
 			//@todo do we need jquery-cookie?
+
 			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree' . $suffix . '.js' ), array('jquery'), '1.0-rc3' );
 
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
@@ -365,17 +366,30 @@ class BU_Groups_Admin {
 			// @see http://bugs.jqueryui.com/ticket/5645
 			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position' . $suffix . '.js' ), array('jquery') );
 
-			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery'), '0.3' );
+			// jQuery UI Autocomplete does not exist prior to WP 3.3, so add it here if it's not already registered
+			if( ! wp_script_is( 'jquery-ui-autocomplete', 'registered' ) ) {
 
-			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
-			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
+				// Register local fallback copy of autocomplete
+				wp_register_script( 'jquery-ui-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.autocomplete'.$suffix.'.js' ), array('jquery-ui-core', 'jquery-ui-widget', 'bu-jquery-ui-position' ), '1.8.23' );
 
+			}
+
+			// Dynamic js file that contains a variable with all users for the current site
+			// Used to keep the autocomplete & add member functionality client-side
+			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+
+			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete'), '0.3' );
 			$buse_config = array(
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
-				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH )
+				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
+				'usersUrl' => admin_url('users.php'),
+				'userNewUrl' => admin_url('user-new.php')
 				);
 
 			wp_localize_script( 'group-editor', 'buse_config', $buse_config );
+
+			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), '0.3' );
+			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), '0.3' );
 
 		}
 
@@ -637,6 +651,11 @@ MSG;
 		// Require valid name
 		if( ! isset($group_data['name']) || empty( $group_data['name'] ) ) {
 			return array( 'valid' => false, 'errorcode' => 1 );
+		}
+
+		// Truncate name if it exceeds max length
+		if( strlen( $group_data['name'] ) >= BU_Edit_Group::MAX_NAME_LENGTH ) {
+			$group_data['name'] = substr( $group_data['name'], 0, BU_Edit_Group::MAX_NAME_LENGTH - 1 );
 		}
 
 		// Convert permission JSON strings to PHP arrays
