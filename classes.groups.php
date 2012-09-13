@@ -366,9 +366,6 @@ class BU_Edit_Groups {
 
 			}
 
-		} else {
-
-			$post_status_clause = "AND post_status = 'publish'";
 		}
 
 		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s, %s WHERE ID = post_ID AND ( meta_key = '%s' AND meta_value IN (%s) %s) %s",

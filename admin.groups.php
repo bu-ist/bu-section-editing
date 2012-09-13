@@ -298,6 +298,7 @@ class BU_Groups_Admin {
 			if( empty( $section_groups ) )
 				return;
 
+			// Craft meta query for allowed posts based on group membership
 			$meta_query = array(
 				'relation' => 'OR',
 				);
@@ -311,10 +312,18 @@ class BU_Groups_Admin {
 			}
 
 			$query->set( 'meta_query', $meta_query );
-			$query->set( 'post_status', 'publish' );
 
-			// Include drafts and pending posts as well
-			add_filter( 'posts_where', array( __CLASS__, 'editable_where_clause' ) );
+			// Clear custom 'section_editable' status from query
+			$query->set( 'post_status', '' );
+
+			// Include drafts and pending posts for hierarchical post types
+			$pto = get_post_type_object( $query->get('post_type') );
+
+			if( $pto->hierarchical ) {
+
+				add_filter( 'posts_where', array( __CLASS__, 'editable_where_clause' ) );
+
+			}
 
 		}
 
@@ -322,17 +331,15 @@ class BU_Groups_Admin {
 
 	/**
 	 * Modify the WHERE clause to include drafts and pending posts for editable queries
+	 * 
+	 * Only runs for hierarchical post types -- flat post types can set explicity
+	 * permissions on draft/pending posts so this is unecessary for them.
 	 */ 
 	public static function editable_where_clause( $where ) {
 		global $wpdb;
 
 		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
-		$pto = get_post_type_object( $post_type );
-
-		// Include drafts and pending posts for hierarchical post types
-		if( $pto->hierarchical )
-			$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
-
+		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
 		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
 
 		return $where;
