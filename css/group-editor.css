@@ -578,7 +578,8 @@
 
 /* Find user autocomplete */
 
-body.users_page_manage_groups .ui-autocomplete {
+body.toplevel_page_buse_edit_groups .ui-autocomplete, 
+body.section-groups_page_buse_new_group .ui-autocomplete {
 	padding: 0;
 	margin: 0;
 	list-style: none;
@@ -592,20 +593,23 @@ body.users_page_manage_groups .ui-autocomplete {
 	border-color: #bbb;
 }
 
-body.users_page_manage_groups .ui-autocomplete li {
+body.toplevel_page_buse_edit_groups .ui-autocomplete li,
+body.section-groups_page_buse_new_group .ui-autocomplete li {
 	margin-bottom: 0;
 	white-space: nowrap;
 	text-align: left;
 }
 
-body.users_page_manage_groups .ui-autocomplete li a {
+body.toplevel_page_buse_edit_groups .ui-autocomplete li a,
+body.section-groups_page_buse_new_group .ui-autocomplete li a {
 	display: block;
 	height: 100%;
 	padding: 4px 10px;
 	color: #333;
 }
 
-body.users_page_manage_groups .ui-autocomplete li a.ui-state-hover {
+body.toplevel_page_buse_edit_groups .ui-autocomplete li a.ui-state-hover,
+body.section-groups_page_buse_new_group .ui-autocomplete li a.ui-state-hover {
 	cursor: pointer;
 	background-color: #ddd;
 }
