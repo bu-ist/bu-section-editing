@@ -490,14 +490,7 @@ class BU_Groups_Admin {
 
 		}
 
-		// @todo move this logic out of here in to a dedicated method
-		$count_user_args = array(
-			'count_total' => true,
-			'fields' => 'ID',
-			'number' => 1
-		);
-
-		$valid_user_count = BU_Section_Editing_Plugin::get_allowed_users( $count_user_args );
+		$valid_user_count = count( BU_Section_Editing_Plugin::get_allowed_users() );
 
 		if( $valid_user_count == 0 ) {
 
