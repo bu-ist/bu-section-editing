@@ -348,6 +348,10 @@ class BU_Groups_Admin {
 	 */
 	public static function admin_scripts( $hook ) {
 
+		// Prevent notices on network admin pages
+		if( is_null( self::$manage_groups_hooks ) )
+			return;
+
 		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
 		
 		if( in_array( $hook, self::$manage_groups_hooks ) ) {

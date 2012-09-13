@@ -7,17 +7,84 @@ class BU_Section_Editing_Upgrader {
 	 */
 	public function upgrade( $existing_version ) {
 
-		// @todo Delete these before final release
-		if( version_compare( $existing_version, '0.2', '<' ) )
-			$this->upgrade_02();
+		// Install section editor role if plugin wasn't previously installed
+		if( ! $existing_version ) {
 
-		if( version_compare( $existing_version, '0.3', '<' ) )
-			$this->upgrade_03();
+			$this->populate_roles();
 
-		// Post alpha release
+		} else {
 
-		if( version_compare( $existing_version, '0.4', '<' ) )
-			$this->upgrade_04();
+			// @todo Delete these before final release
+			if( version_compare( $existing_version, '0.2', '<' ) )
+				$this->upgrade_02();
+
+			if( version_compare( $existing_version, '0.3', '<' ) )
+				$this->upgrade_03();
+
+			// Post alpha release
+
+			if( version_compare( $existing_version, '0.4', '<' ) )
+				$this->upgrade_04();
+
+			if( version_compare( $existing_version, '0.6', '<' ) )
+				$this->upgrade_06();
+
+		}
+
+		// Store new version
+		update_option( BU_Section_Editing_Plugin::BUSE_VERSION_OPTION, BU_Section_Editing_Plugin::BUSE_VERSION );
+
+	}
+
+	/**
+	 * Install default section editor role and capability set
+	 */ 
+	private function populate_roles() {
+
+		// Allow plugins to skip installation of section editor role
+		$create_section_editor = apply_filters( 'buse_create_section_editor_role', true );
+
+		if( $create_section_editor ) {
+
+			$role = get_role('section_editor');
+
+			if(empty($role)) {
+				add_role('section_editor', 'Section Editor');
+			}
+
+			$role =& get_role('section_editor');
+
+			$role->add_cap('upload_files');
+
+			$role->add_cap('read');
+			$role->add_cap('read_private_posts');
+			$role->add_cap('read_private_pages');
+			
+			$role->add_cap('edit_posts');
+			$role->add_cap('edit_others_posts');
+			$role->add_cap('edit_private_posts');
+			
+			$role->add_cap('edit_pages');
+			$role->add_cap('edit_others_pages');
+			$role->add_cap('edit_private_pages');
+			
+			$role->add_cap('delete_posts');
+			$role->add_cap('delete_pages');
+
+			$role->add_cap('level_1');
+			$role->add_cap('level_0');
+
+			$caps = BU_Section_Editing_Plugin::$caps->get_caps();
+			
+			foreach( $caps as $cap ) {
+				$role->add_cap( $cap );
+			}
+
+			if(defined('BU_CMS') && BU_CMS == true) {
+				$role->add_cap('unfiltered_html');
+			}
+
+		}
 
 	}
 
@@ -78,6 +145,24 @@ class BU_Section_Editing_Upgrader {
 			delete_post_meta( $post->post_id, BU_Group_Permissions::META_KEY, $post->meta_value );
 		}
 
+		// Role/cap changes in 04b54ea79c1bc935eee5ce04118812c1d8dad229
+		if( $role =& get_role('section_editor') ) {
+
+			$role->remove_cap('edit_published_posts');
+			$role->remove_cap('edit_published_pages');
+			$role->remove_cap('delete_others_pages');
+			$role->remove_cap('delete_others_posts');
+			$role->remove_cap('delete_published_posts');
+			$role->remove_cap('delete_published_pages');
+			$role->remove_cap('publish_pages');
+			$role->remove_cap('publish_posts');
+
+			$role->add_cap('delete_published_in_section');
+			$role->add_cap('edit_published_in_section');
+			$role->add_cap('publish_in_section');
+
+		}
+
 	}
 
 	/**
@@ -86,51 +171,61 @@ class BU_Section_Editing_Upgrader {
 	private function upgrade_04() {
 		global $wpdb;
 
-		error_log( "[buse_upgrade -> 0.4] BU Section Editing plugin upgrading from 0.3 -> 0.4" );
-
-		// Get old groups
+		// Migrate groups schema
 		$groups = get_option('_bu_section_groups');
 
-		if( false === $groups ) {
-			error_log( "[buse_upgrade -> 0.4] No previous groups found, exiting upgrade" );
-			return;
+		if( $groups ) {
+
+			$gc = BU_Edit_Groups::get_instance();
+
+			foreach( $groups as $groupdata ) {
+
+				// Need to remove pre-existing ID and let wp_insert_post do its thing
+				$old_id = $groupdata['id'];
+				unset($groupdata['id']);
+
+				// Convert to new structure
+				$group = $gc->add_group($groupdata);
+
+				// Grab all post IDS that have permissions set for this group
+				$post_meta_query = sprintf("SELECT post_id FROM %s WHERE meta_key = '%s' AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, $old_id );
+				$posts_to_update = $wpdb->get_col( $post_meta_query );
+
+				// Update one by one
+				foreach( $posts_to_update as $pid ) {
+					update_post_meta( $pid, BU_Group_Permissions::META_KEY, $group->id, $old_id );
+				}
+
+			}
+
+			// Cleanup
+			delete_option( '_bu_section_groups' );
+			delete_option( '_bu_section_groups_index');
+
 		}
 
-		error_log( "[buse_upgrade -> 0.4] Groups for upgrade: " . count($groups) );
+	}
 
-		$gc = BU_Edit_Groups::get_instance();
+	/**
+	 * Switched from <action>_published_in_section to <action>_<post_type>_in_section
+	 * Changes made in caps branch
+	 */ 
+	private function upgrade_06() {
 
-		foreach( $groups as $groupdata ) {
+		// Role/cap mods introduced in 114fcedf80ebdb0ef93948f41a6984006ff74031
+		if( $role =& get_role('section_editor') ) {
 
-			// Need to remove pre-existing ID and let wp_insert_post do its thing
-			$old_id = $groupdata['id'];
-			unset($groupdata['id']);
+			$role->remove_cap( 'delete_published_in_section' );
+			$role->remove_cap( 'edit_published_in_section' );
+			$role->remove_cap( 'publish_in_section' );
 
-			// Convert to new structure
-			$group = $gc->add_group($groupdata);
-
-			error_log( "[buse_upgrade -> 0.4] Group upgraded: {$group->name}" );
-			error_log( "[buse_upgrade -> 0.4] ID changed from $old_id -> {$group->id}" );
-
-			// Grab all post IDS that have permissions set for this group
-			$post_meta_query = sprintf("SELECT post_id FROM %s WHERE meta_key = '%s' AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, $old_id );
-			$posts_to_update = $wpdb->get_col( $post_meta_query );
-
-			error_log( "[buse_upgrade -> 0.4] Migrating group permissions..." );
-
-			// Update one by one
-			foreach( $posts_to_update as $pid ) {
-				update_post_meta( $pid, BU_Group_Permissions::META_KEY, $group->id, $old_id );
-				error_log( "[buse_upgrade -> 0.4] == Post #$pid updated: $old_id -> {$group->id}" );
+			$caps = BU_Section_Editing_Plugin::$caps->get_caps();
+			
+			foreach( $caps as $cap ) {
+				$role->add_cap( $cap );
 			}
 
 		}
-
-		// Cleanup
-		delete_option( '_bu_section_groups' );
-		delete_option( '_bu_section_groups_index');
-
-		error_log( "[buse_upgrade -> 0.4] Upgrade completed succesfully!" );
 
 	}
 

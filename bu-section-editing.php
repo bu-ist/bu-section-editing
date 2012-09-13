@@ -72,13 +72,14 @@ class BU_Section_Editing_Plugin {
 	}
 
 	public static function init() {
+
 		self::$caps = new BU_Section_Capabilities();
-		self::$roles = new BU_Section_Editing_Roles();
 
 		// Roles and capabilities
-		add_filter( 'map_meta_cap', array( self::$caps, 'map_meta_cap' ), 10, 4 );	
-		add_filter( 'bu_user_manager_allowed_roles', array( self::$roles, 'allowed_roles' ) );
-		self::$roles->maybe_create();
+		add_filter( 'map_meta_cap', array( self::$caps, 'map_meta_cap' ), 10, 4 );
+
+		// @todo move this to the bu_user_manager plugin
+		add_filter( 'bu_user_manager_allowed_roles', array( __CLASS__, 'allowed_roles' ) );
 
 		// Admin requests
 		if( is_admin() ) {
@@ -106,6 +107,21 @@ class BU_Section_Editing_Plugin {
 			}
 			
 		}
+
+	}
+
+	/**
+	 * Temporary callback that adds section editor role to BU list of allowed roles
+	 * 
+	 * @todo relocate to bu_user_management plugin
+	 */
+	public function allowed_roles( $roles ) {
+
+		if( ! array_key_exists( 'section_editor', $roles ) ) {
+			$roles[] = 'section_editor';
+		}
+
+		return $roles;
 
 	}
 
@@ -142,18 +158,10 @@ class BU_Section_Editing_Plugin {
 		// Check if plugin has been updated (or just installed) and store current version
 		if( $existing_version === false || $existing_version != self::BUSE_VERSION ) {
 
-			// Perform upgrade(s) based on previously installed version
-			if( $existing_version ) {
+			require_once( dirname(__FILE__) . '/classes.upgrade.php' );
 
-				require_once( dirname(__FILE__) . '/classes.upgrade.php' );
-				self::$upgrader = new BU_Section_Editing_Upgrader();
-
-				self::$upgrader->upgrade( $existing_version );
-
-			}
-
-			// Store new version
-			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
+			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader->upgrade( $existing_version );
 
 		}
 
