@@ -28,14 +28,23 @@ jQuery(document).ready(function($){
 	
 	$('#edit-group-name').blur(function(e){
 
-		var name = $(this).val()
+		var name = $.trim($(this).val());
 
 		// Auto truncate name field
 		if( name.length > GROUP_NAME_MAX_LENGTH ) {
-			$(this).val( name.slice( 0, GROUP_NAME_MAX_LENGTH - 1 ) );
+			name = name.slice( 0, GROUP_NAME_MAX_LENGTH - 1 );
+			$(this).val(name);
 		}
 
-		$('#group-stats-name').html($(this).val());
+		if( name.length < 1 ) {
+			addNotice( 'Section editing groups require a name.');
+			return false;
+		}
+
+		// Remove previously existing notices
+		removeNotice();
+
+		$('#group-stats-name').html(name);
 	});
 
 	// _______________________ Group Members ________________________
@@ -188,26 +197,6 @@ jQuery(document).ready(function($){
 	});
 
 	/**
-	 * Helper function for adding errors while attempting to add group members
-	 */
-	var add_member_error = function( message, message_class ) {
-		
-		if( typeof message_class === "undefined" ) message_class = 'error';
-
-		$('#members-message').attr('class', message_class ).html('<p>' + message + '</p>').fadeIn();
-
-	}
-
-	/**
-	 * Helper function for removing error messages from members panel
-	 */
-	var remove_member_error = function() {
-
-		$('#members-message').fadeOut('fast', function(e){$(this).attr('class','').html('');});	
-
-	}
-
-	/**
 	 * Processes input for adding users to group
 	 */
 	var handle_member_add = function() {
@@ -232,17 +221,19 @@ jQuery(document).ready(function($){
 					// User is not capable of being added to section editing groups
 					// @todo rethink this error message...
 					url += '?s=' + user.login;
-					add_member_error('<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.')
+					var msg = '<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.';
+					addNotice( msg, 'members-message' );
 
 				} else if( _is_existing_member( user ) ) {
 
 					// User is already a member
-					add_member_error('<b>' + user.display_name + '</b> is already a member of this group.')
+					var msg = '<b>' + user.display_name + '</b> is already a member of this group.';
+					addNotice( msg, 'members-message' );
 
 				} else {
 					
 					// Remove any existing errors
-					remove_member_error();
+					removeNotice( 'members-message' );
 
 					// Add the member
 					add_member( user );
@@ -254,7 +245,8 @@ jQuery(document).ready(function($){
 				// No user exists on this site
 				// @todo rethink this error message...
 				url = buse_config.userNewUrl;
-				add_member_error('<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.')
+				var msg = '<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.';
+				addNotice( msg, 'members-message' );
 			
 			}
 
@@ -1302,6 +1294,34 @@ jQuery(document).ready(function($){
 
 	}
 
+	// __________________________ Utility ___________________________
+
+	var addNotice = function( msg, target_id, settings ) {
+
+		var conf = {
+			classes: 'error',
+			before_msg: '<p>',
+			after_msg: '</p>'
+		};
+
+		if( settings && typeof(settings) == 'object' ) {
+			$.extend( conf, settings );
+		}
+
+		var selector = target_id || 'message',
+			$container = $('#' + selector );
+
+		$container.attr('class', conf.classes ).html( conf.before_msg + msg + conf.after_msg ).fadeIn();
+
+	}
+
+	var removeNotice = function( target_id ) {
+		var selector = target_id || 'message';
+
+		$('#' + selector).fadeOut('fast', function(e){$(this).attr('class','').html('')});
+
+	}
+
 	// _______________________ Pending Edits ________________________
 	
 	// State detection
@@ -1384,7 +1404,7 @@ jQuery(document).ready(function($){
 		var name = $.trim($('#edit-group-name').val());
 
 		if( name.length < 1 ) {
-			errorOut( 'Please give your group a name before saving.');
+			addNotice( 'Section editing groups require a name.');
 			return false;
 		}
 
@@ -1409,29 +1429,6 @@ jQuery(document).ready(function($){
 				
 	});
 
-	/**
-	 * Present the user with an error message
-	 */ 
-	var errorOut = function( msg ) {
-
-		var $container = $('#message');
-
-		if( $container.length ) {
-
-			$container.attr('class','error');
-			$container.html( '<p>' + msg + '</p>' );
-
-		} else {
-
-			$container = $('<div id="message" class="error">');
-			$container.html( '<p>' + msg + '</p>' );
-
-			$('.form-wrap').before( $container );
-
-		}
-
-	}
-
 	// ___________________ ON PAGE LOAD _____________________
 
 	// Initial loading
@@ -1451,6 +1448,9 @@ jQuery(document).ready(function($){
 	if( $initialPanel.length ) {
 		loadPermissionsPanel( $initialPanel );
 	}
+
+	// Recreate default WP beahvior of moving notice containers under h2 for blank
+	$('div#message').insertAfter( $('div.wrap h2:first') );
 
 
 });

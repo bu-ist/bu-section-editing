@@ -454,16 +454,23 @@ class BU_Groups_Admin {
 
 		$notices = self::get_notices();
 
+		// List errors first
 		if( isset( $notices['error'] ) ) {
 			foreach( $notices['error'] as $msg ) {
 				printf( '<div id="message" class="error">%s</div>', $msg );
 			}
 		}
 
+		// List notices second
 		if( isset( $notices['update'] ) ) {
 			foreach( $notices['update'] as $msg ) {
 				printf( '<div id="message" class="updated fade">%s</div>', $msg );
 			}
+		}
+
+		// Drop in an empty message container for client-side notices
+		if( empty( $notices ) ) {
+			printf( '<div id="message"></div>' );
 		}
 
 	}
@@ -486,7 +493,7 @@ class BU_Groups_Admin {
 					break;
 
 				case 2:
-					$notices['update'][] = sprintf( '<p>Group added. <a href="%s">View all groups</a></p></p>', $groups_url );
+					$notices['update'][] = sprintf( '<p>Group added. <a href="%s">View all groups</a></p>', $groups_url );
 					break;
 
 				case 3:
@@ -523,7 +530,7 @@ MSG;
 	}
 
 	/**
-	 * Handle form submission for manage_groups_edit page
+	 * Handle form submissions to group management pages
 	 * 
 	 * Also handles adding of admin notices and screen options
 	 */
@@ -618,9 +625,7 @@ MSG;
 		}
 
 		// Generate admin notices
-		if( self::get_notices() ) {
-			add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
-		}
+		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 
 		// Add screen option when adding or editing a group
 		if( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
