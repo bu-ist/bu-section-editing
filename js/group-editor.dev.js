@@ -1381,7 +1381,7 @@ jQuery(document).ready(function($){
 		window.onbeforeunload = null;
 
 		// Name
-		var name = $('#edit-group-name').val();
+		var name = $.trim($('#edit-group-name').val());
 
 		if( name.length < 1 ) {
 			errorOut( 'Please give your group a name before saving.');
