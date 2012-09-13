@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 @author Mike Burns <mgburns@bu.edu>
 */
 
-require_once(dirname(__FILE__) . '/classes.roles-capabilities.php');
+require_once(dirname(__FILE__) . '/classes.capabilities.php');
 require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
 
@@ -53,7 +53,6 @@ define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 class BU_Section_Editing_Plugin {
 	
 	public static $caps;
-	public static $roles;
 	public static $upgrader;
 
 	const BUSE_VERSION = '0.5';

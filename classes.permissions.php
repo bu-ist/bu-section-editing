@@ -36,7 +36,7 @@ class BU_Group_Permissions {
 	}
 
 	/**
-	 * Relocated from BU_Section_Capabilities in classes.roles-capabilities.php
+	 * Relocated from BU_Section_Capabilities in classes.capabilities.php
 	 */ 
 	public static function can_edit_section( WP_User $user, $post_id ) {
 

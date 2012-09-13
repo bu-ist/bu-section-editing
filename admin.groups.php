@@ -199,9 +199,7 @@ class BU_Groups_Admin {
 
 		$role = get_role( $newrole );
 
-		// @todo move this logic check to a method in classes.roles-capabilities once
-		// Gregory figures out how to handle "Section Editing"-ness
-		if( ! $role->has_cap('edit_published_in_section') ) {
+		if( ! $role->has_cap('edit_in_section') ) {
 
 			// Remove members from any groups
 			$manager = BU_Edit_Groups::get_instance();
