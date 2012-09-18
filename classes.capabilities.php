@@ -126,7 +126,7 @@ class BU_Section_Capabilities {
 				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		} else {
-			if( $post_id && $post->post_status == 'publish' && BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
+			if( $post_id && in_array( $post->post_status, array( 'publish', 'trash' ) ) && BU_Group_Permissions::can_edit_section( $user, $post_id ) ) {
 				$caps = array($this->get_section_cap('delete', $post->post_type));
 			}
 		}
