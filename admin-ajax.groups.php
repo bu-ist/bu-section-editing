@@ -137,9 +137,7 @@ class BU_Groups_Admin_Ajax {
 
 	}
 
-
 	static public function can_move() {
-			$user_id = get_current_user_id();
 			$post_id = (int) trim($_POST['post_id']);
 			$parent_id = (int) trim($_POST['parent_id']);
 
@@ -149,11 +147,14 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$post = get_post($post_id);
+			$post_type_obj = get_post_type_object($post->post_type);
+
 			if($parent_id == 0 && $post->post_parent == 0) {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
+				$answer = current_user_can($post_type_obj->cap->edit_post, $post_id);
 			} else {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $parent_id);
+				$answer = current_user_can($post_type_obj->cap->edit_post, $parent_id);
 			}
+
 			$response = new stdClass();
 
 			$response->post_id = $post_id;
@@ -169,9 +170,7 @@ class BU_Groups_Admin_Ajax {
 
 	static public function can_edit() {
 
-			$user_id = get_current_user_id();
 			$post_id = (int) trim($_POST['post_id']);
-
 
 			if(!isset($post_id)) {
 				echo '-1';
@@ -179,10 +178,12 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$post = get_post($post_id);
-			if($post->post_status != 'publish')  {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post->post_parent);
+			$post_type_obj = get_post_type_object($post->post_type);
+
+			if($post->post_status != 'publish') {
+				$answer = current_user_can($post_type_obj->cap->edit_post, $post->post_parent);
 			} else {
-				$answer = BU_Section_Capabilities::can_edit($user_id, $post_id);
+				$answer = current_user_can($post_type_obj->cap->edit_post, $post_id);
 			}
 
 			$response = new stdClass();
