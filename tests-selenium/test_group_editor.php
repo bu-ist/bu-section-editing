@@ -8,19 +8,14 @@ require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
 class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	public function setUp() {
+
 		parent::setUp();
 
 		// Get a group factory
 		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
 
-        // Take site URL from installation
-		$this->setBrowserUrl( site_url() );
-
 		// Create global state programmatically
 		$this->factory->user->create(array('user_login' => 'section_editor','user_pass'=>'buse_test_pass','role'=>'section_editor'));
-		
-		// Login to start each test
-		$this->wp_login( 'admin', 'password' );
 
 	}
 
@@ -312,7 +307,7 @@ class BUSE_GroupsPage {
 
 	private $webdriver = null;
 
-	const MANAGE_GROUPS_URL = '/wp-admin/users.php?page=manage_groups';
+	const MANAGE_GROUPS_URL = '/wp-admin/admin.php?page=buse_edit_groups';
 
 	function __construct( $webdriver ) {
 		$this->webdriver = $webdriver;
@@ -321,7 +316,7 @@ class BUSE_GroupsPage {
 
 		$page_title = $this->webdriver->getTitle();
 
-		if( strpos( $this->webdriver->getTitle(), 'Section Groups' ) === false )
+		if( strpos( $this->webdriver->getTitle(), 'Section Group' ) === false )
 			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . $request_url );
 	}
 
@@ -336,6 +331,8 @@ class BUSE_EditGroupPage {
 	protected $group_form = null;
 
 	/* Markup constants */
+
+	const ADD_GROUP_URL = '/wp-admin/admin.php?page=buse_new_group';
 
 	// Forms
 	const GROUP_EDIT_FORM = 'group-edit-form';
@@ -371,19 +368,16 @@ class BUSE_EditGroupPage {
 		$action_str = $group_str ='';
 
 		if( is_null( $group_id ) ) {
-			$action_str = '&action=add';
+			$request_url = self::ADD_GROUP_URL;
 		} else {
-			$action_str = '&action=edit';
-			$group_str = '&id=' . $group_id;
+			$request_url = BUSE_GroupsPage::MANAGE_GROUPS_URL . '&id=' . $group_id;
 		}
-		$query_str = sprintf('%s%s', $action_str, $group_str );
-		$request_url = BUSE_GroupsPage::MANAGE_GROUPS_URL . $query_str;
 
 		$this->webdriver->open( $request_url  );
 
 		$page_title = $this->webdriver->getTitle();
 
-		if( strpos( $page_title, 'Section Groups' ) === false )
+		if( strpos( $page_title, 'Section Group' ) === false )
 			throw new Exception('Edit Group Page failed to load -- Unable to load URL: ' . $request_url );
 
 		$this->group_form = new SeleniumFormHelper( $this->webdriver, self::GROUP_EDIT_FORM );
@@ -569,6 +563,7 @@ class BUSE_EditGroupPermissions extends BUSE_EditGroupPage {
 
 		$link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '.group-panel.active .perm-tree-expand' );
 		$link->click();
+
 	}
 
 	function togglePostState( $id ) {
