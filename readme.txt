@@ -34,11 +34,28 @@ This plugin requires the BU Navigation plugin in order to work with hierarchical
 1. Upload the `bu-section-editing` directory to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Change user role to "Section Editor" for any user who you want to add to section editing groups
-4. Create section editing groups at User > Section Groups
+4. Create section editing groups by clicking the "Section Groups > Add New" menu item
 
 To complete the advanced permissions work flow, install the [BU Versions Plugin](http://github.com/bu-ist/bu-versions "BU Versions Plugin").
 
 == Changelog ==
+
+0.6
+* Moved manage groups page to top-level menu item
+* Implemented "Find Users Tool" to aid section managers in adding members to groups
+* Major refactoring of role/capability handling
+* Added limit to group name field length
+* General code refactoring / loading optimizations
+* Minor bug fixes
+
+0.5
+* Added bulk actions and pagination for flat post type permission editors
+* Update icons for hierarchical permission editors
+* Added a "Section Groups" column to the manage users table
+* Fixes for "Editable" bucket available to section editors
+* Fixes for allowed post count methods
+* IE style fixes
+* General code cleanup / refactoring
 
 0.4
 * Changed data schema for storing section groups from serialized wp_option to post in custom post type with associated meta

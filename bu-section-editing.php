@@ -2,7 +2,7 @@
 /*
  Plugin Name: BU Section Editing
  Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
- Version: 0.5
+ Version: 0.6
  Author: Boston University (IS&T)
 */
 
@@ -55,7 +55,7 @@ class BU_Section_Editing_Plugin {
 	public static $caps;
 	public static $upgrader;
 
-	const BUSE_VERSION = '0.5';
+	const BUSE_VERSION = '0.6';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	const TEXT_DOMAIN = 'bu_section_editing';
