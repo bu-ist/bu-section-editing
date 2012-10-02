@@ -18,26 +18,37 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 	if( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
-		/* Gather all group post meta in one shot */
-		$ids = array_keys($posts);
-		$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value IN (%s)", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode(',', $ids), implode( ',', $section_groups ) );
-		$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
-		if (!is_array($group_meta)) $group_meta = array();
+		// Section editors with no groups have all posts denied
+		if( is_array( $section_groups ) && ! empty( $section_groups ) ) {
 
-		// Append permissions to post object
-		foreach( $posts as $post ) {
+			/* Gather all group post meta in one shot */
+			$ids = array_keys($posts);
+			$query = sprintf("SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value IN (%s)", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode(',', $ids), implode( ',', $section_groups ) );
+			$group_meta = $wpdb->get_results($query, OBJECT_K); // get results as objects in an array keyed on post_id
+			if (!is_array($group_meta)) $group_meta = array();
 
-			$post->perm = 'denied';
+			// Append permissions to post object
+			foreach( $posts as $post ) {
 
-			if( array_key_exists( $post->ID, $group_meta ) ) {
-				$perm = $group_meta[$post->ID];
+				$post->perm = 'denied';
 
-				if( in_array( $perm->meta_value, $section_groups ) ) {
-					$post->perm = 'allowed';
+				if( array_key_exists( $post->ID, $group_meta ) ) {
+					$perm = $group_meta[$post->ID];
+
+					if( in_array( $perm->meta_value, $section_groups ) ) {
+						$post->perm = 'allowed';
+					}
+
 				}
 
 			}
 
+		} else {
+
+			foreach( $posts as $post ) {
+				$post->perm = 'denied';
+			}
+			
 		}
 
 	}
