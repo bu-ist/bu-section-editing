@@ -18,6 +18,10 @@ class WP_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
 	function update_object( $group_id, $fields ) {
 		return BU_Edit_Groups::get_instance()->update_group( $group_id, $fields );
 	}
+
+	function get_object_by_id( $group_id ) {
+		return BU_Edit_Groups::get_instance()->get( $group_id );
+	}
 }
 
 ?>
