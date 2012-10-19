@@ -5,8 +5,20 @@ $current_user = get_current_user_id();
 // Only add filters for section editors
 if( BU_Section_Editing_Plugin::is_allowed_user( $current_user ) ) {
 
+	add_action( 'bu_navigation_interface_scripts', 'buse_bu_navigation_scripts' );
+	add_filter( 'bu_navigation_script_context', 'buse_bu_navigation_script_context');
 	add_filter( 'bu_navigation_filter_pages', 'buse_bu_navigation_filter_pages');
-	
+	add_filter( 'bu_navigation_interface_format_page', 'buse_bu_navigation_format_page', 10, 3 );
+
+}
+
+function buse_bu_navigation_scripts() {
+	wp_enqueue_script( 'buse-navigation-support', plugins_url( 'section-editor-support.js', __FILE__ ), array('bu-navigation'), '1.0', true );
+}
+
+function buse_bu_navigation_script_context( $config ) {
+	$config['isSectionEditor'] = true;
+	return $config;
 }
 
 function buse_bu_navigation_filter_pages( $posts ) {
@@ -55,4 +67,24 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 	return $posts;
 
+}
+
+function buse_bu_navigation_format_page( $p, $page, $has_children ) {
+
+	if( $page->post_type == 'link' )
+		return $p;
+
+	$perm = isset($page->perm) ? $page->perm : null;
+
+	if( $perm == 'denied' ) {
+		$p['attr']['rel'] = 'denied';
+		$p['metadata']['denied'] = true;
+	}
+
+	if( ! isset( $p['attr']['class'] ) )
+		$p['attr']['class'] = '';
+
+	$p['attr']['class'] = ' ' . $page->perm;
+
+	return $p;
 }
