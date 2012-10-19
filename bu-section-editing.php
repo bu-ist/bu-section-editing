@@ -92,7 +92,7 @@ class BU_Section_Editing_Plugin {
 			add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
 			if( function_exists( 'bu_navigation_get_pages' ) ) {
-				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation.php' );
+				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation/bu-navigation.php' );
 			}
 			
 		}
