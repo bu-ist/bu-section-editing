@@ -78,7 +78,9 @@ function buse_bu_navigation_format_page( $p, $page, $has_children ) {
 
 	if( $perm == 'denied' ) {
 		$p['attr']['rel'] = 'denied';
-		$p['metadata']['denied'] = true;
+		$p['metadata']['post_meta']['denied'] = true;
+	} else {
+		$p['metadata']['post_meta']['denied'] = false;
 	}
 
 	if( ! isset( $p['attr']['class'] ) )

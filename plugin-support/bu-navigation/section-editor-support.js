@@ -10,17 +10,19 @@
 	var isEditable = function( allowed, move ) {
 
 		if ( s.isSectionEditor ) {
+			var post = move.o.data();
+			var post_parent = move.np.data();
 
 			// Can't move to top level
 			if ( move.cr === -1 )
 				return false;
 
 			// Can't move a denied post
-			if ( move.o.data('denied') ) {
+			if ( post['post_meta']['denied'] ) {
 				return false;
 			}
 			// Can't move inside denied post
-			if ( move.np.data('denied') ) {
+			if ( post_parent['post_meta']['denied'] ) {
 				return false;
 			}
 		}
