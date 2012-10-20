@@ -12,7 +12,7 @@ class BU_Section_Capabilities {
 		$caps = array('edit_in_section');
 		$operations = array('edit', 'delete', 'publish');
 		$post_types = $this->get_post_types();
-		
+
 		foreach( $post_types as $post_type ) {
 			if( $post_type->public != true || in_array( $post_type->name, array( 'attachment' ) ) ) {
 				continue;
@@ -27,10 +27,10 @@ class BU_Section_Capabilities {
 	}
 
 	/**
-	 * Filter that modifies the caps needing to take certain actions in cases 
-	 * where the user ($user_id) does not have the capabilities that WordPress 
-	 * has mapped to the meta capability. The mapping is based on which post is 
-	 * being edited, the Section Groups granted access to the post, and the 
+	 * Filter that modifies the caps needing to take certain actions in cases
+	 * where the user ($user_id) does not have the capabilities that WordPress
+	 * has mapped to the meta capability. The mapping is based on which post is
+	 * being edited, the Section Groups granted access to the post, and the
 	 * membership of the user in those groups.
 	 *
 	 *
@@ -42,20 +42,16 @@ class BU_Section_Capabilities {
 	 */
 	public function map_meta_cap($caps, $cap, $user_id, $args) {
 		global $post_ID;
-		
-		
+
+
 		$user = new WP_User( intval( $user_id ) );
-		
-		// avoid infinite loop
-		remove_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
-		
-		// if user alread has the caps as passed by map_meta_cap() pre-filter or 
+
+		// if user alread has the caps as passed by map_meta_cap() pre-filter or
 		// the user doesn't have the main "section editing" cap
-		if( $this->has_caps( $user, $caps ) || ! user_can( $user, 'edit_in_section' ) ) {
-			add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
+		if( $this->user_has_caps( $user, $caps ) || ! $this->user_has_cap( $user, 'edit_in_section' ) ) {
 			return $caps; // bail early
 		}
-		
+
 		if( $this->is_post_cap( $cap, 'edit_post' ) ) {
 			$caps = $this->_override_edit_caps( $user, $args[0], $caps );
 		}
@@ -70,16 +66,15 @@ class BU_Section_Capabilities {
 		if( $this->is_post_cap( $cap, 'publish_posts' ) ) {
 			$caps = $this->_override_publish_caps( $user, $post_ID, $caps );
 		}
-		
-		
-		add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
+
+
 		return $caps;
 	}
-	
+
 	/**
-	 * Check some $_POST variables to see if the posted data matches the post 
+	 * Check some $_POST variables to see if the posted data matches the post
 	 * we are checking permissions against
-	 **/	
+	 **/
 	private function is_parent_changing( $post ) {
 		return isset( $_POST['post_ID'] ) && $post->ID == $_POST['post_ID'] && isset( $_POST['parent_id'] ) &&  $post->post_parent != $_POST['parent_id'];
 	}
@@ -99,7 +94,7 @@ class BU_Section_Capabilities {
 				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		} else {
-			
+
 			if( $this->is_parent_changing( $post ) ) {
 				$parent_id = $this->get_new_parent( $post );
 
@@ -112,7 +107,6 @@ class BU_Section_Capabilities {
 				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		}
-
 		return $caps;
 	}
 
@@ -135,20 +129,20 @@ class BU_Section_Capabilities {
 	}
 
 	private function _override_publish_caps(WP_User $user, $post_id, $caps ) {
-		
+
 		if( ! isset( $post_id ) ) {
 			return $caps;
 		}
-		
+
 		$parent_id = null;
 
 		$post = get_post($post_id);
-		
+
 		$post_type = get_post_type_object( $post->post_type );
-		
+
 		$is_alt = false;
-		
-		// BU Versions uses the post_parent to relate the alternate version 
+
+		// BU Versions uses the post_parent to relate the alternate version
 		// to the original
 		if(class_exists('BU_Version_Workflow')) {
 			$is_alt = BU_Version_Workflow::$v_factory->is_alt( $post->post_type );
@@ -180,8 +174,8 @@ class BU_Section_Capabilities {
 	}
 
 	public function get_section_cap($type, $post_type) {
-		
-		$cap = '';	
+
+		$cap = '';
 		switch($type) {
 			case 'edit':
 				$cap = 'edit_' . $post_type . '_in_section';
@@ -202,17 +196,24 @@ class BU_Section_Capabilities {
 	}
 
 
-	public function has_caps( WP_User $user, $caps ) {
-		
+	public function user_has_caps( WP_User $user, $caps ) {
+
 		foreach( $caps as $cap ) {
-			if( ! user_can( $user, $cap ) ) { 
+			if( ! $this->user_has_cap( $user, $cap ) ) {
 				return false;
 			}
 		}
 
 		return true;
 	}
-	
+
+	public function user_has_cap( WP_User $user, $cap ) {
+		if( isset( $user->allcaps[ $cap ] ) || $user->allcaps[ $cap ] ) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Get post types and store them in a property.
 	 *
@@ -224,17 +225,17 @@ class BU_Section_Capabilities {
 		}
 
 		return $this->post_types;
-	}	
-	
+	}
+
 	/**
 	 * Whether or not the $cap is a meta cap for one of the registered post types.
 	 *
 	 * @param $cap
 	 * @param $meta_cap
 	 * @return bool
-	 **/	
+	 **/
 	public function is_post_cap( $cap, $map_cap ) {
-		
+
 		$caps = array();
 
 		foreach( $this->get_post_types() as $post_type ) {
