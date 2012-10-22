@@ -100,9 +100,8 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
-	 * Temporary callback that adds section editor role to BU list of allowed roles
+	 * Callback that adds section editor role to BU list of allowed roles
 	 * 
-	 * @todo relocate to bu_user_management plugin
 	 */
 	public function allowed_roles( $roles ) {
 
