@@ -192,6 +192,10 @@ class BU_Section_Editing_Plugin {
 			$user = new WP_User( intval( $user ) );
 		}
 
+		if( is_super_admin( $user->ID ) ) {
+			return false;
+		}
+
 		if( $user->has_cap( 'edit_in_section' ) ) {
 			return true;
 		}
