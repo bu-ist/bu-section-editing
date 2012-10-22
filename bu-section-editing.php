@@ -193,18 +193,8 @@ class BU_Section_Editing_Plugin {
 			$user = new WP_User( intval( $user ) );
 		}
 
-		// Iterate over ALL roles for this user
-		if( isset( $user->roles ) && is_array( $user->roles ) ) {
-
-			foreach( $user->roles as $role ) {
-				$role = get_role( $role );
-
-				// Return true if any role is section editing-enabled
-				if( $role->has_cap( 'edit_in_section' ) )
-					return true;
-			
-			}
-
+		if( $user->has_cap( 'edit_in_section' ) ) {
+			return true;
 		}
 
 		return false;
