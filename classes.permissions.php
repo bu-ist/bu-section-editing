@@ -254,7 +254,7 @@ abstract class BU_Permissions_Editor {
 			error_log('Not a valid group ID or object: ' . $group );
 		}
 
-		$this->post_type = $post_type;
+		$this->post_type = $post_type == 'page' ? array('page','link') : $post_type;
 
 		$this->load();
 
