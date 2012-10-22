@@ -4,7 +4,7 @@ $current_user = get_current_user_id();
 
 // Only add filters for section editors
 if( BU_Section_Editing_Plugin::is_allowed_user( $current_user ) ) {
-
+	
 	add_action( 'bu_navigation_interface_scripts', 'buse_bu_navigation_scripts' );
 	add_filter( 'bu_navigation_script_context', 'buse_bu_navigation_script_context');
 	add_filter( 'bu_navigation_filter_pages', 'buse_bu_navigation_filter_pages');
@@ -50,7 +50,11 @@ function buse_bu_navigation_filter_pages( $posts ) {
 					if( in_array( $perm->meta_value, $section_groups ) ) {
 						$post->perm = 'allowed';
 					}
-
+				}
+				
+				// Hierarchical perm editors ignore draft/pending, allowed by default
+				if(in_array($post->post_status,array('draft','pending'))) {
+					$post->perm = 'allowed';
 				}
 
 			}
@@ -59,6 +63,10 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 			foreach( $posts as $post ) {
 				$post->perm = 'denied';
+				// Hierarchical perm editors ignore draft/pending, allowed by default
+				if(in_array($post->post_status,array('draft','pending'))) {
+					$post->perm = 'allowed';
+				}
 			}
 			
 		}
@@ -70,9 +78,6 @@ function buse_bu_navigation_filter_pages( $posts ) {
 }
 
 function buse_bu_navigation_format_page( $p, $page, $has_children ) {
-
-	if( $page->post_type == 'link' )
-		return $p;
 
 	$perm = isset($page->perm) ? $page->perm : null;
 
