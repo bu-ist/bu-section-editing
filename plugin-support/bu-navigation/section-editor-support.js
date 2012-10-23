@@ -4,12 +4,10 @@
 		(typeof bu.plugins === 'undefined' ) ||
 		(typeof bu.plugins.navigation === 'undefined' ) )
 			return;
-
-	var s = bu.plugins.navigation.settings;
-
-	var isEditable = function( allowed, move ) {
-
-		if ( s.isSectionEditor ) {
+		
+	var isEditable = function( allowed, move, instance ) {
+		
+		if ( instance.config.isSectionEditor ) {
 			var post = move.o.data();
 			var post_parent = move.np.data();
 
