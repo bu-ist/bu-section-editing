@@ -208,7 +208,7 @@ class BU_Section_Capabilities {
 	}
 
 	public function user_has_cap( WP_User $user, $cap ) {
-		if( isset( $user->allcaps[ $cap ] ) || $user->allcaps[ $cap ] ) {
+		if( isset( $user->allcaps[ $cap ] ) && $user->allcaps[ $cap ] ) {
 			return true;
 		}
 		return false;
