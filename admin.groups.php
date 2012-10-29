@@ -361,21 +361,16 @@ class BU_Groups_Admin {
 		
 		if( in_array( $hook, self::$manage_groups_hooks ) ) {
 
-			wp_enqueue_script('json2');
-			//@todo do we need jquery-cookie?
-
-			wp_enqueue_script( 'bu-jquery-tree', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/jquery.jstree' . $suffix . '.js' ), array('jquery'), '1.0-rc3' );
-
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
 			// @see https://github.com/jquery/jquery-ui/pull/254
 			// @see http://bugs.jqueryui.com/ticket/5645
-			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position' . $suffix . '.js' ), array('jquery') );
+			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position' . $suffix . '.js' ), array('jquery'), true );
 
 			// jQuery UI Autocomplete does not exist prior to WP 3.3, so add it here if it's not already registered
 			if( ! wp_script_is( 'jquery-ui-autocomplete', 'registered' ) ) {
 
 				// Register local fallback copy of autocomplete
-				wp_register_script( 'jquery-ui-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.autocomplete'.$suffix.'.js' ), array('jquery-ui-core', 'jquery-ui-widget', 'bu-jquery-ui-position' ), '1.8.23' );
+				wp_register_script( 'jquery-ui-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.autocomplete'.$suffix.'.js' ), array('jquery-ui-core', 'jquery-ui-widget', 'bu-jquery-ui-position' ), '1.8.23', true );
 
 			}
 
@@ -383,18 +378,25 @@ class BU_Groups_Admin {
 			// Used to keep the autocomplete & add member functionality client-side
 			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
 
-			wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete'), '0.3' );
-			$buse_config = array(
+			// Group editor script
+			wp_register_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), '0.3', true );
+
+			$script_context = array(
+				'postStatuses' => array('publish'),
+				'lazyLoad' => true,
+				'showCounts' => false,
+				'showStatuses' => false,
+				'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
 				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
 				'usersUrl' => admin_url('users.php'),
-				'userNewUrl' => admin_url('user-new.php')
-				);
-
-			wp_localize_script( 'group-editor', 'buse_config', $buse_config );
-
+				'userNewUrl' => admin_url('user-new.php')	
+			);
+			// Let the tree view class handle enqueing	
+			$treeview = new BU_Navigation_Tree_View( 'buse_group_editor', $script_context );
+			$treeview->enqueue_script( 'group-editor' );
+			
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), array(), '0.3' );
-			wp_enqueue_style( 'jstree-default', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jstree/themes/classic/style.css' ), array(), '0.3' );
 
 		}
 

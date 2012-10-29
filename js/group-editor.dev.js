@@ -1,4 +1,117 @@
+// Check prerequisites
+if((typeof bu === 'undefined') ||
+	(typeof bu.plugins.navigation === 'undefined') ||
+	(typeof bu.plugins.navigation.tree === 'undefined'))
+		throw new TypeError('BU Navigation Manager script dependencies have not been met!');
+
+(function ($){
+	
+	var Nav = bu.plugins.navigation;
+		
+		// ----------------------------
+		// Hierarchical perm editor
+		// ----------------------------
+		Nav.trees['buse_perm_editor'] = function (config, my) {
+			my = my || {};
+
+			// Functional inheritance
+			var that = Nav.trees.base( config, my );
+
+			// Aliases
+			var d = that.data;
+			var c = $.extend(that.config, config || {});	// instance configuration
+
+			var $tree = that.$el;
+
+			// Remove crrm and dnd plugins
+			
+			
+			// Custom tree types for perm editor (icon asset config is temporary)
+			d.treeConfig['types'] = {
+				"types" : {
+					'default' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-60px 0"
+						}
+					},
+					'denied' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-60px 0"
+						}
+					},
+					'denied-desc-allowed' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "2px 0"
+						}
+					},
+					'denied-desc-unknown' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-100px 0"
+						}
+					},
+					'allowed' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-40px 0"
+						}
+					},
+					'allowed-desc-denied' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-20px 0"
+						}
+					},
+					'allowed-desc-unknown' : {
+						icon: {
+							image: c.pluginUrl + "/images/group_perms_sprite.png",
+							position: "-120px 0"
+						}
+					}
+				}
+			};
+
+			// UI plugin
+			d.treeConfig["ui"] = {
+				"select_limit": 1
+			}
+
+			// Append global jstree options with configuration for this post type
+			d.treeConfig['json_data']['ajax'] = {
+					url : c.rpcUrl,
+					type: 'GET',
+					cache: false,
+					data : function(n) {
+						return {
+							group_id : c.groupID,
+							node_prefix : c.nodePrefix,
+							post_type : c.postType,
+							query: {
+								child_of : n.attr ? my.stripNodePrefix(n.attr('id')) : 0
+							}
+						}
+					},
+					success: function( response ) {
+						return response.posts;
+					},
+					error: function( response ) {
+						// @todo handle error
+					}
+			};
+
+			return that;
+			
+		};
+			
+}(jQuery));
+
 jQuery(document).ready(function($){
+
+	// Nav plugin alias
+	var Nav = bu.plugins.navigation;
 
 	// Globals
 	var $members_list = $('#group-member-list');
@@ -211,7 +324,7 @@ jQuery(document).ready(function($){
 
 			// Attempt to translate user input to valid login
 			var user = _translate_input_to_user( input );
-			var url = buse_config.usersUrl;
+			var url = buse_group_editor_settings.usersUrl;
 
 			// Add member to this group
 			if( user ) {
@@ -244,7 +357,7 @@ jQuery(document).ready(function($){
 
 				// No user exists on this site
 				// @todo rethink this error message...
-				url = buse_config.userNewUrl;
+				url = buse_group_editor_settings.userNewUrl;
 				var msg = '<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.';
 				addNotice( msg, 'members-message' );
 			
@@ -694,7 +807,7 @@ jQuery(document).ready(function($){
 			e.stopPropagation();
 
 			// Keep track of current selection
-			$post = $(this).parent('li').first();
+			var $post = $(this).parent('li').first();
 
 			// Remove previous selections 
 			$post.siblings('li.perm-item-selected').each( function() {
@@ -728,52 +841,18 @@ jQuery(document).ready(function($){
 	 * Create a jstree instance for each hierarchical post type
 	 */ 
 	var loadHierarchicalEditor = function( $editor ) {
-
-		var post_type = $editor.data('post-type');
+		var settings = {
+			el: '#' + $editor.attr('id'),
+			groupID: $('#group_id').val() || -1,
+			postType: $editor.data('post-type')	
+		};
+		$.extend(settings, buse_group_editor_settings );
 		
-		// Append global jstree options with configuration for this post type
-		options['json_data'] = {
-			ajax : {
-				url : ajaxurl,
-				type: 'GET',
-				cache: false,
-				data : function(n) {
-					return {
-						action : 'buse_render_post_list',
-						group_id : $('#group_id').val() || -1,
-						post_type : post_type,
-						query: {
-							child_of : n.attr ? n.attr('id').substr(1) : 0
-						}
-					}
-				},
-				success: function( response ) {
-					return response.posts;
-				},
-				error: function( response ) {
-					// @todo handle error
-				}
-			}
-		}
-
+		// Create nav tree
+		Nav.tree( 'buse_perm_editor', settings );
+		
 		// Attach handlers and instantiate
 		$editor
-			.bind('loaded.jstree', function( event, data ) {
-
-				// Lazy loading causes huge performance issues in IE < 8
-				if( $.browser.msie == true &&  parseInt($.browser.version, 10) < 8 )
-					return;
-
-				// Start lazy loading once tree is fully loaded
-				$(this).find('ul > .jstree-closed').each( function(){
-
-					// Load using API -- they require callback functions, but we're
-					// handling actions in the load_node.jstree even handler below
-					// so we just pass empty functions
-					data.inst.load_node( $(this), function(){}, function(){} );
-				});
-
-			})
 			.bind('load_node.jstree', function( event, data ) {
 
 				// Correct state post-load for all non-root nodes
@@ -816,147 +895,10 @@ jQuery(document).ready(function($){
 
 				});
 
-			})
-			.jstree(options);	// create the tree
-
-
-		// Deselect all on click within parent perm panel
-		$editor.closest('.perm-panel').bind( 'click', function(e) {
-
-			/* 
-			Need to make sure we're not in the process of selecting a node,
-			as the jstree event select_node.jstree does not allows us to stop click
-			events from bubbling up on selection
-			*/
-
-			// Bail if click target is a selected anchor (label) or ins (icon)
-			if( $(e.target).hasClass('jstree-clicked') || $(e.target).parents('.jstree-clicked').length )
-				return;
-
-			// Otherwise force deselection
-			if( $editor.jstree('get_selected').length )
-				$editor.jstree( 'deselect_all' );
-
-		});
+			});
 
 	};
 
-	// jstree global configuration
-	var options = {
-		plugins : [ 'themes', 'types', 'json_data', 'ui' ],
-		core : {
-			animation: 0,
-			html_titles : true
-		},
-		themes : {
-			theme: 'classic'	
-		},
-		types : {
-			types : {
-				'default' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-60px 0"
-					}
-				},
-				'denied' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-60px 0"
-					}
-				},
-				'denied-desc-allowed' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "2px 0"
-					}
-				},
-				'denied-desc-unknown' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-100px 0"
-					}
-				},
-				'allowed' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-40px 0"
-					}
-				},
-				'allowed-desc-denied' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-20px 0"
-					}
-				},
-				'allowed-desc-unknown' : {
-					clickable	: true,
-					renameable	: false,
-					deletable	: false,
-					creatable	: false,
-					draggable	: false,
-					max_children	: -1,
-					max_depth	: -1,
-					valid_children	: "all",
-					icon: {
-						image: buse_config.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-120px 0"
-					}
-				}
-			}
-		},
-		ui: {
-			select_limit: 1
-		}
-	};
 	
 	// ____________________ PERM EDITOR API _____________________
 
@@ -1439,8 +1381,8 @@ jQuery(document).ready(function($){
 		var permSprite = new Image();
 		var permSpinner = new Image();
 
-		permSprite.src = buse_config.pluginUrl + "/images/group_perms_sprite.png";
-		permSpinner.src = buse_config.pluginUrl + "/images/loading.gif";
+		permSprite.src = buse_group_editor_settings.pluginUrl + "/images/group_perms_sprite.png";
+		permSpinner.src = buse_group_editor_settings.pluginUrl + "/images/loading.gif";
 
 	}
 

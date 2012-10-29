@@ -5,10 +5,10 @@ $current_user = get_current_user_id();
 // Only add filters for section editors
 if( BU_Section_Editing_Plugin::is_allowed_user( $current_user ) ) {
 	
-	add_action( 'bu_navigation_interface_scripts', 'buse_bu_navigation_scripts' );
-	add_filter( 'bu_navigation_script_context', 'buse_bu_navigation_script_context');
+	add_action( 'bu_nav_tree_enqeueue_scripts', 'buse_bu_navigation_scripts' );
+	add_filter( 'bu_nav_tree_script_context', 'buse_bu_navigation_script_context');
 	add_filter( 'bu_navigation_filter_pages', 'buse_bu_navigation_filter_pages');
-	add_filter( 'bu_navigation_interface_format_page', 'buse_bu_navigation_format_page', 10, 3 );
+	add_filter( 'bu_nav_tree_view_format_post', 'buse_bu_navigation_format_post', 10, 3 );
 
 }
 
@@ -77,7 +77,7 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 }
 
-function buse_bu_navigation_format_page( $p, $page, $has_children ) {
+function buse_bu_navigation_format_post( $p, $post, $has_children ) {
 
 	$perm = isset($page->perm) ? $page->perm : null;
 
@@ -91,7 +91,7 @@ function buse_bu_navigation_format_page( $p, $page, $has_children ) {
 	if( ! isset( $p['attr']['class'] ) )
 		$p['attr']['class'] = '';
 
-	$p['attr']['class'] = ' ' . $page->perm;
+	$p['attr']['class'] = ' ' . $post->perm;
 
 	return $p;
 }
