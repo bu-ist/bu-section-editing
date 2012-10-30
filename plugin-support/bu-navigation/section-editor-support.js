@@ -4,8 +4,12 @@
 		(typeof bu.plugins === 'undefined' ) ||
 		(typeof bu.plugins.navigation === 'undefined' ) )
 			return;
-		
-	var isEditable = function( allowed, move, instance ) {
+	
+	/**
+	 * Make sure that current user has sufficient capabilities to
+	 * move node to new location
+	 */	
+	var isEditable = function (allowed, move, instance) {
 		
 		if ( instance.config.isSectionEditor ) {
 			var post = move.o.data();
@@ -16,11 +20,11 @@
 				return false;
 
 			// Can't move a denied post
-			if ( post['post_meta']['denied'] ) {
+			if ( post['post_meta']['canEdit'] ) {
 				return false;
 			}
 			// Can't move inside denied post
-			if ( post_parent['post_meta']['denied'] ) {
+			if ( post_parent['post_meta']['canEdit'] ) {
 				return false;
 			}
 		}
@@ -30,6 +34,24 @@
 	};
 
 	bu.hooks.addFilter('moveAllowed', isEditable );
+
+	/**
+	 * Make sure that current user has sufficient capabilities to
+	 * execute context menu items
+	 */
+	var filterNavmanContextItems = function (items, node) {
+		var post = node.data();
+
+		if( ! post['post_meta']['canEdit'] && items['edit'] )
+			delete items['edit'];
+
+		if( ! post['post_meta']['canRemove'] && items['remove'] )
+			delete items['remove'];
+
+		return items;
+	}
+
+	bu.hooks.addFilter('navmanContextItems', filterNavmanContextItems );
 
 	var nodeToPost = function( post ) {
 

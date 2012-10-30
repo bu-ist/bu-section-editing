@@ -42,19 +42,21 @@ function buse_bu_navigation_filter_pages( $posts ) {
 			// Append permissions to post object
 			foreach( $posts as $post ) {
 
-				$post->perm = 'denied';
+				$post->can_edit = false;
+				$post->can_remove = false;
 
 				if( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[$post->ID];
 
 					if( in_array( $perm->meta_value, $section_groups ) ) {
-						$post->perm = 'allowed';
+						$post->can_edit = true;
+						$post->can_remove = true;
 					}
 				}
 				
 				// Hierarchical perm editors ignore draft/pending, allowed by default
 				if(in_array($post->post_status,array('draft','pending'))) {
-					$post->perm = 'allowed';
+					$post->can_edit = true;
 				}
 
 			}
@@ -62,10 +64,13 @@ function buse_bu_navigation_filter_pages( $posts ) {
 		} else {
 
 			foreach( $posts as $post ) {
-				$post->perm = 'denied';
+
+				$post->can_edit = false;
+				$post->can_remove = false;
+
 				// Hierarchical perm editors ignore draft/pending, allowed by default
 				if(in_array($post->post_status,array('draft','pending'))) {
-					$post->perm = 'allowed';
+					$post->can_edit = true;
 				}
 			}
 			
@@ -79,19 +84,17 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 function buse_bu_navigation_format_post( $p, $post, $has_children ) {
 
-	$perm = isset($page->perm) ? $page->perm : null;
+	$status = $post->can_edit ? 'allowed' : 'denied';
 
-	if( $perm == 'denied' ) {
-		$p['attr']['rel'] = 'denied';
-		$p['metadata']['post_meta']['denied'] = true;
-	} else {
-		$p['metadata']['post_meta']['denied'] = false;
-	}
+	$p['attr']['rel'] = $status;
+
+	$p['metadata']['post_meta']['canEdit'] = $post->can_edit;
+	$p['metadata']['post_meta']['canRemove'] = $post->can_remove;
 
 	if( ! isset( $p['attr']['class'] ) )
 		$p['attr']['class'] = '';
 
-	$p['attr']['class'] = ' ' . $post->perm;
+	$p['attr']['class'] = ' ' . $status;
 
 	return $p;
 }
