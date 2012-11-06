@@ -413,8 +413,8 @@
 	font-weight: bold;
 }
 
-#group-stats-widget span[id*="count"],
-#group-stats-widget span[class*="count"] {
+#group-stats-widget .member-count,
+#group-stats-widget .perm-stats-count {
 	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
 	font-weight: bold;
 	font-size: 18px;
