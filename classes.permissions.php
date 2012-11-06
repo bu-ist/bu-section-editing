@@ -422,11 +422,17 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			$p['metadata']['post_id']
 			);
 
+		// Perm actions button
+		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
+		$perm_label = $perm_state == 'allowed' ? 'Allow' : 'Deny';
+		$button = sprintf("<button class=\"edit-perms %s\">%s</button>", $perm_state, $perm_label );
+
 		// Anchor
-		$a = sprintf( "<a href=\"#\">%s<span class=\"title\">%s</span>%s</a>",
+		$a = sprintf( "<a href=\"#\">%s<span class=\"title\">%s</span>%s%s</a>",
 			$icon,
 			$p['data']['title'],
-			$meta
+			$meta,
+			$button
 		 );
 
 		// Post list item
