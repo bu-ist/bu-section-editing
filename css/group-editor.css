@@ -248,7 +248,6 @@
 }
 
 .perm-list.flat li {
-	display: block;
 	padding: 10px 15px;
 	border-top: 1px solid #dfdfdf;
 	margin: 0;
@@ -259,7 +258,7 @@
 }
 
 #perm-panel-container .perm-list input[type="checkbox"] {
-	margin-right: 10px;
+	margin-right: 12px;
 }
 
 /* Bulk Edit */
