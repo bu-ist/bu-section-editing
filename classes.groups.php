@@ -342,7 +342,11 @@ class BU_Edit_Groups {
 		// Maybe filter by post type and status
 		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			$post_type_clause = "AND post_type = '$post_type' ";
+			if( $post_type == 'page' ) {
+				$post_type_clause = "AND post_type IN ('page','link') ";
+			} else {
+				$post_type_clause = "AND post_type = '$post_type' ";
+			}
 
 		}
 
