@@ -448,7 +448,7 @@
 }
 
 #group-stats-widget .member-count,
-#group-stats-widget .perm-stats-count {
+#group-stats-widget .perm-stat-count {
 	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
 	font-weight: bold;
 	font-size: 18px;
