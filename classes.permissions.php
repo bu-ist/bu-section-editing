@@ -494,6 +494,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		// We don't need these
 		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_exclude' );
+		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_external_links' );
 
 		// But we definitely need these
 		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
