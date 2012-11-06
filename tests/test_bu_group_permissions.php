@@ -4,7 +4,7 @@ require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
 
 /**
  * Integration tests for group permissions operations
- * 
+ *
  * @group bu-section-editing
  **/
 class Test_BU_Group_Permissions extends WP_UnitTestCase {
@@ -29,8 +29,8 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 		$this->assertTrue( empty( $allowedpages ) );
 
 		$perms = array(
-			'post' => array_combine( $posts, array( 'allowed', 'allowed', 'allowed' ) ),
-			'page' => array_combine( $pages, array( 'allowed', 'allowed', 'allowed', 'allowed','allowed') )
+			'post' => array( 'allowed' => $posts ),
+			'page' => array( 'allowed' => $pages )
 			);
 
 		BU_Group_Permissions::update_group_permissions( $group->id, $perms );
@@ -51,8 +51,8 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 		$pages = $this->factory->post->create_many(2, array('post_type' => 'page'));
 
 		$perms = array(
-			'post' => array_combine( $posts, array( 'allowed', 'allowed' ) ),
-			'page' => array_combine( $pages, array( 'allowed', 'allowed' ) )
+			'post' => array( 'allowed', $posts ),
+			'page' => array( 'allowed', $pages )
 			);
 
 		$group = $this->factory->group->create( array( 'perms' => $perms ) );
@@ -81,8 +81,8 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 		$pages = $this->factory->post->create_many(2, array('post_type' => 'page'));
 
 		$perms = array(
-			'post' => array_combine( $posts, array( 'allowed', '' ) ),
-			'page' => array_combine( $pages, array( '', 'allowed' ) )
+			'post' => array( 'allowed' => array( $posts[0] ) ),
+			'page' => array( 'allowed' => array( $pages[1] ) )
 			);
 
 		$group = $this->factory->group->create( array( 'perms' => $perms ) );

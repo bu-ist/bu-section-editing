@@ -1,6 +1,6 @@
 <?php
 
-/** 
+/**
  * @group bu-section-editing
  **/
 class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
@@ -85,7 +85,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
-		
+
 		$post_id = $this->pages['section_editor-draft']->ID;
 		$this->assertTrue(current_user_can('edit_page', $post_id));
 		$post_id = $this->pages['top-level1']->ID;
@@ -93,13 +93,13 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$post_id = $this->posts['draft1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
-		
+
 		$post_id = $this->posts['publish1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
 
 		$post_id = $this->posts['nogroups-draft']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
-		
+
 		$post_id = $this->posts['nogroups-published']->ID;
 		$this->assertFalse(current_user_can('edit_post', $post_id));
 	}
@@ -202,19 +202,19 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$perms = array();
 
 		if(is_array($this->pages)) {
-			$perms['page'] = array();
+			$perms['page']['allowed'] = array();
 			foreach($this->pages as $page) {
 				if(isset($page->groups) && in_array($group_name, $page->groups)) {
-					$perms['page'][$page->ID] = 'allowed';
+					$perms['page']['allowed'][] = $page->ID;
 				}
 			}
 		}
 
 		if(is_array($this->posts)) {
-			$perms['post'] = array();
+			$perms['post']['allowed'] = array();
 			foreach($this->posts as $post) {
 				if(isset($post->groups) && in_array($group_name, $post->groups)) {
-					$perms['post'][$post->ID] = 'allowed';
+					$perms['post']['allowed'][] = $post->ID;
 				}
 			}
 		}

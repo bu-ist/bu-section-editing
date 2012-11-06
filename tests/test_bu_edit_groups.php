@@ -4,9 +4,9 @@ require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
 
 /**
  * Integration tests for BU_Edit_Groups controller class
- * 
+ *
  * @todo investigate using mock objects here
- * 
+ *
  * @group bu-section-editing
  **/
 class Test_BU_Edit_Groups extends WP_UnitTestCase {
@@ -31,7 +31,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test group controller instance creation
-	 */ 
+	 */
 	function test_get_instance() {
 
 		$gc = BU_Edit_Groups::get_instance();
@@ -43,7 +43,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test adding of group
-	 */ 
+	 */
 	function test_add_and_get_group() {
 
 		$data = $this->_generate_group_data();
@@ -84,7 +84,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test updating of group
-	 */ 
+	 */
 	function test_update_and_get_group() {
 
 		// Objects are passed by reference, so clone to maintain original data
@@ -121,7 +121,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test loading of group
-	 */ 
+	 */
 	function test_load_group() {
 
 		$gc = BU_Edit_Groups::get_instance();
@@ -146,7 +146,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test saving of group
-	 */ 
+	 */
 	function test_save_group() {
 
 		// Create group object
@@ -179,7 +179,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test deletion of group
-	 */ 
+	 */
 	function test_delete_group() {
 
 		// Create group object
@@ -218,7 +218,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Assert that find groups for user returns the correct results
-	 */ 
+	 */
 	function test_find_groups_for_user() {
 
 		$user = $this->factory->user->create();
@@ -242,7 +242,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * Test if a user exists in an array of groups
-	 */ 
+	 */
 	function test_has_user() {
 
 		$user_in = $this->factory->user->create();
@@ -258,7 +258,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	/**
 	 * @todo
-	 */ 
+	 */
 	function test_get_allowed_post_count() {
 
 		// Configure state
@@ -273,14 +273,14 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 		// Group one - 3 allowed posts, 0 allowed pages (3 draft pages)
 		$g1_perms = array(
-			'post' => array_combine( $posts, array('allowed','allowed','allowed')),
+			'post' => array( 'allowed' => $posts )
 			);
 
 		$g1 = $this->factory->group->create( array( 'perms' => $g1_perms, 'users' => array( $u1, $u2 ) ) );
 
 		// Group two - 0 allowed posts, 3 allowed pages (3 draft pages)
 		$g2_perms = array(
-			'page' => array_combine( $pages, array('allowed','allowed','allowed'))
+			'page' => array( 'allowed' => $pages )
 			);
 
 		$g2 = $this->factory->group->create( array( 'perms' => $g2_perms, 'users' => array( $u2 ) ) );
@@ -315,7 +315,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$count_post_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'post', 'include_unpublished' => true ) );
 		$count_page_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'post_type' => 'page', 'include_unpublished' => true ) );
 		$count_all_draft_inc_g1 = $gc->get_allowed_post_count( array( 'group' => $g1->id, 'include_unpublished' => true ) );
-		
+
 		$count_all_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id ) );
 		$count_post_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'post' ) );
 		$count_page_g2 = $gc->get_allowed_post_count( array( 'group' => $g2->id, 'post_type' => 'page'  ) );

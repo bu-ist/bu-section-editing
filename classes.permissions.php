@@ -8,7 +8,7 @@ class BU_Group_Permissions {
 
 	/**
 	 * Allows developers to opt-out for section editing feature
-	 */ 
+	 */
 	public static function get_supported_post_types( $output = 'objects') {
 
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
@@ -28,7 +28,7 @@ class BU_Group_Permissions {
 						break;
 				}
 			}
-				
+
 		}
 
 		return $supported_post_types;
@@ -37,7 +37,7 @@ class BU_Group_Permissions {
 
 	/**
 	 * Relocated from BU_Section_Capabilities in classes.capabilities.php
-	 */ 
+	 */
 	public static function can_edit_section( WP_User $user, $post_id ) {
 
 		$user_id = $user->ID;
@@ -69,29 +69,30 @@ class BU_Group_Permissions {
 
 	/**
 	 * Update permissions for a group
-	 * 
+	 *
 	 * @param int $group_id ID of group to modify ACL for
 	 * @param array $permissions Permissions, as an associative array indexed by post type
-	 */ 
+	 */
 	public static function update_group_permissions( $group_id, $permissions ) {
 		global $wpdb;
 
 		if( ! is_array( $permissions ) )
 			return false;
 
-		foreach( $permissions as $post_type => $new_perms ) {
+		foreach( $permissions as $post_type => $ids_by_status ) {
 
-			if( ! is_array( $new_perms ) ) {
-				error_log( "Unexpected value found while updating permissions: $new_perms" );
+			if( ! is_array( $ids_by_status ) ) {
+				error_log( "Unexpected value found while updating permissions: $ids_by_status" );
 				continue;
 			}
 
 			// Incoming allowed posts
-			$allowed_ids = array_keys( $permissions[$post_type], 'allowed' );
+			$allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
 
 			if( ! empty( $allowed_ids ) ) {
 
-				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+				// Make sure we don't add allowed meta twice
+				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
 					$wpdb->postmeta,
 					implode( ',', $allowed_ids ),
 					self::META_KEY,
@@ -104,18 +105,17 @@ class BU_Group_Permissions {
 				foreach( $additions as $post_id ) {
 
 					add_post_meta( $post_id, self::META_KEY, $group_id );
-
 				}
 
 			}
 
 			// Incoming restricted posts
-			$denied_ids = array_keys( $permissions[$post_type], 'denied' );
+			$denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
 
 			if( ! empty( $denied_ids ) ) {
 
 				// Select meta_id's for removal based on incoming posts
-				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'", 
+				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
 					$wpdb->postmeta,
 					implode( ',', $denied_ids ),
 					self::META_KEY,
@@ -143,7 +143,7 @@ class BU_Group_Permissions {
 				}
 
 			}
-			
+
 		}
 
 	}
@@ -175,23 +175,23 @@ class BU_Group_Permissions {
 
 	/**
 	 * Can this group edit a particular post
-	 */ 
+	 */
 	public static function group_can_edit( $group_id, $post_id ) {
-		
+
 		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
 
 		return in_array( $group_id, $allowed_groups ) ? true : false;
-	
+
 	}
 
 	/**
 	 * Query for all posts that have section editing permissions assigned for this group
-	 * 
+	 *
 	 * @uses WP_Query
 	 *
 	 * @param array $args an optional array of WP_Query arguments, will override defaults
 	 * @return array an array of posts that have section editing permissions for this group
-	 */ 
+	 */
 	public function get_allowed_posts_for_group( $group_id, $args = array() ) {
 
 		$defaults = array(
@@ -212,7 +212,7 @@ class BU_Group_Permissions {
 
 /**
  * Abstract base class for post permissions editor
- */ 
+ */
 abstract class BU_Permissions_Editor {
 
 	protected $group;
@@ -228,7 +228,7 @@ abstract class BU_Permissions_Editor {
 
 	/**
 	 * $group can be either a BU_Edit_Group object or a group ID
-	 */ 
+	 */
 	function __construct( $group, $post_type ) {
 
 		if( is_numeric( $group ) ) {
@@ -236,7 +236,7 @@ abstract class BU_Permissions_Editor {
 			$group_id = intval( $group );
 
 			$controller = BU_Edit_Groups::get_instance();
-			
+
 			$this->group = $controller->get( $group_id );
 
 			// Could be a new group
@@ -287,7 +287,6 @@ abstract class BU_Permissions_Editor {
 	}
 
 	abstract public function get_posts( $post_id = 0 );
-	abstract public function filter_posts( $posts );
 	abstract public function display();
 
 	abstract protected function load();
@@ -298,15 +297,15 @@ abstract class BU_Permissions_Editor {
 
 /**
  * Permissions editor for flat post types
- */ 
+ */
 class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	protected function load() {
 
-		// Load user setting for posts per page on the manage groups screen 
+		// Load user setting for posts per page on the manage groups screen
 		$user = get_current_user_id();
 		$per_page = get_user_meta( $user, BU_Groups_Admin::POSTS_PER_PAGE_OPTION, true );
-		
+
 		if ( empty ( $per_page) || $per_page < 1 ) {
 			// get the default value if none is set
 			$per_page = 10;
@@ -314,13 +313,11 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		$this->per_page = $per_page;
 
-		add_filter( 'the_posts', array( &$this, 'filter_posts' ) );
-
 	}
 
 	/**
 	 * Display posts using designated output format
-	 */ 
+	 */
 	public function display() {
 
 		switch( $this->format ) {
@@ -339,7 +336,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Get posts intended for display by permissions editors
-	 */ 
+	 */
 	public function get_posts( $post_id = 0 ) {
 
 		if( $this->format == 'json' )
@@ -383,22 +380,22 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 			if( $this->format == 'html' )
 				$posts .= "</ul>";
-			
+
 		} else {
 			$labels = get_post_type_object( $this->post_type )->labels;
 			$posts = sprintf('<ul class="perm-list flat"><li><p>%s</p></li></ul>', $labels->not_found );
 		}
 
 		return $posts;
-		
+
 	}
 
 	/**
 	 * Takes an array of post data formatted for permissions editor output,
 	 * converts to HTML markup
-	 * 
+	 *
 	 * The format of this markup lines up with default jstree markup
-	 */ 
+	 */
 	public function get_post_markup( $p ) {
 
 		// Permission status
@@ -426,18 +423,19 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			);
 
 		// Anchor
-		$a = sprintf( "<a href=\"#\">%s %s%s</a>",
+		$a = sprintf( "<a href=\"#\">%s<span class=\"title\">%s</span>%s</a>",
 			$icon,
 			$p['data']['title'],
 			$meta
 		 );
 
 		// Post list item
-		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-perm=\"%s\">%s %s</li>\n", 
+		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s</li>\n",
 			$p['attr']['id'],
 			$p['attr']['class'],
 			$p['attr']['rel'],
-			$p['attr']['data-perm'],
+			json_encode($p['metadata']['editable']),
+			json_encode($p['metadata']['editable-original']),
 			$checkbox,
 			$a
 			);
@@ -448,30 +446,32 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Format a single post for display by the permissions editor
-	 * 
+	 *
 	 * Data structure is jstree-friendly
-	 * 
+	 *
 	 * @todo merge with hierarchical format_post logic
-	 */ 
+	 */
 	public function format_post( $post, $has_children = false ) {
 
-		$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
+		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
+		$perm = $editable ? 'allowed' : 'denied';
 
 		$p = array(
-			'attr' => array( 
-				'id' => esc_attr( 'p' . $post->ID ), 
-				'rel' => esc_attr( $post->perm ),
-				'class' => '',
-				'data-perm' => esc_attr( $post->perm )
+			'attr' => array(
+				'id' => esc_attr( 'p' . $post->ID ),
+				'rel' => esc_attr( $perm ),
+				'class' => ''
 			),
 			'data' => array(
-				'title' => esc_html( $title ),
+				'title' => esc_html( $post->post_title ),
 				'icon' => 'flat-perm-icon'
 			),
 			'metadata' => array(
 				'post_id' => $post->ID,
 				'post_date' => date( get_option('date_format'), strtotime( $post->post_date ) ),
-				'post_status' => $post->post_status
+				'post_status' => $post->post_status,
+				'editable' => $editable,
+				'editable-original' => $editable
 				)
 			);
 
@@ -479,26 +479,13 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 	}
 
-	/**
-	 * Add permissions fields to post object
-	 */ 
-	public function filter_posts( $posts ) {
-
-		foreach( $posts as $post ) {
-			$post->perm = ( BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID ) ) ? 'allowed' : 'denied';
-		}
-
-		return $posts;
-
-	}
-
 }
 
 /**
- * Permissions editor for hierarchical post types 
- * 
+ * Permissions editor for hierarchical post types
+ *
  * @uses (depends on) BU Navigation library
- */ 
+ */
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	private $child_of = 0;
@@ -518,9 +505,9 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Custom query for hierarchical posts
-	 * 
+	 *
 	 * @uses BU Navigation library
-	 */ 
+	 */
 	public function query( $args = array() ) {
 
 		$defaults = array(
@@ -548,7 +535,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Get post IDs for this section
 		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);
-		
+
 		// Fetch posts
 		$page_args = array(
 			'sections' => $sections,
@@ -558,16 +545,16 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 		$root_pages = bu_navigation_get_pages( $page_args );
 		$this->posts = bu_navigation_pages_by_parent($root_pages);
-	
+
 	}
 
 	/**
 	 * Display posts using designated output format
-	 */ 
+	 */
 	public function display() {
 
 		switch( $this->format ) {
-			
+
 			case 'json':
 				$posts = $this->get_posts( $this->child_of );
 				echo json_encode( $posts );
@@ -576,14 +563,14 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			case 'html': default:
 				echo $this->get_posts( $this->child_of );
 				break;
-		
+
 		}
 
 	}
 
 	/**
 	 * Get posts intended for display by permissions editors
-	 */ 
+	 */
 	public function get_posts( $post_id = 0 ) {
 
 		if( array_key_exists( $post_id, $this->posts ) && ( count( $this->posts[$post_id] ) > 0 ) )
@@ -623,15 +610,15 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 					$post_id = $post->ID;
 					$descendents = $this->get_posts( $post_id );
-			
-					if( !empty( $descendents ) ) {	
+
+					if( !empty( $descendents ) ) {
 						$p['children'] = $descendents;
 					}
 
 				} else {
-
+					$perm = $post->editable ? 'allowed' : 'denied';
 					// Let users known descendents have not yet been loaded
-					$p['attr']['rel'] = $post->perm . '-desc-unknown';
+					$p['attr']['rel'] = $perm . '-desc-unknown';
 
 				}
 
@@ -659,20 +646,21 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	/**
 	 * Takes an array of post data formatted for permissions editor output,
 	 * converts to HTML markup
-	 * 
+	 *
 	 * The format of this markup lines up with default jstree markup
-	 */ 
+	 */
 	protected function get_post_markup( $p ) {
 
 		$a = sprintf('<a href="#">%s</a>', $p['data'] );
 
 		$descendents = !empty($p['children']) ? sprintf("<ul>%s</ul>\n", $p['children'] ) : '';
 
-		$markup = sprintf("<li id=\"%s\" class=\"%s\" rel=\"%s\" data-perm=\"%s\">%s %s</li>\n",
+		$markup = sprintf("<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s %s</li>\n",
 			$p['attr']['id'],
 			$p['attr']['class'],
 			$p['attr']['rel'],
-			$p['attr']['data-perm'],
+			$p['metadata']['editable'],
+			$p['metadata']['editable-original'],
 			$a,
 			$descendents
 			);
@@ -682,25 +670,29 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Format a single post for display by the permissions editor
-	 * 
+	 *
 	 * Data structure is jstree-friendly
-	 * 
+	 *
 	 * @todo merge with flat format_post logic
-	 */ 
+	 */
 	protected function format_post( $post, $has_children = false ) {
 
 		$title = isset( $post->navigation_label ) ? $post->navigation_label : $post->post_title;
 		$classes = ( $has_children ) ? 'jstree-closed' : 'jstree-default';
+		$perm = $post->editable ? 'allowed' : 'denied';
 
 		$p = array(
-			'attr' => array( 
-				'id' => esc_attr( 'p' . $post->ID ), 
-				'rel' => esc_attr( $post->perm ),
-				'class' => esc_attr( $classes ),
-				'data-perm' => esc_attr( $post->perm )
+			'attr' => array(
+				'id' => esc_attr( 'p' . $post->ID ),
+				'rel' => esc_attr( $perm ),
+				'class' => esc_attr( $classes )
 			),
 			'data' => array(
 				'title' => esc_html( $title )
+				),
+			'metadata' => array(
+				'editable' => $post->editable,
+				'editable-original' => $post->editable
 				),
 			'children' => null
 			);
@@ -714,7 +706,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Add custom section editable properties to the post objects returned by bu_navigation_get_pages()
-	 */ 
+	 */
 	public function filter_posts( $posts ) {
 		global $wpdb;
 
@@ -729,13 +721,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			// Append permissions to post object
 			foreach( $posts as $post ) {
 
-				$post->perm = 'denied';
+				$post->editable = false;
 
 				if( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[$post->ID];
 
 					if( $perm->meta_value === (string) $this->group->id ) {
-						$post->perm = 'allowed';
+						$post->editable = true;
 					}
 
 				}
@@ -750,7 +742,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 	/**
 	 * Get only the post fields that we need
-	 */ 
+	 */
 	public function filter_post_fields( $fields ) {
 
 		$fields = array(

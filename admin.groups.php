@@ -14,7 +14,7 @@ class BU_Groups_Admin {
 	const NEW_GROUP_PAGE = 'admin.php?page=buse_new_group';
 
 	const EDITABLE_POST_STATUS = 'section_editable';
-	
+
 	const MANAGE_USERS_COLUMN = 'section_groups';
 	const MANAGE_USERS_MAX_NAME_LENGTH = 60;
 
@@ -39,7 +39,7 @@ class BU_Groups_Admin {
 
 		add_filter( 'manage_users_columns', array( __CLASS__, 'add_manage_users_column' ) );
 		add_filter( 'manage_users_custom_column', array( __CLASS__, 'manage_users_group_column' ), 10, 3 );
-		
+
 		// WP hooks that trigger group related state changes
 		add_action( 'transition_post_status', array( __CLASS__, 'transition_post_status' ), 10, 3 );
 		add_action( 'set_user_role', array( __CLASS__, 'user_role_switched'), 10, 2 );
@@ -56,7 +56,7 @@ class BU_Groups_Admin {
 
 	/**
 	 * Register a custom "Section Groups" column for the manage users table
-	 */ 
+	 */
 	public static function add_manage_users_column( $columns ) {
 
 		$columns[self::MANAGE_USERS_COLUMN] = 'Section Groups';
@@ -67,7 +67,7 @@ class BU_Groups_Admin {
 
 	/**
 	 * Custom "Section Groups" column for the manage users table
-	 */ 
+	 */
 	public static function manage_users_group_column( $content, $column, $user_id ) {
 
 		if( $column == self::MANAGE_USERS_COLUMN ) {
@@ -77,7 +77,7 @@ class BU_Groups_Admin {
 			$groups = $gc->find_groups_for_user( $user_id );
 
 			if( empty( $groups ) ) {
-				
+
 				$content = 'None';
 
 			} else {
@@ -111,7 +111,7 @@ class BU_Groups_Admin {
 						admin_url(self::MANAGE_GROUPS_PAGE),
 						$truncated_count );
 				}
-			
+
 			}
 
 		}
@@ -192,9 +192,9 @@ class BU_Groups_Admin {
 
 	/**
 	 * Remove group members when user role has switched to role that cannot belong in section groups
-	 * 
+	 *
 	 * @todo make sure this works in 3.1.4
-	 */ 
+	 */
 	public static function user_role_switched( $user_id, $newrole ) {
 
 		$role = get_role( $newrole );
@@ -218,7 +218,7 @@ class BU_Groups_Admin {
 
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
-	 * 
+	 *
 	 * register_post_status API/admin UI functionality is limited as of 3.5
 	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
@@ -331,10 +331,10 @@ class BU_Groups_Admin {
 
 	/**
 	 * Modify the WHERE clause to include drafts and pending posts for editable queries
-	 * 
+	 *
 	 * Only runs for hierarchical post types -- flat post types can set explicity
 	 * permissions on draft/pending posts so this is unecessary for them.
-	 */ 
+	 */
 	public static function editable_where_clause( $where ) {
 		global $wpdb;
 
@@ -358,7 +358,7 @@ class BU_Groups_Admin {
 			return;
 
 		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
-		
+
 		if( in_array( $hook, self::$manage_groups_hooks ) ) {
 
 			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
@@ -390,12 +390,12 @@ class BU_Groups_Admin {
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
 				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
 				'usersUrl' => admin_url('users.php'),
-				'userNewUrl' => admin_url('user-new.php')	
+				'userNewUrl' => admin_url('user-new.php')
 			);
-			// Let the tree view class handle enqueing	
+			// Let the tree view class handle enqueing
 			$treeview = new BU_Navigation_Tree_View( 'buse_group_editor', $script_context );
 			$treeview->enqueue_script( 'group-editor' );
-			
+
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), array(), '0.3' );
 
 		}
@@ -422,8 +422,8 @@ class BU_Groups_Admin {
 			'',	// icon
 			73	// position
 			);
-		
-		add_submenu_page( 
+
+		add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
 			'Section Groups',
 			'All Groups',
@@ -432,13 +432,13 @@ class BU_Groups_Admin {
 			array( 'BU_Groups_Admin', 'manage_groups_screen' )
 			);
 
-		$groups_edit = add_submenu_page( 
+		$groups_edit = add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
 			'Edit Section Group',
 			'Add New',
 			'promote_users',
 			self::NEW_GROUP_SLUG,
-			array( 'BU_Groups_Admin', 'manage_groups_screen' ) 
+			array( 'BU_Groups_Admin', 'manage_groups_screen' )
 			);
 
 		// Keep track of hooks
@@ -454,9 +454,9 @@ class BU_Groups_Admin {
 
 	/**
 	 * Display errors and notices that occur during section group management
-	 * 
+	 *
 	 * @hook admin_notices
-	 */ 
+	 */
 	public static function admin_notices() {
 
 		$notices = self::get_notices();
@@ -538,7 +538,7 @@ MSG;
 
 	/**
 	 * Handle form submissions to group management pages
-	 * 
+	 *
 	 * Also handles adding of admin notices and screen options
 	 */
 	static function load_manage_groups() {
@@ -601,16 +601,16 @@ MSG;
 						break;
 
 				}
-				
+
 				// Redirect on successful save
 				$args = array( 'id' => $group_id, 'status' => $status, 'tab' => $tab, 'perm_panel' => $perm_panel );
 				$redirect_url = self::manage_groups_url( 'edit', $args );
 
 			} else {
-				
+
 				// Redirect with validation errors
 				$redirect_url = add_query_arg( 'status', $results['errorcode'] );
-			
+
 			}
 
 		}
@@ -637,11 +637,11 @@ MSG;
 		// Add screen option when adding or editing a group
 		if( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
 
-			add_screen_option( 'per_page', array( 
+			add_screen_option( 'per_page', array(
 				'label' => 'Posts per page',
 				'default' => 10,
-				'option' => self::POSTS_PER_PAGE_OPTION 
-				) 
+				'option' => self::POSTS_PER_PAGE_OPTION
+				)
 			);
 
 		}
@@ -650,10 +650,10 @@ MSG;
 
 	/**
 	 * Sanitizes and validates edit group form submission data
-	 * 
+	 *
 	 * @param array $group_data an array of unclean group data
 	 * @return array a custom results array depending on validation
-	 */ 
+	 */
 	static function clean_group_form( $group_data ) {
 
 		// if no users are set, array key for users won't exist
@@ -675,21 +675,8 @@ MSG;
 
 		foreach( $post_types as $post_type ) {
 
-			// flat permission type use checkboxes, need to add empty array for post type
-			if( ! isset( $group_data['perms'][$post_type] ) )
-				$group_data['perms'][$post_type] = array();
-
-			$data = $group_data['perms'][$post_type];
-
-			if( is_string( $data ) ) {
-				$post_ids = json_decode( stripslashes( $data ), true );
-
-				if( is_null( $post_ids ) )
-					$post_ids = array();
-
-				$group_data['perms'][$post_type] = $post_ids;
-
-			}
+			$value = $group_data['perms'][$post_type];
+			$group_data['perms'][$post_type] = json_decode(stripslashes($value),true);
 
 		}
 
@@ -720,11 +707,11 @@ MSG;
 			case self::MANAGE_GROUPS_SLUG:
 
 				if( $group_id > 0 ) {
-				
+
 					$group = $groups->get( $group_id );
 					$page_title = __( 'Edit Section Group', BU_Section_Editing_Plugin::TEXT_DOMAIN );
 					$template_path = 'interface/edit-group.php';
-				
+
 				} else {
 
 					$group_list = new BU_Groups_List();
@@ -748,7 +735,7 @@ MSG;
 
 	/**
 	 * Store custom "Posts per page" screen option for manage groups page in user meta
-	 */ 
+	 */
 	public function manage_groups_set_screen_option( $status, $option, $value ) {
 
 		if ( self::POSTS_PER_PAGE_OPTION == $option ) return $value;
@@ -768,7 +755,7 @@ MSG;
 		$args = array();
 
 		switch( $action ) {
-			
+
 			case 'add':
 				$page = admin_url( self::NEW_GROUP_PAGE );
 				break;
@@ -803,7 +790,7 @@ MSG;
 			);
 
 		extract( wp_parse_args( $args, $defaults ) );
-		
+
 		if( ! is_null( $post_type ) && $pto = get_post_type_object( $post_type ) ) $content_types = array( $pto );
 		else  $content_types =  BU_Group_Permissions::get_supported_post_types();
 

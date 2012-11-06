@@ -25,7 +25,6 @@ if((typeof bu === 'undefined') ||
 
 			// Remove crrm and dnd plugins
 
-
 			// Custom tree types for perm editor (icon asset config is temporary)
 			d.treeConfig['types'] = {
 				"types" : {
@@ -101,6 +100,9 @@ if((typeof bu === 'undefined') ||
 						// @todo handle error
 					}
 			};
+
+			// Interferes with icon state correction with lazy load
+			d.treeConfig['json_data']['progressive_render'] = false;
 
 			return that;
 
@@ -565,11 +567,10 @@ jQuery(document).ready(function($){
 
 				if( action == 'allowed' || action == 'denied' ) {
 
-					selections.each( function() {
+					selections.each(function () {
 						var $post = $(this).parents('li');
-						$post.attr('rel', action );
-						setPostPermissions( action, $post, $editor );
-
+						var isEditable = action == 'allowed' ? true : false;
+						setPostPermissions($post, isEditable, $editor);
 					});
 
 				}
@@ -577,9 +578,9 @@ jQuery(document).ready(function($){
 			}
 
 			// Reset bulk actions to default state
-			$panel.find('.bulk-edit-select-all').attr('checked',false );
+			$panel.find('.bulk-edit-select-all').attr('checked', false);
 			$selector.val('none');
-			selections.attr( 'checked', false );
+			selections.attr('checked', false);
 
 		});
 
@@ -746,21 +747,24 @@ jQuery(document).ready(function($){
 
 		// Event binding
 		$editor
-			.bind( 'posts_loaded.buse', function(e, data ) {
+			.bind('posts_loaded.buse', function (e, data) {
 
 				// Merge incoming server state with pending edits
-				var $pending = $(this).siblings('input.buse-edits').first();
+				var edits = $editor.data('perm-edits') || {"allowed":[], "denied": []},
+					i, post_id, $p;
 
-				if( $pending.val().length === 0 )
-					return;
-
-				var edits = JSON.parse($pending.val());
-
-				for( post_id in edits ) {
-					var $p = $editor.find('#p' + post_id );
-
-					if( $p.length ) {
-						$p.attr( 'rel', edits[post_id] );
+				for (i = 0; i < edits["allowed"].length; i = i + 1) {
+					post_id = edits["allowed"][i];
+					$p = $editor.find('#p' + post_id );
+					if ($p.length) {
+						$p.attr('rel', 'allowed');
+					}
+				}
+				for (i = 0; i < edits["denied"].length; i = i + 1) {
+					post_id = edits["denied"][i];
+					$p = $editor.find('#p' + post_id);
+					if ($p.length) {
+						$p.attr('rel', 'denied');
 					}
 				}
 
@@ -778,10 +782,10 @@ jQuery(document).ready(function($){
 				$editor.find('.perm-item-selected').each(function(){
 
 					var $post = $(this);
-					var state = toggleState( $post );
+					var isEditable = $post.data('editable') ? false : true;
 
 					// Update permissions
-					setPostPermissions( state, $post, $editor );
+					setPostPermissions( $post, isEditable, $editor );
 
 					// Deselect
 					$(this).removeClass('perm-item-selected');
@@ -801,7 +805,7 @@ jQuery(document).ready(function($){
 	var attachFlatEditorHandlers = function( $editor ) {
 
 		// Post selection
-		$editor.delegate( 'a', 'click', function(e) {
+		$editor.delegate( 'a', 'click', function (e) {
 
 			e.preventDefault();
 			e.stopPropagation();
@@ -810,7 +814,7 @@ jQuery(document).ready(function($){
 			var $post = $(this).parent('li').first();
 
 			// Remove previous selections
-			$post.siblings('li.perm-item-selected').each( function() {
+			$post.siblings('li.perm-item-selected').each( function () {
 
 				$(this).removeClass('perm-item-selected');
 
@@ -826,7 +830,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Deselect all on click within parent perm panel
-		$editor.closest('.perm-panel').bind( 'click', function(e) {
+		$editor.closest('.perm-panel').bind( 'click', function (e) {
 
 			$editor.trigger( 'deselect_all.buse' );
 
@@ -882,13 +886,19 @@ jQuery(document).ready(function($){
 			})
 			.bind( 'overlay_clicked.buse', function(e) {
 
-				$editor.jstree( 'get_selected' ).each( function(){
+				$editor.jstree( 'get_selected' ).each(function (){
 
 					var $post = $(this);
-					var state = toggleState( $post );
+					var isEditable = $post.data('editable') ? false : true;
 
-					// Update permissions
-					setPostPermissions( state, $(this), $editor );
+					if ($post.hasClass('jstree-closed')) {
+
+						$editor.jstree( 'open_all', $post );
+
+					}
+
+					// Diff the changes
+					setPostPermissions( $post, isEditable, $editor );
 
 					// Deselect
 					$editor.jstree('deselect_node', $post );
@@ -1002,114 +1012,18 @@ jQuery(document).ready(function($){
 	/**
 	 * The user has allowed/denied a specific node
 	 */
-	var setPostPermissions = function( state, $post, $editor ) {
+	var setPostPermissions = function( $post, isEditable, $editor ) {
 
-		// Set visual state
-		$post.attr( 'rel', state );
+		var post_type = $editor.data('post-type');
+		var edits = $editor.data('perm-edits') || {'allowed':[], 'denied':[]};
+
+		// Diff the changes
+		processUpdatesForPost( $post, isEditable, edits );
 
 		// Hierarchical post types
 		if( $editor.hasClass('hierarchical') ) {
 
-			var $jstree = $.jstree._reference( $editor );
-
-			if( $post.hasClass('jstree-closed') ) {
-
-				// Need to load node first
-				$jstree.open_node( $post, function() {
-
-					// Open all children to expose permissions cascade
-					$jstree.open_all( $post );
-
-					// Diff the changes
-					processUpdatesForPost( state, $post, $editor );
-
-				});
-
-			} else {
-
-					// Diff the changes
-					processUpdatesForPost( state, $post, $editor );
-
-			}
-
-		}
-
- 		// Flat post types
-		if( $editor.hasClass('flat') ) {
-
-			// Diff the changes
-			processUpdatesForPost( state, $post, $editor );
-
-		}
-
-	}
-
-	/**
-	 * Returns the toggled state for the given node
-	 */
-	var toggleState = function( $node ) {
-
-		var previous = $node.data('perm');
-		var state = '';
-
-		if( previous == 'allowed' ) return 'denied';
-		if( previous == 'denied' ) return 'allowed';
-
-		return 'denied';
-
-	}
-
-	/**
-	 * Update post permissions state and add to pending edits
-	 */
-	var processUpdatesForPost = function( state, $post, $editor ) {
-
-		var id = $post.attr('id').substr(1);
-		var post_type = $editor.data('post-type');
-
-		// Track changes
-		var edits = getExistingEdits( post_type );
-		var count = 0;
-
-		// Set our persistent data attr first
-		prev_state = $post.data('perm');
-		$post.data('perm',state);
-		edits[id] = state;
-
-		if( prev_state != state ) {
-			if( state == 'allowed' ) count +=1;
-			else count -= 1;
-		}
-
-		// Hierarchical post types need extra love
-		if( $editor.hasClass('hierarchical') ) {
-
-			// Fetch all children
-			var $children = $post.find('li');
-
-			// Cascade permissions
-			$children.each(function(index, child) {
-
-				var existing_perm = $(child).data('perm');
-				var child_id = $(this).attr('id').substr(1);
-
-				// Note incoming edit if state changed
-				if( existing_perm != state ) {
-
-					$(child).data('perm', state);
-					edits[child_id] = state;
-
-					if( state == 'allowed' ) count += 1;
-					else count -= 1;
-
-				}
-
-				// Change icon no matter what
-				$(child).attr('rel', state);
-
-			});
-
-			// Find root node for update post
+			// Correct icons for affected section
 			$root_post = $post.parentsUntil( '#' + $editor.attr('id'), 'li' ).last();
 
 			// Root post will be empty if we are a top-level post
@@ -1120,13 +1034,59 @@ jQuery(document).ready(function($){
 
 		}
 
-		// Save edits
-		commitEdits( edits, post_type );
+		// Update pending edits
+		$editor.data('perm-edits', edits);
 
 		// Update the stats widget counter
 		// @todo make this happen through notifications
-		updatePermStats( count, post_type );
+		updatePermStats( post_type );
+	}
 
+	/**
+	 * Update post permissions state and add to pending edits
+	 */
+	var processUpdatesForPost = function ($post, isEditable, edits ) {
+
+		var id = $post.attr('id').substr(1);
+
+		// Track changes
+		var perm = isEditable ? 'allowed' : 'denied';
+		var wasEditable = $post.data('editable-original');
+		var index;
+
+		// Update state
+		$post.data('editable', isEditable);
+		$post.attr('rel', perm);
+
+		// Update pending edits
+		if (wasEditable != isEditable) {
+
+			index = $.inArray(id, edits[perm]);
+			if (index === -1) {
+				edits[perm].push(id);
+			}
+
+		} else {
+
+			// Revert pending edits for this post
+			index = $.inArray(id, edits['allowed']);
+			if (index > -1) {
+				edits['allowed'].splice(index, 1);
+			}
+			index = $.inArray(id, edits['denied']);
+			if (index > -1) {
+				edits['denied'].splice(index, 1);
+			}
+
+		}
+
+		// Recurse if necessary
+		var $children = $post.find('> ul > li');
+
+		// Cascade permissions
+		$children.each(function () {
+			processUpdatesForPost($(this), isEditable, edits);
+		});
 	}
 
 	/**
@@ -1173,66 +1133,38 @@ jQuery(document).ready(function($){
 
 	}
 
-	/**
-	 * Retrieve pending edits for the specified post type
-	 */
-	var getExistingEdits = function( post_type ) {
-
-		// fetch existing edits
-		var $edits_field = $('#buse-edits-' + post_type );
-		var edits = $edits_field.val() || '';
-
-		// Convert to object
-		return edits ? JSON.parse(edits) : {};
-	}
-
-	/**
-	 * Merge existing edits with new ones for the specified post type
-	 */
-	var commitEdits = function( edits, post_type ) {
-
-		var $edits_field = $('#buse-edits-' + post_type );
-
-		// Update input
-		$edits_field.val( JSON.stringify(edits) );
-
-	}
-
 	// ____________________ PERM STATS ______________________
 
 	/**
 	 * Stats widget -- permissions count
 	 */
-	var updatePermStats = function( count, post_type ) {
+	var updatePermStats = function( post_type ) {
 
-		var $container = $('#group-stats-permissions'),
-			$stats_el = $('#' + post_type + '-stats'),
-			$diff_el = $('#' + post_type + '-pending-diff'),
-			start_count = 0;
+		var $stats_el = $('#' + post_type + '-stats'),
+			$diff_el = $('.perm-stats-diff', $stats_el),
+			edits = $('#perm-editor-'+post_type).data('perm-edits');
 
-		if( $diff_el.length == 0 )
-			$diff_el = $('<span id="' + post_type + '-pending-diff" class="perm-stats-diff" data-count="0"></span>').appendTo($stats_el);
-
-		// Grab existing count
-		start_count = parseInt( $diff_el.data('count') );
-
-		// Check total count for post type with incoming edits
-		var total = start_count + count;
-		var count_str = '';
-
-		// Generate diff string
-		if( total > 0 ) {
-			count_str = ' ( +' + total +' )';
-			$diff_el.removeClass('negative').addClass('positive');
-		} else if( total < 0 ) {
-			count_str = ' ( ' + total +' )';
-			$diff_el.removeClass('positive').addClass('negative');
-		} else {
-			$diff_el.removeClass('positive negative');
+		if ($diff_el.length === 0) {
+			$diff_el = $('<span class="perm-stats-diff"></span>');
+			$stats_el.append($diff_el);
 		}
 
-		// Update diff count
-		$diff_el.data('count',total).text(count_str);
+		var stats = [], perm, sign;
+
+		for (perm in edits) {
+			if (edits[perm].length) {
+				sign = perm === 'allowed' ? '+' : '-';
+				stats.push('<span class="' + perm + '">' + sign + edits[perm].length + '</span>');
+			}
+		}
+
+		var stats_html = stats.join(', ');
+
+		if (stats_html) {
+			$diff_el.html(' (' + stats_html + ')');
+		} else {
+			$diff_el.html('');
+		}
 
 	}
 
@@ -1297,49 +1229,44 @@ jQuery(document).ready(function($){
 	/**
 	 * Logic to determine if a group has pending edits
 	 */
-	var hasEdits = function() {
+	var hasEdits = function () {
+
+		var hasEdits = false, currentName, currentMemberList, permEdits, i;
 
 		// Check name field
-		if( origName != $('#edit-group-name').val() ) {
-			//console.log('Name has changed!');
-			return true;
+		currentName = $('#edit-group-name').val();
+		if (origName != currentName) {
+			hasEdits = true;
 		}
 
-		var currentMemberList = getMembers();
-
 		// Check member list
-		if( origMemberList.length != currentMemberList.length ) {
-			//console.log('Member list has changed!');
-			return true;
+		currentMemberList = getMembers();
+		if (origMemberList.length != currentMemberList.length) {
+			hasEdits = true;
 		} else {
-			for( index in origMemberList ) {
-				if( $.inArray( origMemberList[index], currentMemberList ) == -1 ) {
-					//console.log('Member list has changed!');
-					return true;
+			for (i = 0; i < origMemberList.length; i = i + 1 ) {
+				if ($.inArray(origMemberList[i], currentMemberList) == -1) {
+					hasEdits = true;
 				}
 			}
 		}
 
-		var permEdits = false;
-
-		// Check permissions for all post types
-		$('.buse-edits').each( function(i, input) {
-			// @todo do a better check -- if json object in buse-edits only has ID's
-			// with a value of "", then actually nothing has changed...
-			if( $(input).val() ) {
-				//console.log('Permissions have changed!');
-				permEdits = true;
+		// Check permissions editors for all post types
+		$('.perm-editor').each(function () {
+			permEdits = $(this).data('perm-edits');
+			if (typeof permEdits !== 'undefined' && ( permEdits['allowed'].length || permEdits['denied'].length ) ) {
+				hasEdits = true;
 			}
 		});
 
-		return permEdits;
+		return hasEdits;
 
-	}
+	};
 
 	/**
 	 * Saving/updating does not trigger alerts
 	 */
-	$('#group-edit-form').submit(function(e){
+	$('#group-edit-form').submit(function (e){
 		window.onbeforeunload = null;
 
 		// Name
@@ -1349,6 +1276,12 @@ jQuery(document).ready(function($){
 			addNotice( 'Section editing groups require a name.');
 			return false;
 		}
+
+		// Commit pending edits for each permissions editor to input value
+		$('.perm-editor').each(function (){
+			var edits = $(this).data('perm-edits') || {'allowed': [], 'denied': []};
+			$(this).siblings('.buse-edits').val( JSON.stringify(edits) );
+		});
 
 	});
 

@@ -59,11 +59,11 @@
 }
 
 #group-member-list label {
-	display:inline;    
+	display:inline;
 }
 
 #group-member-list li a {
-	float:right;    
+	float:right;
 }
 
 #inactive-members {
@@ -87,7 +87,6 @@
 	margin-right: 3px;
 	border: none;
 	margin-left:1px;
-	color: 
 }
 
 #perm-tab-container .nav-tab.inline {
@@ -201,7 +200,7 @@
 }
 
 .perm-editor.flat.loading {
-		padding: 10px 15px;	
+	padding: 10px 15px;
 }
 
 .perm-editor.flat .loader {
@@ -249,10 +248,10 @@
 }
 
 .perm-list.flat li {
+	display: block;
 	padding: 10px 15px;
-	margin: 0;
-	position: relative;
 	border-top: 1px solid #dfdfdf;
+	margin: 0;
 }
 
 .perm-list.flat li:first-child {
@@ -306,7 +305,7 @@
 }
 
 .bulk-edit-actions select {
-	width: 150px;   
+	width: 150px;
 }
 
 .bulk-edit-close {
@@ -321,7 +320,7 @@
 }
 
 .bulk-edit-close:hover {
-	background: url('../images/close_icons.png') no-repeat 0 -24px;    
+	background: url('../images/close_icons.png') no-repeat 0 -24px;
 }
 
 /* Overlay */
@@ -332,7 +331,7 @@
 	top: 50%;
 	margin-top: -6px;
 	content: url('../images/left-arrow.png');
-	width: 10px;	
+	width: 10px;
 }
 
 .buse-overlay {
@@ -438,11 +437,11 @@
 	margin-bottom: 2px;
 }
 
-.perm-stats-diff.positive {
-	color: #0CA02A;    
+.perm-stats-diff .allowed {
+	color: #0CA02A;
 }
 
-.perm-stats-diff.negative {
+.perm-stats-diff .denied {
 	color: #E24740;
 }
 
@@ -516,24 +515,24 @@
 
 /* Panel show/hide states */
 
-.js .group-panel { 
+.js .group-panel {
 	position: absolute;
 	top: -9999px;
 	left: -9999px;
 }
 
-.group-panel.active { 
-	position: static; 
+.group-panel.active {
+	position: static;
 }
 
-.js .perm-panel { 
+.js .perm-panel {
 	position: absolute;
 	top: -9999px;
 	left: -9999px;
 }
 
-.perm-panel.active { 
-	position: relative; 
+.perm-panel.active {
+	position: relative;
 	top: auto;
 	left: auto;
 }
@@ -553,7 +552,7 @@
 }
 
 #section-group-editor label.topaligned {
-	display: block;    
+	display: block;
 }
 
 #section-group-editor label.leftaligned {
@@ -578,7 +577,7 @@
 
 /* Find user autocomplete */
 
-body.toplevel_page_buse_edit_groups .ui-autocomplete, 
+body.toplevel_page_buse_edit_groups .ui-autocomplete,
 body.section-groups_page_buse_new_group .ui-autocomplete {
 	padding: 0;
 	margin: 0;

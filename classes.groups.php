@@ -2,7 +2,7 @@
 
 /**
  * Section editor group controller
- * 
+ *
  * @todo investigate replacing in-memory groups store with cache API
  */
 class BU_Edit_Groups {
@@ -16,19 +16,19 @@ class BU_Edit_Groups {
 
 	/**
 	 * Load groups and index from db on instantiation
-	 * 
+	 *
 	 * Usage of global singleton pattern assures this method is only called once
-	 */ 
+	 */
 	protected function __construct() {
 
 		// Load group data
 		$this->load();
-		
+
 	}
 
 	/**
 	 * Generates/fetches global singleton instance
-	 */ 
+	 */
 	static public function get_instance() {
 
 		if(!isset(BU_Edit_Groups::$instance)) {
@@ -46,19 +46,19 @@ class BU_Edit_Groups {
 
 	/**
 	 * Register hidden post type for group data storage
-	 */ 
+	 */
 	static public function register_post_type() {
 
 		$args = array(
 			'label' => 'Section Groups',
 			'public' => false,
 			'publicly_queryable' => false,
-			'show_ui' => false, 
-			'show_in_menu' => false, 
+			'show_ui' => false,
+			'show_in_menu' => false,
 			'query_var' => true,
 			'rewrite' => false,
 			'capability_type' => 'post',
-			'has_archive' => false, 
+			'has_archive' => false,
 			'hierarchical' => false,
 			'menu_position' => null,
 			'can_export' => true
@@ -72,10 +72,10 @@ class BU_Edit_Groups {
 
 	/**
 	 * Returns a group by ID from internal groups array
-	 * 
+	 *
 	 * @param int $id unique ID of section group to return
 	 * @return BU_Edit_Group|bool the requested section group object, or false on bad ID
-	 */ 
+	 */
 	public function get( $id ) {
 
 		foreach( $this->groups as $group ) {
@@ -88,9 +88,9 @@ class BU_Edit_Groups {
 
 	/**
 	 * Add a group object to the internal groups array
-	 * 
+	 *
 	 * @param BU_Edit_Group $group a valid section editing group object
-	 */ 
+	 */
 	public function add( $group ) {
 
 		if( ! $group instanceof BU_Edit_Group )
@@ -102,10 +102,10 @@ class BU_Edit_Groups {
 
 	/**
 	 * Remove a group by ID from the internal groups array
-	 * 
+	 *
 	 * @param int $id unique ID of section group to delete
 	 * @return BU_Edit_Group|bool the deleted section group object on success, otherwise false
-	 */ 
+	 */
 	public function delete( $id ) {
 
 		foreach( $this->groups as $i => $g ) {
@@ -122,21 +122,21 @@ class BU_Edit_Groups {
 
 	/**
 	 * Return an array of all groups
-	 * 
+	 *
 	 * @todo *_groups methods usually touch the DB
 	 * 	- investigate renaming to get_all()
-	 * 
-	 * @return type 
+	 *
+	 * @return type
 	 */
 	public function get_groups() {
 
 		return $this->groups;
-		
+
 	}
 
 	/**
 	 * Remove all groups from internal array
-	 * 
+	 *
 	 * @todo *_groups methods usually touch the DB
 	 * 	- investigate renaming to delete_all()
 	 */
@@ -148,10 +148,10 @@ class BU_Edit_Groups {
 
 	/**
 	 * Add a new section editing group
-	 * 
+	 *
 	 * @param array $data an array of parameters for group initialization
 	 * @return BU_Edit_Group the group that was just added
-	 */ 
+	 */
 	public function add_group($data) {
 
 		// Sanitize input
@@ -162,7 +162,7 @@ class BU_Edit_Groups {
 
 		if( ! $group instanceof BU_Edit_Group )
 			return false;
-		
+
 		// Set permissions
 		if( isset( $data['perms'] ) )
 			BU_Group_Permissions::update_group_permissions( $group->id, $data['perms'] );
@@ -176,7 +176,7 @@ class BU_Edit_Groups {
 
 	/**
 	 * Update an existing section editing group
-	 * 
+	 *
 	 * @param int $id the id of the group to update
 	 * @param array $data an array of parameters with group fields to update
 	 * @return BU_Edit_Group|bool the group that was just updated or false if none existed
@@ -205,7 +205,7 @@ class BU_Edit_Groups {
 
 	/**
 	 * Delete an existing section editing group
-	 * 
+	 *
 	 * @param int $id the id of the group to delete
 	 * @return bool true on success, false on failure
 	 */
@@ -217,7 +217,7 @@ class BU_Edit_Groups {
 		if( ! $group ) {
 			error_log('Error deleting group: ' . $id );
 			return false;
-		} 
+		}
 
 		// Delete from db
 		$result = wp_delete_post( $id, true );
@@ -234,14 +234,14 @@ class BU_Edit_Groups {
 
 	/**
 	 * Returns an array of group ID's for which the specified user is a member
-	 * 
+	 *
 	 * @param int $user_id WordPress user id
 	 * @return array array of group ids for which the specified user belongs
-	 */ 
+	 */
 	public function find_groups_for_user($user_id, $output = 'objects' ) {
-		
+
 		$groups = array();
-		
+
 		foreach ($this->groups as $group) {
 			if($group->has_user($user_id)) {
 
@@ -260,10 +260,10 @@ class BU_Edit_Groups {
 	 * Returns whether or not a user exists in an array of edit groups
 	 *
 	 * @todo remove this if it unused
-	 *  
+	 *
 	 * @param array $groups an array of BU_Edit_Group objects to check
 	 * @param int $user_id WordPress user id to check
-	 */ 
+	 */
 	public function has_user($groups, $user_id) {
 
 			if( ! is_array( $groups ) )
@@ -272,7 +272,7 @@ class BU_Edit_Groups {
 			foreach($groups as $group_id) {
 
 				$group = $this->get($group_id);
-				
+
 				if( $group && $group->has_user($user_id)) {
 					return true;
 				}
@@ -290,9 +290,9 @@ class BU_Edit_Groups {
 	 * @todo possibly move to BU_Group_Permissions
 	 *
 	 * @param $args array optional args
-	 * 
+	 *
 	 * @return int allowed post count for the given post type, group or user
-	 */ 
+	 */
 	public function get_allowed_post_count( $args = array() ) {
 		global $wpdb;
 
@@ -361,7 +361,7 @@ class BU_Edit_Groups {
 				if( $pto->hierarchical ) {
 
 					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
-				
+
 				}
 
 			} else {
@@ -393,7 +393,7 @@ class BU_Edit_Groups {
 
 	/**
 	 * Load all groups
-	 */ 
+	 */
 	public function load() {
 
 		$args = array(
@@ -418,10 +418,10 @@ class BU_Edit_Groups {
 
 	/**
 	 * Save all groups
-	 * 
+	 *
 	 * @todo refactor so that both insert and update groups utilize this method
 	 * @todo test coverage
-	 */ 
+	 */
 	public function save() {
 
 		$result = true;
@@ -452,12 +452,12 @@ class BU_Edit_Groups {
 
 	/**
 	 * Insert a new group
-	 * 
+	 *
 	 * @todo test coverage
-	 * 
-	 * @param array $data a parameter list of group data for insertion 
+	 *
+	 * @param array $data a parameter list of group data for insertion
 	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the new group on success.
-	 */ 
+	 */
 	protected function insert( $data ) {
 
 		// Create new group
@@ -489,13 +489,13 @@ class BU_Edit_Groups {
 
 	/**
 	 * Update an existing group
-	 * 
+	 *
 	 * @todo test coverage
-	 * 
+	 *
 	 * @param int $id ID of group to update
-	 * @param array $data a parameter list of group data for update 
+	 * @param array $data a parameter list of group data for update
 	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the updated group on success.
-	 */ 
+	 */
 	 protected function update( $id, $data ) {
 
 	 	// Fetch existing group
@@ -538,7 +538,7 @@ class BU_Edit_Groups {
 
 	/**
 	 * Sanitizes array of group data prior to group creation or updating
-	 */ 
+	 */
 	protected function _clean_group_data( &$args ) {
 
 		// Process input
@@ -547,37 +547,40 @@ class BU_Edit_Groups {
 		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
 
 		if( isset($args['perms']) && is_array($args['perms'])) {
-		
-			foreach( $args['perms'] as $post_type => $post_statuses ) {
 
-				if( ! is_array( $post_statuses ) ) {
+			foreach( $args['perms'] as $post_type => $ids_by_status ) {
 
-					error_log("Unepected value for post stati: $post_statuses" );
+				if( ! is_array( $ids_by_status ) ) {
+
+					error_log("Unepected value for permissions data: $ids_by_status" );
 					unset( $args['perms'][$post_type]);
 					continue;
 				}
 
-				foreach( $post_statuses as $post_id => $status ) {
+				if( !isset( $ids_by_status['allowed'] ) ) $args['perms'][$post_type]['allowed'] = array();
+				if( !isset( $ids_by_status['denied'] ) ) $args['perms'][$post_type]['denied'] = array();
+
+				foreach( $ids_by_status as $status => $post_ids ) {
 
 					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log("Removing post $post_id due to unexpected status: $status" );
-						unset( $args['perms'][$post_type][$post_id] );
+						error_log("Unexpected status: $status" );
+						unset( $args['perms'][$post_type][$status] );
 					}
 
 				}
 
 			}
-			
+
 		}
 
 	}
-	
+
 	/**
 	 * Maps a group object to post object
-	 * 
+	 *
 	 * @param BU_Edit_Group $group Group object for translation
 	 * @return StdClass $post Resulting post object
-	 */ 
+	 */
 	protected function _group_to_post( $group ) {
 
 		$post = new stdClass();
@@ -596,10 +599,10 @@ class BU_Edit_Groups {
 
 	/**
 	 * Maps a WP post object to group object
-	 * 
+	 *
 	 * @param StdClass $post Post object for translation
 	 * @return BU_Edit_Group $group Resulting group object
-	 */ 
+	 */
 	protected function _post_to_group( $post ) {
 
 		// Map post -> group fields
@@ -624,7 +627,7 @@ class BU_Edit_Groups {
 
 /**
  * Class for listing groups (designed to be extended)
- * 
+ *
  * @todo rework to use standard array traversal function and allow for keyed arrays
  */
 class BU_Groups_List {
@@ -658,7 +661,7 @@ class BU_Groups_List {
 
 /**
  * A Section Editing group model
- */ 
+ */
 class BU_Edit_Group {
 
 	private $id = null;
@@ -672,9 +675,9 @@ class BU_Edit_Group {
 
 	/**
 	 * Instantiate new edit group
-	 * 
+	 *
 	 * @param array $args optional parameter list to merge with defaults
-	 */ 
+	 */
 	function __construct( $args = array() ) {
 
 		// Merge defaults
@@ -691,11 +694,11 @@ class BU_Edit_Group {
 
 	/**
 	 * Returns an array with default parameter values for edit group
-	 * 
+	 *
 	 * @return array default values for edit group model
-	 */ 
+	 */
 	private function defaults() {
-		
+
 		$fields = array(
 			'id' => -1,
 			'name' => '',
@@ -710,22 +713,22 @@ class BU_Edit_Group {
 
 	/**
 	 * Does the specified user exist for this group?
-	 * 
+	 *
 	 * @todo test coverage
 	 *
 	 * @return bool true if user exists, false otherwise
-	 */ 
+	 */
 	public function has_user($user_id) {
 		return in_array($user_id, $this->users);
 	}
 
 	/**
 	 * Add a new user to this group
-	 * 
+	 *
 	 * @todo test coverage
-	 * 
+	 *
 	 * @param int $user_id WordPress user ID to add for this group
-	 */ 
+	 */
 	public function add_user($user_id) {
 
 		// need to make sure the user is a member of the site
@@ -737,13 +740,13 @@ class BU_Edit_Group {
 
 	/**
 	 * Remove a user from this group
-	 * 
+	 *
 	 * @todo test coverage
-	 * 
+	 *
 	 * @param int $user_id WordPress user ID to remove from this group
-	 */ 
+	 */
 	public function remove_user($user_id) {
-		
+
 		if($this->has_user($user_id)) {
 			unset($this->users[array_search($user_id, $this->users)]);
 		}
@@ -752,9 +755,9 @@ class BU_Edit_Group {
 
 	/**
 	 * Update data fields for this group
-	 * 
+	 *
 	 * @param array $args an array of key => value parameters to update
-	 */ 
+	 */
 	public function update($args = array()) {
 
 		$valid_fields = array_keys( $this->get_attributes() );
@@ -769,9 +772,9 @@ class BU_Edit_Group {
 
 	/**
 	 * Returns privata data field keys as an array of attribute names
-	 * 
+	 *
 	 * Used for data serialization
-	 */ 
+	 */
 	public function get_attributes() {
 
 		return get_object_vars( $this );
@@ -789,7 +792,7 @@ class BU_Edit_Group {
 	public function __set( $key, $val ) {
 
 		$this->$key = $val;
-	
+
 	}
 
 }
