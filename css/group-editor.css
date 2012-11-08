@@ -1,8 +1,5 @@
 /* Group editor containers */
 
-#section-group-editor {
-}
-
 #section-group-editor h3.nav-tab-wrapper {
 	margin-bottom: 0;
 }
@@ -172,13 +169,11 @@
 	background: none;
 }
 
-.perm-editor.jstree li {
-}
-
 .perm-editor.jstree a {
 	height: 18px;
 }
 
+/*
 .perm-editor.jstree a > ins {
 	height: 20px;
 	width: 21px;
@@ -188,9 +183,11 @@
 	background-color: #555;
 	border-color: #555;
 }
+*/
 
 /* Override default throbber while loading descendents */
 
+/*
 .perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
 	background: url('../images/group_perms_sprite.png') no-repeat -100px 0;
 }
@@ -198,6 +195,7 @@
 .perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
 	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
 }
+*/
 
 .perm-editor.flat.loading {
 	padding: 10px 15px;
@@ -220,6 +218,7 @@
 	color: inherit;
 	text-decoration: none;
 	display: block;
+	margin: 1px;
 }
 
 .perm-editor.flat a:hover,
@@ -230,17 +229,6 @@
 .perm-editor.flat li .flat-perm-icon {
 	display: block;
 	float: left;
-	padding-right: 8px;
-	width: 15px;
-	height: 15px;
-}
-
-.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
-}
-
-.perm-editor.flat li[rel="denied"] .flat-perm-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
 }
 
 .perm-list {
@@ -258,44 +246,6 @@
 	border-top: none;
 }
 
-/* Permissions button */
-
-.edit-perms {
-	display: none;
-	float: right;
-	border: none;
-	width: 65px;
-}
-
-.perm-editor.flat .edit-perms {
-	margin: -10px -15px;
-	padding: 11px 15px;
-}
-
-.perm-editor.hierarchical .edit-perms {
-	margin: -7px -1px;
-	padding: 9px 15px;
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
-}
-
-.perm-item-selected .edit-perms,
-.jstree-clicked .edit-perms {
-	display: block;
-}
-
-.edit-perms.allowed {
-	background-color: green;
-}
-
-.edit-perms.denied {
-	background-color: red;
-}
-
-#perm-panel-container .perm-list input[type="checkbox"] {
-	margin-right: 12px;
-}
-
 /* Bulk Edit */
 .perm-panel.bulk-edit .perm-editor-bulk-edit {
 	display: none;
@@ -308,7 +258,7 @@
 
 .perm-panel.bulk-edit li input[type="checkbox"] {
 	float: left;
-	margin-top: 2px;
+	margin-top: 14px;
 }
 
 .perm-editor-bulk-edit-panel {
@@ -336,6 +286,7 @@
 
 .bulk-edit-actions {
 	float: left;
+	padding-left: 10px;
 }
 
 .bulk-edit-actions select {
@@ -680,4 +631,110 @@ body.no-js #add-group-members {
 
 body.no-js .remove_member {
 	display:none;
+}
+
+
+
+/* */
+.perm-list.flat li {
+	padding: 0;
+}
+
+.perm-list.flat li a {
+	display: block;
+	cursor:	default;
+	padding: 11px 0 11px 0;
+}
+
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon, 
+.perm-editor.flat li[rel="denied"] .flat-perm-icon {
+	background-image: url("sprite.png");
+	background-repeat: no-repeat;
+	background-color: transparent;
+	margin-right: 10px;
+	width: 14px;
+	height: 37px;
+}
+
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
+	background-position: -48px -48px;
+	border-top: 1px solid #7d9a42;
+	border-left: 1px solid #7d9a42;
+	border-bottom: 1px solid #7d9a42;
+}
+
+.perm-editor.flat li[rel="denied"] .flat-perm-icon {
+	background-position: -32px -48px;
+	border-top: 1px solid #9e5b5b;
+	border-left: 1px solid #9e5b5b;
+	border-bottom: 1px solid #9e5b5b;
+}
+
+/* Permissions button */
+
+.edit-perms {
+	display: none;
+	float: right;
+	border: none;
+	width: 65px;
+}
+
+.perm-editor.flat .edit-perms {
+	margin: -10px -15px;
+	padding: 11px 15px;
+}
+
+.perm-editor.hierarchical .edit-perms {
+	margin: -6px -1px;
+	padding: 4px 0 5px 0;
+	color: white;
+	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+	font-size: 100%;
+}
+
+.perm-item-selected .edit-perms,
+.jstree-clicked .edit-perms {
+	display: block;
+}
+
+#perm-panel-container .perm-list input[type="checkbox"] {
+	margin-right: 12px;
+}
+
+.perm-editor.flat .edit-perms {
+	margin: -12px -1px;
+	padding: 12px;
+	color: white;
+	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
+	font-size: 100%;
+}
+
+.perm-editor.flat .edit-perms.denied {
+	cursor:	pointer;
+	border: 1px solid #7b4949;
+	background: #cf5b5b;
+	background: -moz-linear-gradient(top, #cf5b5b 0%, #a24a4a 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #cf5b5b), color-stop(100%, #a24a4a));
+	background: -webkit-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: -o-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: -ms-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: linear-gradient(to bottom, #cf5b5b 0%,#a24a4a 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cf5b5b', endColorstr='#a24a4a',GradientType=0 );
+	box-shadow: inset 3px 0 5px rgba(0, 0, 0, .20);
+}
+
+.perm-editor.flat .edit-perms.allowed {
+	cursor:	pointer;
+	border: 1px solid #506527;
+	background: #6a9812;
+	background: -moz-linear-gradient(top, #6a9812 0%, #567812 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #6a9812), color-stop(100%, #567812));
+	background: -webkit-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: -o-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: -ms-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: linear-gradient(to bottom, #6a9812 0%,#567812 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6a9812', endColorstr='#567812',GradientType=0 );
+	box-shadow: inset 3px 0 5px rgba(0, 0, 0, .20);
 }

@@ -428,20 +428,20 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$button = sprintf("<button class=\"edit-perms %s\">%s</button>", $perm_state, $perm_label );
 
 		// Anchor
-		$a = sprintf( "<a href=\"#\">%s<span class=\"title\">%s</span>%s%s</a>",
-			$icon,
+		$a = sprintf( "<a href=\"#\"><span class=\"title\">%s</span>%s%s</a>",
 			$p['data']['title'],
 			$meta,
 			$button
 		 );
 
 		// Post list item
-		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s</li>\n",
+		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s%s</li>\n",
 			$p['attr']['id'],
 			$p['attr']['class'],
 			$p['attr']['rel'],
 			json_encode($p['metadata']['editable']),
 			json_encode($p['metadata']['editable-original']),
+			$icon,
 			$checkbox,
 			$a
 			);
