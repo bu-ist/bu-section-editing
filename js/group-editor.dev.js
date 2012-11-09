@@ -878,29 +878,40 @@ jQuery(document).ready(function($){
 		$next_page 		= $pagination.find('.next-page');
 		$last_page 		= $pagination.find('.last-page');
 
-		// Update found posts
-		var noun = ( parseInt( pageVars.found_posts ) == 1 ) ? ' item' : ' items';
-		$total_items.text( pageVars.found_posts + noun );
+		// Only show pagination if we have enough items to warrant it
+		if (pageVars.max_num_pages > 1) {
 
-		// Update page counts (current page, total pages)
-		$current_page.val( pageVars.page );
-		$total_pages.text( pageVars.max_num_pages );
+			// Update found posts
+			var noun = ( parseInt( pageVars.found_posts ) == 1 ) ? ' item' : ' items';
+			$total_items.text( pageVars.found_posts + noun );
 
-		// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
-		if( pageVars.page == 1 ) {
-			$first_page.addClass('disabled');
-			$prev_page.addClass('disabled');
+			// Update page counts (current page, total pages)
+			$current_page.val( pageVars.page );
+			$total_pages.text( pageVars.max_num_pages );
+
+			// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
+			if( pageVars.page == 1 ) {
+				$first_page.addClass('disabled');
+				$prev_page.addClass('disabled');
+			} else {
+				$first_page.removeClass('disabled');
+				$prev_page.removeClass('disabled');
+			}
+
+			if( pageVars.page == pageVars.max_num_pages ) {
+				$next_page.addClass('disabled');
+				$last_page.addClass('disabled');
+			} else {
+				$next_page.removeClass('disabled');
+				$last_page.removeClass('disabled');
+			}
+
+			$pagination.show();
+
 		} else {
-			$first_page.removeClass('disabled');
-			$prev_page.removeClass('disabled');
-		}
 
-		if( pageVars.page == pageVars.max_num_pages ) {
-			$next_page.addClass('disabled');
-			$last_page.addClass('disabled');
-		} else {
-			$next_page.removeClass('disabled');
-			$last_page.removeClass('disabled');
+			$pagination.hide();
+
 		}
 	}
 
