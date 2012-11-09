@@ -615,25 +615,28 @@ jQuery(document).ready(function($){
 
 		/* Bulk editor */
 
-		// Open editor
+		// Toggle bulk edit mode
 		$panel.delegate( 'a.perm-editor-bulk-edit', 'click', function(e) {
 			e.preventDefault();
-			$panel.addClass('bulk-edit');
-		});
+			var $a = $(this);
 
-		// Close editor
-		$panel.delegate( 'a.bulk-edit-close', 'click', function(e) {
-			e.preventDefault();
-			$panel.removeClass('bulk-edit');
+			if ($panel.hasClass('bulk-edit')) {
+				$a.removeClass('bulk-edit-close').attr('title','Enable bulk edit mode').text('Bulk Edit');
+				$panel.removeClass('bulk-edit');
+			} else {
+				$a.addClass('bulk-edit-close').attr('title','Disable bulk edit mode').text('Close Bulk Edit');
+				$panel.addClass('bulk-edit');
+			}
 		});
 
 		// Select all behavior toolbar checkbox
-		$panel.delegate( '.bulk-edit-select-all', 'click', function(e) {
-			$editor.find('input[type="checkbox"]').attr( 'checked', this.checked );
+		$panel.delegate('.bulk-edit-select-all', 'click', function(e) {
+			var $allposts = $editor.find('li');
+			$allposts.children('input[type="checkbox"]').attr( 'checked', this.checked );
 		});
 
 		// Apply bulk actions
-		$panel.delegate( '.bulk-edit-actions button', 'click', function(e) {
+		$panel.delegate('.bulk-edit-actions button', 'click', function(e) {
 			e.preventDefault();
 
 			var $selector = $(this).siblings('select');
@@ -653,6 +656,7 @@ jQuery(document).ready(function($){
 				}
 
 			}
+
 
 			// Reset bulk actions to default state
 			$panel.find('.bulk-edit-select-all').attr('checked', false);
@@ -765,7 +769,6 @@ jQuery(document).ready(function($){
 
 		// Post selection
 		$editor.delegate( 'a', 'click', function (e) {
-
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -774,17 +777,10 @@ jQuery(document).ready(function($){
 
 			// Remove previous selections
 			$post.siblings('li.perm-item-selected').each( function () {
-
 				$(this).removeClass('perm-item-selected');
-
-				$editor.trigger( 'deselect_post.buse', { post: $(this) } );
-
 			});
 
 			$post.addClass('perm-item-selected');
-
-			// Trigger a post selection event
-			$editor.trigger( 'select_post.buse', { post: $post } );
 
 		});
 

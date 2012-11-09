@@ -9,7 +9,7 @@
 		</div><!-- perm-tab-container -->
 		<div id="perm-panel-container">
 		<?php foreach( $content_types as $index => $pt ): ?>
-			<?php 
+			<?php
 			$active = $perm_panel == $pt->name ? ' active' : '';
 			$hierarchical = $pt->hierarchical ? true : false;
 			$hiearchical_class = $hierarchical ? 'hierarchical' : 'flat';
@@ -18,22 +18,21 @@
 				<div id="perm-toolbar-<?php echo $pt->name; ?>-top" class="perm-toolbar top clearfix">
 					<?php if( $hierarchical ): ?>
 					<p class="alignright">
-						<a href="#" class="perm-tree-expand" data-target="perm-editor-<?php echo $pt->name; ?>">Expand All</a> | 
+						<a href="#" class="perm-tree-expand" data-target="perm-editor-<?php echo $pt->name; ?>">Expand All</a> |
 						<a href="#" class="perm-tree-collapse" data-target="perm-editor-<?php echo $pt->name; ?>">Collapse All</a>
 					</p>
 					<?php else: ?>
 					<p class="alignleft">
-						<input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo $hiearchical_class; ?>" > 
+						<input id="perm-search-<?php echo $pt->name; ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo $hiearchical_class; ?>" >
 						<button class="perm-search flat button-secondary">Search <?php echo $pt->label; ?></button>
 					</p>
 					<p class="alignright">
-						<a class="perm-editor-bulk-edit" href="#" title="Enter bulk edit mode">Bulk Edit</a>
+						<a class="perm-editor-bulk-edit" href="#" title="Enable bulk edit mode">Bulk Edit</a>
 					</p>
 					<?php endif; ?>
 				</div><!-- .perm-tooblar.top -->
 				<?php if( ! $hierarchical ): ?>
 				<div class="perm-editor-bulk-edit-panel clearfix">
-					<a href="#" class="bulk-edit-close">Close Bulk Edit</a>
 					<div class="bulk-edit-actions">
 						<input type="checkbox" class="bulk-edit-select-all" name="perm-ed-bulk-edit[select-all]" value="1">
 						<select name="perm-ed-bulk-edit[action]">

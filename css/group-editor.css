@@ -247,10 +247,6 @@
 }
 
 /* Bulk Edit */
-.perm-panel.bulk-edit .perm-editor-bulk-edit {
-	display: none;
-}
-
 .perm-panel.bulk-edit input[type="checkbox"] {
 	display: inline;
 	vertical-align: middle;
@@ -293,15 +289,14 @@
 	width: 150px;
 }
 
-.bulk-edit-close {
-	float: right;
+.perm-editor-bulk-edit {
 	display: block;
-	color: inherit;
-	text-decoration: none;
 	font-style: normal;
+}
+
+.bulk-edit-close {
 	padding-left: 20px;
 	background: url('../images/close_icons.png') no-repeat 0px 0px;
-	line-height: 16px;
 }
 
 .bulk-edit-close:hover {
@@ -633,9 +628,6 @@ body.no-js .remove_member {
 	display:none;
 }
 
-
-
-/* */
 .perm-list.flat li {
 	padding: 0;
 }
@@ -646,7 +638,11 @@ body.no-js .remove_member {
 	padding: 11px 0 11px 0;
 }
 
-.perm-editor.flat li[rel="allowed"] .flat-perm-icon, 
+.perm-list .perm-item-selected a {
+	background: #888;
+}
+
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon,
 .perm-editor.flat li[rel="denied"] .flat-perm-icon {
 	background-image: url("sprite.png");
 	background-repeat: no-repeat;
@@ -697,6 +693,14 @@ body.no-js .remove_member {
 .perm-item-selected .edit-perms,
 .jstree-clicked .edit-perms {
 	display: block;
+}
+
+.bulk-edit .perm-item-selected a {
+	background-color: inherit;
+}
+
+.bulk-edit .perm-item-selected .edit-perms {
+	display: none;
 }
 
 #perm-panel-container .perm-list input[type="checkbox"] {
