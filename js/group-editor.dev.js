@@ -594,6 +594,10 @@ jQuery(document).ready(function($){
 				$a.addClass('bulk-edit-close').attr('title','Disable bulk edit mode').text('Close Bulk Edit');
 				$panel.addClass('bulk-edit');
 			}
+
+			// Clear selections
+			$editor.find('.perm-item-selected').removeClass('perm-item-selected');
+
 		});
 
 		// Select all behavior toolbar checkbox
