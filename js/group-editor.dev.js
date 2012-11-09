@@ -1043,27 +1043,25 @@ jQuery(document).ready(function($){
 	}
 
 	var updatePostMismatchCount = function ($parent, mismatches) {
-
 		var $stats = $parent.find('> a > .perm-stats');
 		var child_count;
 		var status = $parent.data('editable');
 
 		if ($stats.length === 0) {
-			$stats = $(' <span class="perm-stats"></span>');
+			$stats = $(' <span class="perm-stats"><ins class="jstree-icon">&nbsp;</ins><span class="label"></span></span>');
 			$parent.find('> a > .title-count').after($stats);
 		}
 
 		// Clear previous state
-		$stats.removeClass('allowed denied').text('');
+		$stats.removeClass('allowed denied').children('.label').text('');
 
 		if (mismatches) {
 			if (status) {
-				$stats.addClass('denied').text(mismatches + ' non-editable');
+				$stats.addClass('denied').children('.label').text(mismatches + ' non-editable');
 			} else {
-				$stats.addClass('allowed').text(mismatches + ' editable');
+				$stats.addClass('allowed').children('.label').text(mismatches + ' editable');
 			}
 		}
-
 	};
 
 	// ____________________ PERM STATS ______________________
