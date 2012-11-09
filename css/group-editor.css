@@ -165,38 +165,6 @@
 	margin: 15px;
 }
 
-.perm-editor.jstree-default.jstree-focused {
-	background: none;
-}
-
-.perm-editor.jstree a {
-	height: 18px;
-}
-
-/*
-.perm-editor.jstree a > ins {
-	height: 20px;
-	width: 21px;
-}
-
-.perm-editor.jstree-classic a.jstree-clicked {
-	background-color: #555;
-	border-color: #555;
-}
-*/
-
-/* Override default throbber while loading descendents */
-
-/*
-.perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -100px 0;
-}
-
-.perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
-}
-*/
-
 .perm-editor.flat.loading {
 	padding: 10px 15px;
 }
@@ -639,6 +607,7 @@ body.no-js .remove_member {
 }
 
 .perm-list .perm-item-selected a {
+	color: white;
 	background: #888;
 }
 
@@ -696,6 +665,7 @@ body.no-js .remove_member {
 }
 
 .bulk-edit .perm-item-selected a {
+	color: inherit;
 	background-color: inherit;
 }
 
@@ -708,8 +678,8 @@ body.no-js .remove_member {
 }
 
 .perm-editor.flat .edit-perms {
-	margin: -12px -1px;
-	padding: 12px;
+	margin: -11px -1px;
+	padding: 11px;
 	color: white;
 	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
 	font-size: 100%;

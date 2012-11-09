@@ -43,48 +43,13 @@ if((typeof bu === 'undefined') ||
 		// Custom tree types for perm editor (icon asset config is temporary)
 		d.treeConfig['types'] = {
 			"types" : {
-				'default' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-60px 0"
-					}
-				},
-				'denied' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-60px 0"
-					}
-				},
-				'denied-desc-allowed' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "2px 0"
-					}
-				},
-				'denied-desc-unknown' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-100px 0"
-					}
-				},
-				'allowed' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-40px 0"
-					}
-				},
-				'allowed-desc-denied' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-20px 0"
-					}
-				},
-				'allowed-desc-unknown' : {
-					icon: {
-						image: c.pluginUrl + "/images/group_perms_sprite.png",
-						position: "-120px 0"
-					}
-				}
+				'default' : {},
+				'denied' : {},
+				'denied-desc-allowed' : {},
+				'denied-desc-unknown' : {},
+				'allowed' : {},
+				'allowed-desc-denied' : {},
+				'allowed-desc-unknown' : {}
 			}
 		};
 
@@ -145,6 +110,8 @@ if((typeof bu === 'undefined') ||
 		$tree.bind("loaded.jstree", function (e) {
 			_prepare_perm_actions();
 		});
+
+		$tree.addClass('buse-perm-editor');
 
 		return that;
 	};
@@ -940,6 +907,7 @@ jQuery(document).ready(function($){
 
 		var post_type = $editor.data('post-type');
 		var edits = $editor.data('perm-edits') || {'allowed':[], 'denied':[]};
+		var $section;
 
 		// Diff the changes
 		processUpdatesForPost( $post, isEditable, edits );
@@ -949,13 +917,13 @@ jQuery(document).ready(function($){
 		if( $editor.hasClass('hierarchical') ) {
 
 			// Correct icons for affected section
-			$root_post = $post.parentsUntil( '#' + $editor.attr('id'), 'li' ).last();
-
-			// Root post will be empty if we are a top-level post
-			if( $root_post.length ) {
-				// Correct icons for both descendents and ancestors affected by this change
-				correctIconsForSection( $root_post );
+			if ($post.parent('ul').parent('div').attr('id') != $editor.attr('id')) {
+				$section = $post.parents('li:last');
+			} else {
+				$section = $post;
 			}
+
+			correctIconsForSection( $section );
 
 		}
 
@@ -1040,20 +1008,30 @@ jQuery(document).ready(function($){
 				switch( state ) {
 
 					case 'allowed': case 'allowed-desc-denied': case 'allowed-desc-unknown':
-						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"],li[rel="denied-desc-unknown"]').length > 0 );
+						mismatch = $(this).find('li[rel="denied"],li[rel="denied-desc-allowed"],li[rel="denied-desc-unknown"]').length;
 
 						// Adjust state
-						if( mismatch ) $parent_post.attr('rel','allowed-desc-denied');
-						else $parent_post.attr('rel','allowed');
+						if( mismatch ) {
+							$parent_post.attr('rel','allowed-desc-denied');
+						} else {
+							$parent_post.attr('rel','allowed');
+						}
 
+						updatePostMismatchCount( $parent_post, mismatch );
 						break;
 
 					case 'denied': case 'denied-desc-allowed': case 'denied-desc-unknown':
-						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"],li[rel="allowed-desc-unknown"]').length > 0 );
+						mismatch = $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"],li[rel="allowed-desc-unknown"]').length;
 
 						// Adjust state
-						if( mismatch ) $parent_post.attr('rel','denied-desc-allowed');
-						else $parent_post.attr('rel','denied');
+						if( mismatch ) {
+							$parent_post.attr('rel','denied-desc-allowed');
+						} else {
+							$parent_post.attr('rel','denied');
+						}
+
+						updatePostMismatchCount( $parent_post, mismatch );
+						break;
 						break;
 
 				}
@@ -1063,6 +1041,30 @@ jQuery(document).ready(function($){
 		});
 
 	}
+
+	var updatePostMismatchCount = function ($parent, mismatches) {
+
+		var $stats = $parent.find('> a > .perm-stats');
+		var child_count;
+		var status = $parent.data('editable');
+
+		if ($stats.length === 0) {
+			$stats = $(' <span class="perm-stats"></span>');
+			$parent.find('> a > .title-count').after($stats);
+		}
+
+		// Clear previous state
+		$stats.removeClass('allowed denied').text('');
+
+		if (mismatches) {
+			if (status) {
+				$stats.addClass('denied').text(mismatches + ' non-editable');
+			} else {
+				$stats.addClass('allowed').text(mismatches + ' editable');
+			}
+		}
+
+	};
 
 	// ____________________ PERM STATS ______________________
 
