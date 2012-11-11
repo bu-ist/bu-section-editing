@@ -133,8 +133,8 @@ class BU_Groups_Admin {
 
 		$pto = get_post_type_object( $post->post_type );
 
-		// We only need special logic for hierarchical post types
-		if( ! $pto->hierarchical ) {
+		// We only need special logic for hierarchical post types and links
+		if( ( is_object( $pto ) && ! $pto->hierarchical ) || ! 'link' == $post->post_type ) {
 			return;
 		}
 
