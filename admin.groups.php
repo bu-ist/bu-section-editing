@@ -379,22 +379,42 @@ class BU_Groups_Admin {
 			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
 
 			// Group editor script
-			wp_register_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), '0.3', true );
+			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
+			if( class_exists('BU_Navigation_Tree_View' ) ) {
 
-			$script_context = array(
-				'postStatuses' => array('publish'),
-				'lazyLoad' => true,
-				'showCounts' => false,
-				'showStatuses' => false,
-				'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
-				'adminUrl' => admin_url( 'admin-ajax.php' ),
-				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
-				'usersUrl' => admin_url('users.php'),
-				'userNewUrl' => admin_url('user-new.php')
-			);
-			// Let the tree view class handle enqueing
-			$treeview = new BU_Navigation_Tree_View( 'buse_group_editor', $script_context );
-			$treeview->enqueue_script( 'group-editor' );
+				wp_register_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), '0.3', true );
+
+				$script_context = array(
+					'postStatuses' => array('publish'),
+					'lazyLoad' => true,
+					'showCounts' => false,
+					'showStatuses' => false,
+					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
+					'adminUrl' => admin_url( 'admin-ajax.php' ),
+					'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
+					'usersUrl' => admin_url('users.php'),
+					'userNewUrl' => admin_url('user-new.php')
+				);
+
+				// Let the tree view class handle enqueing
+				$treeview = new BU_Navigation_Tree_View( 'buse_group_editor', $script_context );
+				$treeview->enqueue_script( 'group-editor' );
+
+			} else {
+
+				// Fallback if BU Navigation plugin is inactive -- disables hierarhical perm editors
+				$data = array(
+					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
+					'adminUrl' => admin_url( 'admin-ajax.php' ),
+					'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
+					'usersUrl' => admin_url('users.php'),
+					'userNewUrl' => admin_url('user-new.php')
+				);
+
+				wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete'), '0.3', true );
+				wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
+
+			}
 
 			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), array(), '0.3' );
 

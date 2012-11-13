@@ -1,10 +1,10 @@
-// Check prerequisites
-if((typeof bu === 'undefined') ||
-	(typeof bu.plugins.navigation === 'undefined') ||
-	(typeof bu.plugins.navigation.tree === 'undefined'))
-		throw new TypeError('BU Navigation Manager script dependencies have not been met!');
-
 (function ($){
+
+	// Check prerequisites
+	if((typeof bu === 'undefined') ||
+		(typeof bu.plugins.navigation === 'undefined') ||
+		(typeof bu.plugins.navigation.tree === 'undefined'))
+			return;
 
 	var Nav = bu.plugins.navigation;
 
@@ -119,9 +119,13 @@ if((typeof bu === 'undefined') ||
 }(jQuery));
 
 jQuery(document).ready(function($){
+	var Nav;
 
-	// Nav plugin alias
-	var Nav = bu.plugins.navigation;
+	// Check dependencies for hierarchical perm editors
+	if((typeof bu !== 'undefined') &&
+		(typeof bu.plugins.navigation !== 'undefined') &&
+		(typeof bu.plugins.navigation.tree !== 'undefined'))
+			Nav = bu.plugins.navigation;
 
 	// Globals
 	var $members_list = $('#group-member-list');
@@ -419,7 +423,12 @@ jQuery(document).ready(function($){
 		// Load appropriate editor
 		if( $editor.hasClass('hierarchical') ) {
 
-			loadHierarchicalEditor( $editor );
+			if (typeof Nav === 'undefined') {
+				alert('Warning: Hierarchical permissions editor require the BU Navigation plugin.');
+				$editor.text('Please install the BU Navigation plugin in order to set permissions for post type: ' + $editor.data('post-type'));
+			} else {
+				loadHierarchicalEditor( $editor );
+			}
 
 		} else {
 
