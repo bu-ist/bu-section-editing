@@ -199,7 +199,7 @@ jQuery(document).ready(function($){
 	// Get ID's for users that belong to the current group
 	var get_active_member_ids = function() {
 
-		return $.map( $('li.member.active input[type="checkbox"]'), function(o) { return o.value } );
+		return $.map( $('li.member.active input[type="checkbox"]'), function(o) { return parseInt(o.value, 10) } );
 
 	}
 
