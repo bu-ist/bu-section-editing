@@ -462,6 +462,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
 		$perm = $editable ? 'allowed' : 'denied';
 
+		$post->post_title = empty( $post->post_title ) ? '(no title)' : $post->post_title;
+
 		$p = array(
 			'attr' => array(
 				'id' => esc_attr( 'p' . $post->ID ),
