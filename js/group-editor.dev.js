@@ -606,8 +606,8 @@ jQuery(document).ready(function($){
 
 			// Reset selections & bulk editor state
 			$editor.find('.perm-item-selected').removeClass('perm-item-selected');
-			$panel.find('input[type="checkbox"]').attr('checked', '');
-			$('.bulk-edit-actions select').val('');
+			$panel.find('input[type="checkbox"]').attr('checked', false);
+			$('.bulk-edit-actions select').val('none');
 
 		});
 
