@@ -358,19 +358,15 @@ class BU_Groups_Admin {
 			return;
 
 		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
+		$version = BU_Section_Editing_Plugin::BUSE_VERSION;
 
 		if( in_array( $hook, self::$manage_groups_hooks ) ) {
-
-			// Use newer version of jquery.ui.ppsition from github master, adds 'within' option
-			// @see https://github.com/jquery/jquery-ui/pull/254
-			// @see http://bugs.jqueryui.com/ticket/5645
-			wp_enqueue_script( 'bu-jquery-ui-position', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.position' . $suffix . '.js' ), array('jquery'), true );
 
 			// jQuery UI Autocomplete does not exist prior to WP 3.3, so add it here if it's not already registered
 			if( ! wp_script_is( 'jquery-ui-autocomplete', 'registered' ) ) {
 
 				// Register local fallback copy of autocomplete
-				wp_register_script( 'jquery-ui-autocomplete', plugins_url( BUSE_PLUGIN_PATH . '/js/lib/jquery.ui.autocomplete'.$suffix.'.js' ), array('jquery-ui-core', 'jquery-ui-widget', 'bu-jquery-ui-position' ), '1.8.23', true );
+				wp_register_script( 'jquery-ui-autocomplete', plugins_url('/js/lib/jquery.ui.autocomplete'.$suffix.'.js', __FILE__), array('jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-position'), '1.8.23', true );
 
 			}
 
@@ -380,9 +376,9 @@ class BU_Groups_Admin {
 
 			// Group editor script
 			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
-			if( class_exists('BU_Navigation_Tree_View' ) ) {
+			if( class_exists( 'BU_Navigation_Tree_View' ) ) {
 
-				wp_register_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), '0.3', true );
+				wp_register_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), $version, true );
 
 				$script_context = array(
 					'postStatuses' => array('publish'),
@@ -411,17 +407,17 @@ class BU_Groups_Admin {
 					'userNewUrl' => admin_url('user-new.php')
 				);
 
-				wp_enqueue_script( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/js/group-editor' . $suffix . '.js' ), array('jquery', 'jquery-ui-autocomplete'), '0.3', true );
+				wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
 				wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
 
 			}
 
-			wp_enqueue_style( 'group-editor', plugins_url( BUSE_PLUGIN_PATH . '/css/group-editor.css' ), array(), '0.3' );
+			wp_enqueue_style( 'group-editor', plugins_url('/css/group-editor.css', __FILE__), array(), $version );
 
 		}
 
 		if( in_array($hook, array('post.php', 'post-new.php', 'edit.php') ) ) {
-			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), '1.0', true);
+			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), $version, true);
 		}
 
 	}
