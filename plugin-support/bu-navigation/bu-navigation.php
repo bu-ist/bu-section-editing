@@ -2,7 +2,7 @@
 
 // Only add filters for section editors
 if( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
-	
+
 	add_action( 'bu_nav_tree_enqeueue_scripts', 'buse_bu_navigation_scripts' );
 	add_filter( 'bu_nav_tree_script_context', 'buse_bu_navigation_script_context');
 	add_filter( 'bu_navigation_filter_fields', 'buse_bu_navigation_filter_fields');
@@ -22,7 +22,7 @@ function buse_bu_navigation_script_context( $config ) {
 
 /**
  * Add 'post_author' to the post fields to return during bu_navigation_get_pages
- * 
+ *
  * @param array $fields
  * @return string
  */
@@ -33,7 +33,7 @@ function buse_bu_navigation_filter_fields($fields) {
 
 /**
  * Filters pages during bu_navigation_get_pages to add section group related meta data -- can_edit and can_remove
- * 
+ *
  * @global type $wpdb
  * @param type $posts
  * @return type
@@ -70,7 +70,7 @@ function buse_bu_navigation_filter_pages( $posts ) {
 						$post->can_remove = true;
 					}
 				}
-				
+
 				// Hierarchical perm editors ignore draft/pending, allowed by default
 				if(in_array($post->post_status,array('draft','pending'))) {
 					$post->can_edit = true;
@@ -92,7 +92,7 @@ function buse_bu_navigation_filter_pages( $posts ) {
 					$post->can_remove = ($post->post_author == $current_user);
 				}
 			}
-			
+
 		}
 
 	}
@@ -103,7 +103,7 @@ function buse_bu_navigation_filter_pages( $posts ) {
 
 /**
  * Unused -- This is the ideal filter in that it relies on current_user_can to determine the actual edit and delete capability
- * 
+ *
  * The issue is that since we are bypassing WP_Query in favor of bu_navigation_get_pages, this approach winds up
  * using a lot of memory.  Also, since links are currently a non-registered custom post type, there's some extra
  * logic needed as well.
@@ -114,14 +114,14 @@ function buse_bu_navigation_filter_pages_slow( $posts ) {
 
 				// Links, being a non-registered custom post type, bypass map_meta_cap and must be accounted for specially here
 				if( $post->post_type == 'link') {
-					
+
 					$post->can_edit = BU_Group_Permissions::can_edit_section( wp_get_current_user(), $post->ID );
 					$post->can_remove = $post->can_edit;
 
 				} else {
-					
+
 					$post->can_edit = current_user_can( 'edit_post', $post->ID );
-					$post->can_remove = current_user_can( 'delete_post', $post->ID );					
+					$post->can_remove = current_user_can( 'delete_post', $post->ID );
 
 				}
 			}
