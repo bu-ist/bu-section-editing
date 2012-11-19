@@ -417,7 +417,7 @@ class BU_Groups_Admin {
 		}
 
 		if( in_array($hook, array('post.php', 'post-new.php', 'edit.php') ) ) {
-			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), $version, true);
+			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery','bu-navigation-metabox'), $version, true);
 		}
 
 	}
