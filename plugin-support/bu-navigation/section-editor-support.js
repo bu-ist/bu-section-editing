@@ -57,7 +57,7 @@
 		return post;
 	};
 
-	bu.hooks.addFilter('preInsertPost', preInsertPost );
+	bu.hooks.addFilter('preInsertPost', preInsertPost);
 
 	/*
 	 * Prevent the Navman interface from showing the "Add a Link" button
@@ -76,13 +76,13 @@
 
 	};
 
-	bu.hooks.addFilter('navmanCanAddLink', canAddLink );
+	bu.hooks.addFilter('navmanCanAddLink', canAddLink);
 
 	/*
 	 * Make sure that current user has sufficient capabilities to
-	 * execute context menu items
+	 * execute options menu items
 	 */
-	var filterNavmanContextItems = function (items, node) {
+	var filterNavmanOptionsMenuItems = function (items, node) {
 		var post = node.data();
 
 		if( ! post['post_meta']['canEdit'] && items['edit'] )
@@ -94,6 +94,6 @@
 		return items;
 	}
 
-	bu.hooks.addFilter('navmanContextItems', filterNavmanContextItems );
+	bu.hooks.addFilter('navmanOptionsMenuItems', filterNavmanOptionsMenuItems);
 
 })(jQuery);
