@@ -20,31 +20,36 @@
 	 */
 	var isEditable = function (allowed, move, tree) {
 
-		if ( tree.config.isSectionEditor ) {
+		if (tree.config.isSectionEditor) {
 			var post = move.o.data();
 			var post_parent = move.np.data();
 
-			// Can't move to top level
-			if ( move.cr === -1 )
-				return false;
+			// Section editing restrictions only affect published content
+			if (post['post_status'] !== 'publish') {
+				return allowed;
+			}
 
+			// Can't move to top level
+			if (move.cr === -1) {
+				return false;
+			}
 			// Can't move a denied post
-			if ( !post['post_meta']['canEdit'] ) {
+			if (!post['post_meta']['canEdit']) {
 				return false;
 			}
 			// Can't move inside denied post
-			if ( !post_parent['post_meta']['canEdit'] ) {
+			if (!post_parent || !post_parent['post_meta']['canEdit']) {
 				return false;
 			}
 		}
 
-		return true;
+		return allowed;
 
 	};
 
-	bu.hooks.addFilter('moveAllowed', isEditable );
+	bu.hooks.addFilter('moveAllowed', isEditable);
 
-	var preInsertPost = function(post, parent) {
+	var preInsertPost = function (post, parent) {
 
 		post.meta.canEdit = true;
 		post.meta.canRemove = true;
