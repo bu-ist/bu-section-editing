@@ -131,17 +131,15 @@ function buse_bu_navigation_filter_pages_slow( $posts ) {
 
 function buse_bu_navigation_format_post( $p, $post, $has_children ) {
 
-	$status = $post->can_edit ? $p['attr']['rel'] : 'denied';
-
-	$p['attr']['rel'] = $status;
-
 	$p['metadata']['post_meta']['canEdit'] = $post->can_edit;
 	$p['metadata']['post_meta']['canRemove'] = $post->can_remove;
 
 	if( ! isset( $p['attr']['class'] ) )
 		$p['attr']['class'] = '';
 
-	$p['attr']['class'] = ' ' . $status;
+	if( ! $post->can_edit ) {
+		$p['attr']['class'] = ' denied';
+	}
 
 	return $p;
 }
