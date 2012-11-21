@@ -25,7 +25,7 @@
 			var post_parent = move.np.data();
 
 			// Section editing restrictions only affect published content
-			if (post['post_status'] !== 'publish') {
+			if (post['post_status'] !== 'publish' && post['post_type'] !== 'link') {
 				return allowed;
 			}
 
