@@ -191,6 +191,7 @@
 	padding: 0;
 	border-top: 1px solid #dfdfdf;
 	margin: 0;
+	position: relative;
 }
 
 .perm-editor.flat li:first-child {
@@ -289,6 +290,9 @@
 	color: white;
 	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
 	font-size: 100%;
+	position: absolute;
+	top: 10px;
+	right: 0;
 }
 
 .perm-editor.flat .edit-perms.denied {
