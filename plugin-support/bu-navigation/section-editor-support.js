@@ -21,8 +21,8 @@
 	var isEditable = function (allowed, move, tree) {
 
 		if (tree.config.isSectionEditor) {
-			var post = move.o.data();
-			var post_parent = move.np.data();
+			var post = move.o.data('post');
+			var post_parent = move.np.data('post');
 
 			// Section editing restrictions only affect published content
 			if (post['post_status'] !== 'publish' && post['post_type'] !== 'link') {
@@ -51,8 +51,8 @@
 
 	var preInsertPost = function (post, parent) {
 
-		post.meta.canEdit = true;
-		post.meta.canRemove = true;
+		post.post_meta.canEdit = true;
+		post.post_meta.canRemove = true;
 
 		return post;
 	};
@@ -68,7 +68,7 @@
 			return false;
 		}
 
-		if (!parent.meta['canEdit']) {
+		if (!parent.post_meta['canEdit']) {
 			return false;
 		}
 
@@ -83,7 +83,7 @@
 	 * execute options menu items
 	 */
 	var filterNavmanOptionsMenuItems = function (items, node) {
-		var post = node.data();
+		var post = node.data('post');
 
 		if( ! post['post_meta']['canEdit'] && items['edit'] )
 			delete items['edit'];

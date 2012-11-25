@@ -5,8 +5,8 @@ if( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
 
 	add_action( 'bu_nav_tree_enqeueue_scripts', 'buse_bu_navigation_scripts' );
 	add_filter( 'bu_nav_tree_script_context', 'buse_bu_navigation_script_context');
-	add_filter( 'bu_navigation_filter_fields', 'buse_bu_navigation_filter_fields');
-	add_filter( 'bu_navigation_filter_pages', 'buse_bu_navigation_filter_pages');
+	add_filter( 'bu_nav_tree_view_filter_fields', 'buse_bu_navigation_filter_fields');
+	add_filter( 'bu_nav_tree_view_filter_posts', 'buse_bu_navigation_filter_pages');
 	add_filter( 'bu_nav_tree_view_format_post', 'buse_bu_navigation_format_post', 10, 3 );
 
 }
@@ -27,7 +27,12 @@ function buse_bu_navigation_script_context( $config ) {
  * @return string
  */
 function buse_bu_navigation_filter_fields($fields) {
-	$fields[] = 'post_author';
+	if( ! in_array( 'post_author', $fields ) ) {
+		$fields[] = 'post_author';
+	}
+	if( ! in_array( 'post_status', $fields ) ) {
+		$fields[] = 'post_status';
+	}
 	return $fields;
 }
 
@@ -131,8 +136,8 @@ function buse_bu_navigation_filter_pages_slow( $posts ) {
 
 function buse_bu_navigation_format_post( $p, $post, $has_children ) {
 
-	$p['metadata']['post_meta']['canEdit'] = $post->can_edit;
-	$p['metadata']['post_meta']['canRemove'] = $post->can_remove;
+	$p['metadata']['post']['post_meta']['canEdit'] = $post->can_edit;
+	$p['metadata']['post']['post_meta']['canRemove'] = $post->can_remove;
 
 	if( ! isset( $p['attr']['class'] ) )
 		$p['attr']['class'] = '';

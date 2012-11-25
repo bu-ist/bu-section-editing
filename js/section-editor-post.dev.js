@@ -118,11 +118,11 @@ jQuery(document).ready(function ($) {
 			var modal = navMetabox.data.modalTree;
 
 			modal.listenFor('locationUpdated', function (post) {
-				var parent = modal.tree.getPost(post.parent);
+				var parent = modal.tree.getPost(post.post_parent);
 
 				// Update text for publish button
 				if (parent) {
-					if (parent.meta.canEdit) {
+					if (parent.post_meta.canEdit) {
 						$('#post #publish').val('Publish');
 					} else {
 						$('#post #publish').val('Submit for Review');
