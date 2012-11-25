@@ -424,7 +424,7 @@ jQuery(document).ready(function($){
 		if( $editor.hasClass('hierarchical') ) {
 
 			if (typeof Nav === 'undefined') {
-				alert('Warning: Hierarchical permissions editor require the BU Navigation plugin.');
+				alert('Warning: Hierarchical permission editors require the BU Navigation plugin.');
 				$editor.text('Please install the BU Navigation plugin in order to set permissions for post type: ' + $editor.data('post-type'));
 			} else {
 				loadHierarchicalEditor( $editor );
@@ -472,7 +472,7 @@ jQuery(document).ready(function($){
 			var clickedActivePanel = $.contains( $active_perm_panel[0], e.target );
 
 			if (!clickedActivePanel) {
-				if ($editor.hasClass('hierarchical')) {
+				if ($editor.hasClass('hierarchical') && typeof $editor.jstree !== 'undefined') {
 					$editor.jstree('deselect_all');
 				} else {
 					$editor.find('.perm-item-selected').removeClass('perm-item-selected');
@@ -652,13 +652,17 @@ jQuery(document).ready(function($){
 		// Expand all
 		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
 			e.preventDefault();
-			$.jstree._reference($editor).open_all();
+			if(typeof $.jstree !== 'undefined') {
+				$.jstree._reference($editor).open_all();
+			}
 		});
 
 		// Collapse all
 		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
 			e.preventDefault();
-			$.jstree._reference($editor).close_all();
+			if(typeof $.jstree !== 'undefined') {
+				$.jstree._reference($editor).close_all();
+			}
 		});
 
 	}
