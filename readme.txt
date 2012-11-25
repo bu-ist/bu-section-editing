@@ -40,6 +40,15 @@ To complete the advanced permissions work flow, install the [BU Versions Plugin]
 
 == Changelog ==
 
+0.7
+* UI updates to match navigation trees used for other BU plugins (props clrux)
+* Added hard dependency on BU Navigation plugin for hierarchical permissions editors
+* Added section editing restrictions to BU Navigation views
+* Tweaked permissions stats diff view to better represent changes since last save
+* Improvements to capabilities logic
+* Updates to Selenium test cases
+* General cleanup & bug fixes
+
 0.6
 * Moved manage groups page to top-level menu item
 * Implemented "Find Users Tool" to aid section managers in adding members to groups
