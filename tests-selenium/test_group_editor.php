@@ -4,7 +4,7 @@ require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
 
 /**
  * @group bu-section-editing-selenium
- */ 
+ */
 class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	public function setUp() {
@@ -23,7 +23,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	/**
 	 * Switching group panels via nav tabs
-	 */ 
+	 */
 	public function test_load_panels() {
 
 		$edit_page = new BUSE_EditGroupPage( $this );
@@ -100,7 +100,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	/**
 	 * Tests adding user to group
-	 */ 
+	 */
 	public function test_add_member() {
 
 		// Add a group first
@@ -114,11 +114,11 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		// Save group (reloads page as well)
 		$members_panel->saveGroup();
 
-		//  == Issue ==			
+		//  == Issue ==
 		// 	Selenium works through the browser session.
 		// 	Meanwhile, this code runs in a separate session, so the group fetched during the factory
-		// 	creation is cached -- in both the 'option' and 'alloptions' groups.  
-			
+		// 	creation is cached -- in both the 'option' and 'alloptions' groups.
+
 		// 	When we change things through Selenium and then attempt to load from the DB,
 		// 	we get the cached value (either from memory if we don't reload BU_Edit_Groups,
 		// 	or from the options/alloptions object cache if we do).
@@ -140,24 +140,24 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	// _______________________ PERMISSION TESTS _______________________
 
-	/* 
+	/*
 	 @todo Other needed test cases
 	   - pending edits that will be committed on save (hidden input)
 	  		- saving group permissions
 	   - perm stats counters
 	   - overlay behavior & text
-	*/ 
+	*/
 
-	/** 
+	/**
 	 * Excercises the Javascript responsible for propogating icon permissions on toggled state
-	 * 
+	 *
 	 * Page tree for testing:
-	 * 
+	 *
 	 * - 1. Parent Post
 	 * 	 `-- 2. Child post
 	 *      `-- 3. Grand child post 1
 	 * 		`-- 4. Grand child post 2
-	 */ 
+	 */
 	public function test_hierarchical_permission_propogation() {
 
 		$group = $this->factory->group->create( array('name' => 'Test Group - Hierarchical Permissions Propogation' ) );
@@ -201,7 +201,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		$this->assertEquals( BUSE_EditGroupPermissions::STATE_DENIED, $perms_panel->getPostState( $pid_four ) );
 
 		// Action: Allow "Grand child page 1"
-		// Expected Result: 1 should be allowed w/ denied children, 2 should be denied w/allowed children, 3 should be allowed, 4 should be denied 
+		// Expected Result: 1 should be allowed w/ denied children, 2 should be denied w/allowed children, 3 should be allowed, 4 should be denied
 		$perms_panel->togglePostState( $pid_three );
 
 		$this->assertEquals( BUSE_EditGroupPermissions::STATE_ALLOWED_DESC_DENIED, $perms_panel->getPostState( $pid_one ) );
@@ -269,7 +269,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 	/**
 	 * Find group ID by looking at the edit group link found on the section groups page
-	 */ 
+	 */
 	protected function findGroupIdByName( $name) {
 
 		$group_id = null;
@@ -290,19 +290,19 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		return $group_id;
 
 	}
- 
+
 }
 
 /**
  * Page objects for group editor interface
- * 
+ *
  * @todo
  *	- better isolate markup/url dependencies in to constants
  */
 
 /**
  * Section groups list page
- */ 
+ */
 class BUSE_GroupsPage {
 
 	private $webdriver = null;
@@ -324,7 +324,7 @@ class BUSE_GroupsPage {
 
 /**
  * Add/Edit section group page
- */ 
+ */
 class BUSE_EditGroupPage {
 
 	protected $webdriver = null;
@@ -336,8 +336,8 @@ class BUSE_EditGroupPage {
 
 	// Forms
 	const GROUP_EDIT_FORM = 'group-edit-form';
-	const GROUP_NAME_INPUT = 'edit-group-name';
-	const GROUP_DESC_INPUT = 'edit-group-description';
+	const GROUP_NAME_INPUT = 'group[name]';
+	const GROUP_DESC_INPUT = 'group[description]';
 	const GROUP_ADD_MEMBER_INPUT = 'user_login';
 	const GROUP_ADD_MEMBER_BTN = 'add_member';
 
@@ -358,9 +358,9 @@ class BUSE_EditGroupPage {
 
 	/**
 	 * Loads the add or edit group page, depending on group ID arg
-	 * 
+	 *
 	 * @todo make URL generation more flexible
-	 */ 
+	 */
 	function __construct( $webdriver, $group_id = null ) {
 		$this->webdriver = $webdriver;
 
@@ -385,7 +385,7 @@ class BUSE_EditGroupPage {
 	}
 
 	function loadPanel( $name ) {
-		
+
 		$tab_id = self::PROPERTIES_TAB;
 
 		switch( strtolower( $name ) ) {
@@ -450,7 +450,7 @@ class BUSE_EditGroupPage {
 	function getName() {
 
 		$this->loadPanel( 'properties' );
-		$name_input = $this->webdriver->getElement( LocatorStrategy::id, self::GROUP_NAME_INPUT );
+		$name_input = $this->webdriver->getElement( LocatorStrategy::name, self::GROUP_NAME_INPUT );
 
 		if( isset( $name_input ) )
 			return $name_input->getAttribute('value');
@@ -462,7 +462,7 @@ class BUSE_EditGroupPage {
 	function getDescription() {
 
 		$this->loadPanel( 'properties' );
-		$desc_input = $this->webdriver->getElement( LocatorStrategy::id, self::GROUP_DESC_INPUT );
+		$desc_input = $this->webdriver->getElement( LocatorStrategy::name, self::GROUP_DESC_INPUT );
 
 		if( isset( $desc_input ) )
 			return $desc_input->getAttribute('value');
@@ -476,12 +476,12 @@ class BUSE_EditGroupPage {
 		$this->group_form->submit();
 
 	}
-	
+
 }
 
 /**
  * Add/Edit section group page, members panel
- */ 
+ */
 class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 
 	const ACTIVE_MEMBER_XPATH = "//li[contains(@class,'member') and contains(@class,'active')]//label[text()='%s']";
@@ -536,7 +536,7 @@ class BUSE_EditGroupMembers extends BUSE_EditGroupPage {
 
 /**
  * Add/Edit group page, permissions panel
- */ 
+ */
 class BUSE_EditGroupPermissions extends BUSE_EditGroupPage {
 
 	const STATE_ALLOWED = 'allowed';
@@ -568,18 +568,18 @@ class BUSE_EditGroupPermissions extends BUSE_EditGroupPage {
 
 	function togglePostState( $id ) {
 
-		// Trigger overlay
+		// Select post
 		$post_link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '#p' . $id . ' > a' );
 		$post_link->click();
 
-		// Wait for overlay
-		$overlay_link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '.buse-overlay .buse-action' );
-		$overlay_link->click();
+		// Click action button
+		$action_link = $this->webdriver->getElement( LocatorStrategy::cssSelector, '#p' . $id . ' .edit-perms' );
+		$action_link->click();
 
 	}
 
 	function getPostState( $id ) {
-		
+
 		$post_link = $this->webdriver->getElement( LocatorStrategy::id, 'p' . $id );
 		return $post_link->getAttribute('rel');
 

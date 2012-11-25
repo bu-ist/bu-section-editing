@@ -1,76 +1,4 @@
 jQuery(function($) {
-	$('#bu-page-parent').bind('nodeSelected', function(e){
-		var scrollingTree = $(e.target).data('scrollingTree');
-		var parent_id = scrollingTree.getSelection();
-
-		var data = {
-			action: 'buse_can_move',
-			parent_id: parent_id,
-			post_id: $('#post [name="post_ID"]').val()
-		}
-
-		$.ajax({
-			url: ajaxurl,
-			data: data,
-			type: 'POST',
-			success: function(response) {
-				if(response.can_edit == false) {
-					if(response.status == 'publish') {
-						alert("You cannot place this page there.");
-						$('#post [name="parent_id"]').val(response.original_parent);
-						if(response.original_parent != 0) {
-							scrollingTree.selectNode(response.original_parent, true);
-						} else {
-							scrollingTree.selectNode(response.original_parent, true);
-							$('#top_level_page').attr('checked', 'checked');
-						}
-					} else {
-						$('#post #publish').val('Submit for Review');
-						$('.misc-pub-section.curtime').hide();
-					}
-					return;
-				}
-
-				if(response.can_edit == true) {
-					if(response.status != 'publish') {
-						$('#post #publish').val('Publish');
-						$('.misc-pub-section.curtime').show();
-					}
-				}
-			},
-			error: function(response) {
-			}
-		});
-	});
-
-	$('#pageparentdiv #parent_id').bind('change', function(e) {
-		var parent_id = $('#parent_id option:selected').val();
-		var post_id = $('[name="post_ID"]').val();
-
-		var data = {
-			action: 'buse_can_move',
-			post_id: post_id,
-			parent_id: parent_id
-		}
-
-		$.ajax({
-			url: ajaxurl,
-			data: data,
-			type: 'POST',
-			success: function(response) {
-				if(response.can_edit == false) {
-					alert("You are not able to edit the parent, so you cannot place this page under the parent.");
-					var original_parent = response.original_parent;
-					if(original_parent == 0) {
-						original_parent = '';
-					}
-					$('#pageparentdiv #parent_id [value="' + original_parent + '"]').attr('selected', 'selected');
-				}
-			},
-			error: function(response) {
-			}
-		});
-	});
 
 	//bulk-edit
 	$('#bulk-edit #post_parent').bind('change', function(e) {
@@ -168,5 +96,42 @@ jQuery(function($) {
 
 	inlineEditPost.edit = function(id) {
 		inlineEditPost.pre_edit(id);
+	}
+});
+
+jQuery(document).ready(function ($) {
+
+	// Navigation attributes modal post tree
+	var navMetabox;
+
+	if ((typeof bu !== 'undefined') &&
+		(typeof bu.plugins !== 'undefined') &&
+		(typeof bu.plugins.navigation !== 'undefined') &&
+		(typeof bu.plugins.navigation.metabox !== 'undefined')) {
+			navMetabox = bu.plugins.navigation.metabox;
+		}
+
+	if (typeof navMetabox !== 'undefined') {
+
+		// Extra check for section editors
+		if (navMetabox.settings.isSectionEditor) {
+			var modal = navMetabox.data.modalTree;
+
+			modal.listenFor('locationUpdated', function (post) {
+				var parent = modal.tree.getPost(post.post_parent);
+
+				// Update text for publish button
+				if (parent) {
+					if (parent.post_meta.canEdit) {
+						$('#post #publish').val('Publish');
+					} else {
+						$('#post #publish').val('Submit for Review');
+					}
+				} else {
+					// Moved to top level location
+					$('#post #publish').val('Submit for Review');
+				}
+			});
+		}
 	}
 });

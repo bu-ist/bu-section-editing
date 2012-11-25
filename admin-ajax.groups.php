@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /**
  * Centralized admin ajax routing
@@ -20,7 +20,7 @@ class BU_Groups_Admin_Ajax {
 
 	/**
 	 * Generates a Javscript file that contains a variable with all site users and relevant meta
-	 * 
+	 *
 	 * The variable is used for autocompletion (find user tool) and while adding members
 	 */
 	static public function site_users_script() {
@@ -41,12 +41,12 @@ class BU_Groups_Admin_Ajax {
 					'value' => $user->user_login
 				),
 				'user' => array(
-					'id' => $user->ID,
+					'id' => (int) $user->ID,
 					'login' => $user->user_login,
 					'nicename' => $user->user_nicename,
 					'display_name' => $user->display_name,
 					'email' => $user->user_email,
-					'is_section_editor' => BU_Section_Editing_Plugin::is_allowed_user( $user->ID )
+					'is_section_editor' => (bool) BU_Section_Editing_Plugin::is_allowed_user( $user->ID )
 				)
 			);
 
@@ -93,7 +93,7 @@ class BU_Groups_Admin_Ajax {
 			}
 
 			$perm_editor->query( $query_vars );
-			
+
 			$response = new stdClass();
 			$child_of = isset( $query_vars['child_of'] ) ? $query_vars['child_of'] : 0;
 

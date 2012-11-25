@@ -1,8 +1,5 @@
 /* Group editor containers */
 
-#section-group-editor {
-}
-
 #section-group-editor h3.nav-tab-wrapper {
 	margin-bottom: 0;
 }
@@ -161,42 +158,11 @@
 }
 
 #perm-panel-container .perm-scroll-area {
-	overflow-x: auto;
+	overflow: hidden;
 }
 
 .perm-editor.hierarchical {
 	margin: 15px;
-}
-
-.perm-editor.jstree-default.jstree-focused {
-	background: none;
-}
-
-.perm-editor.jstree li {
-}
-
-.perm-editor.jstree a {
-	height: 18px;
-}
-
-.perm-editor.jstree a > ins {
-	height: 20px;
-	width: 21px;
-}
-
-.perm-editor.jstree-classic a.jstree-clicked {
-	background-color: #555;
-	border-color: #555;
-}
-
-/* Override default throbber while loading descendents */
-
-.perm-editor li[rel="denied-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -100px 0;
-}
-
-.perm-editor li[rel="allowed-desc-unknown"] a.jstree-loading .jstree-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -120px 0;
 }
 
 .perm-editor.flat.loading {
@@ -216,9 +182,64 @@
 
 /* Flat Permissions */
 
+.perm-list {
+	padding: 0;
+	margin: 0;
+}
+
+.perm-editor.flat li {
+	padding: 0;
+	border-top: 1px solid #dfdfdf;
+	margin: 0;
+	position: relative;
+}
+
+.perm-editor.flat li:first-child {
+	border-top: none;
+}
+
+.perm-editor.flat li .flat-perm-icon {
+	display: block;
+	float: left;
+}
+
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon,
+.perm-editor.flat li[rel="denied"] .flat-perm-icon {
+	background-image: url("sprite.png");
+	background-repeat: no-repeat;
+	background-color: transparent;
+	margin-right: 10px;
+	width: 14px;
+	height: 36px;
+}
+
+.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
+	background-position: -48px -48px;
+	border-left: 1px solid #7d9a42;
+}
+
+.perm-editor.flat li[rel="denied"] .flat-perm-icon {
+	background-position: -32px -48px;
+	border-left: 1px solid #9e5b5b;
+}
+
+.perm-editor.flat li[rel="allowed"].perm-item-selected .flat-perm-icon {
+	background-position: -80px -48px;
+	border-left: 1px solid #666;
+}
+
+.perm-editor.flat li[rel="denied"].perm-item-selected .flat-perm-icon {
+	background-position: -64px -48px;
+	border-left: 1px solid #666;
+}
+
 .perm-editor.flat a {
+	display: block;
+	padding: 10px 0 10px 0;
 	color: inherit;
 	text-decoration: none;
+	white-space: nowrap;
+	cursor:	default;
 }
 
 .perm-editor.flat a:hover,
@@ -226,46 +247,83 @@
 	outline: none;
 }
 
-.perm-editor.flat li .flat-perm-icon {
+.perm-editor.flat li a .title {
+	max-width: 50%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;    
+	*display: inline;
+}
+
+.perm-editor.flat .perm-item-selected a {
+	color: white;
+	background: #888;
+}
+
+/* Permissions button */
+
+.edit-perms {
+	display: none;
+	float: right;
+	border: none;
+	width: 65px;
+}
+
+.perm-editor.hierarchical .edit-perms {
+	margin: -6px -1px;
+	padding: 4px 0 5px 0;
+	color: white;
+	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+	font-size: 100%;
+}
+
+.perm-item-selected .edit-perms,
+.jstree-clicked .edit-perms {
 	display: block;
-	float: left;
-	padding-right: 8px;
-	width: 15px;
-	height: 15px;
 }
 
-.perm-editor.flat li[rel="allowed"] .flat-perm-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
+.perm-editor.flat .edit-perms {
+	margin: -10px -1px;
+	padding: 9px 9px 10px 9px;
+	color: white;
+	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
+	font-size: 100%;
+	position: absolute;
+	top: 10px;
+	right: 0;
 }
 
-.perm-editor.flat li[rel="denied"] .flat-perm-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
+.perm-editor.flat .edit-perms.denied {
+	cursor:	pointer;
+	border: 1px solid #7b4949;
+	background: #cf5b5b;
+	background: -moz-linear-gradient(top, #cf5b5b 0%, #a24a4a 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #cf5b5b), color-stop(100%, #a24a4a));
+	background: -webkit-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: -o-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: -ms-linear-gradient(top, #cf5b5b 0%,#a24a4a 100%);
+	background: linear-gradient(to bottom, #cf5b5b 0%,#a24a4a 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cf5b5b', endColorstr='#a24a4a',GradientType=0 );
+	box-shadow: inset 3px 0 5px rgba(0, 0, 0, .20);
 }
 
-.perm-list {
-	padding: 0;
-	margin: 0;
-}
-
-.perm-list.flat li {
-	padding: 10px 15px;
-	border-top: 1px solid #dfdfdf;
-	margin: 0;
-}
-
-.perm-list.flat li:first-child {
-	border-top: none;
-}
-
-#perm-panel-container .perm-list input[type="checkbox"] {
-	margin-right: 12px;
+.perm-editor.flat .edit-perms.allowed {
+	cursor:	pointer;
+	border: 1px solid #506527;
+	background: #6a9812;
+	background: -moz-linear-gradient(top, #6a9812 0%, #567812 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #6a9812), color-stop(100%, #567812));
+	background: -webkit-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: -o-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: -ms-linear-gradient(top, #6a9812 0%,#567812 100%);
+	background: linear-gradient(to bottom, #6a9812 0%,#567812 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6a9812', endColorstr='#567812',GradientType=0 );
+	box-shadow: inset 3px 0 5px rgba(0, 0, 0, .20);
 }
 
 /* Bulk Edit */
-.perm-panel.bulk-edit .perm-editor-bulk-edit {
-	display: none;
-}
-
 .perm-panel.bulk-edit input[type="checkbox"] {
 	display: inline;
 	vertical-align: middle;
@@ -273,7 +331,7 @@
 
 .perm-panel.bulk-edit li input[type="checkbox"] {
 	float: left;
-	margin-top: 2px;
+	margin: 14px 12px 0 0;
 }
 
 .perm-editor-bulk-edit-panel {
@@ -295,97 +353,46 @@
 	background-image: linear-gradient(top,#ECECEC,#DFDFDF);
 }
 
-.perm-editor-bulk-edit-panel input[type="checkbox"] {
-	margin-right: 10px;
+.bulk-edit .perm-editor.flat .perm-item-selected a {
+	color: inherit;
+	background-color: inherit;
+}
+
+.bulk-edit .perm-editor.flat .perm-item-selected .edit-perms {
+	display: none;
+}
+
+.bulk-edit .perm-editor.flat li[rel="allowed"].perm-item-selected .flat-perm-icon {
+	background-position: -48px -48px;
+	border-left: 1px solid #7d9a42;
+}
+
+.bulk-edit .perm-editor.flat li[rel="denied"].perm-item-selected .flat-perm-icon {
+	background-position: -32px -48px;
+	border-left: 1px solid #9e5b5b;
 }
 
 .bulk-edit-actions {
 	float: left;
+	padding-left: 10px;
 }
 
 .bulk-edit-actions select {
 	width: 150px;
 }
 
-.bulk-edit-close {
-	float: right;
+.perm-editor-bulk-edit {
 	display: block;
-	color: inherit;
-	text-decoration: none;
 	font-style: normal;
+}
+
+.bulk-edit-close {
 	padding-left: 20px;
 	background: url('../images/close_icons.png') no-repeat 0px 0px;
-	line-height: 16px;
 }
 
 .bulk-edit-close:hover {
 	background: url('../images/close_icons.png') no-repeat 0 -24px;
-}
-
-/* Overlay */
-
-.buse-overlay:before {
-	position: absolute;
-	left: -10px;
-	top: 50%;
-	margin-top: -6px;
-	content: url('../images/left-arrow.png');
-	width: 10px;
-}
-
-.buse-overlay {
-	background-color: #FFFFFF;
-	border-radius: 3px 3px 3px 3px;
-	border: 1px solid #CCCCCC;
-	box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-	margin-left: 20px;
-	margin-top: -20px;
-	padding: 10px;
-	position: absolute;
-	display: inline-block;
-	text-align: center;
-	z-index: 10;
-}
-
-.buse-overlay .buse-icon {
-	display: block;
-	float: left;
-	text-decoration: none;
-}
-
-.buse-overlay.allowed .buse-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -60px 0;
-	width: 18px;
-	height: 20px;
-	margin: 1px 5px 0 0;
-}
-
-.buse-overlay.denied .buse-icon {
-	background: url('../images/group_perms_sprite.png') no-repeat -40px 0;
-	width: 18px;
-	height: 20px;
-	margin: 1px 5px 0 0;
-}
-
-.buse-overlay.inactive {
-	display: none;
-}
-
-.buse-action {
-	display: block;
-	float: left;
-	color: white;
-	background-color: #4790b4;
-	background-image: -webkit-linear-gradient(top,#6699CC,#1C729E);
-	background-image: linear-gradient(top,#6699CC,#1C729E);
-	padding: 10px 8px;
-	border-radius: 3px;
-	text-decoration: none;
-	width: 108px;
-}
-
-.buse-action:hover {
-	color: white;
 }
 
 /* Stats widget */
@@ -413,7 +420,7 @@
 }
 
 #group-stats-widget .member-count,
-#group-stats-widget .perm-stats-count {
+#group-stats-widget .perm-stat-count {
 	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
 	font-weight: bold;
 	font-size: 18px;

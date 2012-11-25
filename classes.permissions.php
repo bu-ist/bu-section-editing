@@ -422,20 +422,26 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			$p['metadata']['post_id']
 			);
 
+		// Perm actions button
+		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
+		$perm_label = $perm_state == 'allowed' ? 'Allow' : 'Deny';
+		$button = sprintf("<button class=\"edit-perms %s\">%s</button>", $perm_state, $perm_label );
+
 		// Anchor
-		$a = sprintf( "<a href=\"#\">%s<span class=\"title\">%s</span>%s</a>",
-			$icon,
+		$a = sprintf( "<a href=\"#\"><span class=\"title\">%s</span>%s%s</a>",
 			$p['data']['title'],
-			$meta
+			$meta,
+			$button
 		 );
 
 		// Post list item
-		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s</li>\n",
+		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s%s</li>\n",
 			$p['attr']['id'],
 			$p['attr']['class'],
 			$p['attr']['rel'],
 			json_encode($p['metadata']['editable']),
 			json_encode($p['metadata']['editable-original']),
+			$icon,
 			$checkbox,
 			$a
 			);
@@ -455,6 +461,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
 		$perm = $editable ? 'allowed' : 'denied';
+
+		$post->post_title = empty( $post->post_title ) ? '(no title)' : $post->post_title;
 
 		$p = array(
 			'attr' => array(
@@ -507,7 +515,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	/**
 	 * Custom query for hierarchical posts
 	 *
-	 * @uses BU Navigation library
+	 * @uses BU Navigation plugin
 	 */
 	public function query( $args = array() ) {
 
@@ -533,6 +541,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		// Don't load the whole tree at once
 		if( $this->child_of == 0 ) $section_args['depth'] = 1;
 		else $section_args['depth'] = 0;
+
+		// Make sure navigation plugin functions are available before querying
+		if( ! function_exists('bu_navigation_get_pages') ) {
+			$this->posts = array();
+			error_log('BU Navigation Plugin must be activated in order for hierarchical permissions editors to work');
+			return false;
+		}
 
 		// Get post IDs for this section
 		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);

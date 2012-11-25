@@ -1,119 +1,131 @@
-// Check prerequisites
-if((typeof bu === 'undefined') ||
-	(typeof bu.plugins.navigation === 'undefined') ||
-	(typeof bu.plugins.navigation.tree === 'undefined'))
-		throw new TypeError('BU Navigation Manager script dependencies have not been met!');
-
 (function ($){
+
+	// Check prerequisites
+	if((typeof bu === 'undefined') ||
+		(typeof bu.plugins.navigation === 'undefined') ||
+		(typeof bu.plugins.navigation.tree === 'undefined'))
+			return;
 
 	var Nav = bu.plugins.navigation;
 
-		// ----------------------------
-		// Hierarchical perm editor
-		// ----------------------------
-		Nav.trees['buse_perm_editor'] = function (config, my) {
-			my = my || {};
+	// ----------------------------
+	// Hierarchical perm editor
+	// ----------------------------
+	Nav.trees['buse_perm_editor'] = function (config, my) {
+		my = my || {};
 
-			// Functional inheritance
-			var that = Nav.trees.base( config, my );
+		// Functional inheritance
+		var that = Nav.trees.base( config, my );
 
-			// Aliases
-			var d = that.data;
-			var c = $.extend(that.config, config || {});	// instance configuration
+		// Aliases
+		var d = that.data;
+		var c = $.extend(that.config, config || {});	// instance configuration
 
-			var $tree = that.$el;
+		var $tree = that.$el;
 
-			// Remove crrm and dnd plugins
+		// Remove base plugins and config that we don't need
+		// @todo consider removing from bu-navigation base
+		var crrm = $.inArray('crrm', d.treeConfig['plugins']);
+		if (crrm > -1) {
+			d.treeConfig['plugins'].splice(crrm,1);
+			if (typeof d.treeConfig['crrm'] !== 'undefined' ) {
+				delete d.treeConfig['crrm'];
+			}
+		}
+		var dnd = $.inArray('dnd', d.treeConfig['plugins']);
+		if (dnd > -1) {
+			d.treeConfig['plugins'].splice(dnd,1);
+			if (typeof d.treeConfig['dnd'] !== 'undefined' ) {
+				delete d.treeConfig['dnd'];
+			}
+		}
 
-			// Custom tree types for perm editor (icon asset config is temporary)
-			d.treeConfig['types'] = {
-				"types" : {
-					'default' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-60px 0"
-						}
-					},
-					'denied' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-60px 0"
-						}
-					},
-					'denied-desc-allowed' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "2px 0"
-						}
-					},
-					'denied-desc-unknown' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-100px 0"
-						}
-					},
-					'allowed' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-40px 0"
-						}
-					},
-					'allowed-desc-denied' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-20px 0"
-						}
-					},
-					'allowed-desc-unknown' : {
-						icon: {
-							image: c.pluginUrl + "/images/group_perms_sprite.png",
-							position: "-120px 0"
-						}
+		// Custom tree types for perm editor (icon asset config is temporary)
+		d.treeConfig['types'] = {
+			"types" : {
+				'default' : {},
+				'denied' : {},
+				'denied-desc-allowed' : {},
+				'denied-desc-unknown' : {},
+				'allowed' : {},
+				'allowed-desc-denied' : {},
+				'allowed-desc-unknown' : {}
+			}
+		};
+
+		// UI plugin
+		d.treeConfig["ui"] = {
+			"select_limit": 1
+		}
+
+		// Append global jstree options with configuration for this post type
+		d.treeConfig['json_data']['ajax'] = {
+			url : c.rpcUrl,
+			type: 'GET',
+			cache: false,
+			data : function(n) {
+				return {
+					group_id : c.groupID,
+					node_prefix : c.nodePrefix,
+					post_type : c.postType,
+					query: {
+						child_of : n.attr ? my.stripNodePrefix(n.attr('id')) : 0
 					}
 				}
-			};
-
-			// UI plugin
-			d.treeConfig["ui"] = {
-				"select_limit": 1
+			},
+			success: function( response ) {
+				return response.posts;
+			},
+			error: function( response ) {
+				// @todo handle error
 			}
-
-			// Append global jstree options with configuration for this post type
-			d.treeConfig['json_data']['ajax'] = {
-					url : c.rpcUrl,
-					type: 'GET',
-					cache: false,
-					data : function(n) {
-						return {
-							group_id : c.groupID,
-							node_prefix : c.nodePrefix,
-							post_type : c.postType,
-							query: {
-								child_of : n.attr ? my.stripNodePrefix(n.attr('id')) : 0
-							}
-						}
-					},
-					success: function( response ) {
-						return response.posts;
-					},
-					error: function( response ) {
-						// @todo handle error
-					}
-			};
-
-			// Interferes with icon state correction with lazy load
-			d.treeConfig['json_data']['progressive_render'] = false;
-
-			return that;
-
 		};
+
+		// Interferes with icon state correction with lazy load
+		d.treeConfig['json_data']['progressive_render'] = false;
+
+		var _prepare_perm_actions = function (node) {
+			node = !node || node == -1 ? $tree.find("> ul > li") : $.jstree._reference($tree)._get_node(node);
+
+			var $li, $button, action_class, action_label;
+
+			node.each(function () {
+				$li = $(this);
+				$li.find("li").andSelf().each(function () {
+					action_class = $(this).data('editable') ? 'denied' : 'allowed';
+					action_label = action_class == 'allowed' ? 'Allow' : 'Deny';
+
+					$button = $('<button class="edit-perms ' + action_class + '"></button>')
+						.text(action_label);
+					$(this).children("a").not(":has(.edit-perms)").append($button);
+				});
+			});
+		};
+
+		// Add perm actions button to each node as needed
+		$tree.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", function (e, data) {
+			_prepare_perm_actions(data.rslt.obj);
+		});
+
+		$tree.bind("loaded.jstree", function (e) {
+			_prepare_perm_actions();
+		});
+
+		$tree.addClass('buse-perm-editor');
+
+		return that;
+	};
 
 }(jQuery));
 
 jQuery(document).ready(function($){
+	var Nav;
 
-	// Nav plugin alias
-	var Nav = bu.plugins.navigation;
+	// Check dependencies for hierarchical perm editors
+	if((typeof bu !== 'undefined') &&
+		(typeof bu.plugins.navigation !== 'undefined') &&
+		(typeof bu.plugins.navigation.tree !== 'undefined'))
+			Nav = bu.plugins.navigation;
 
 	// Globals
 	var $members_list = $('#group-member-list');
@@ -187,7 +199,7 @@ jQuery(document).ready(function($){
 	// Get ID's for users that belong to the current group
 	var get_active_member_ids = function() {
 
-		return $.map( $('li.member.active input[type="checkbox"]'), function(o) { return o.value } );
+		return $.map( $('li.member.active input[type="checkbox"]'), function(o) { return parseInt(o.value, 10) } );
 
 	}
 
@@ -411,7 +423,12 @@ jQuery(document).ready(function($){
 		// Load appropriate editor
 		if( $editor.hasClass('hierarchical') ) {
 
-			loadHierarchicalEditor( $editor );
+			if (typeof Nav === 'undefined') {
+				alert('Warning: Hierarchical permission editors require the BU Navigation plugin.');
+				$editor.text('Please install the BU Navigation plugin in order to set permissions for post type: ' + $editor.data('post-type'));
+			} else {
+				loadHierarchicalEditor( $editor );
+			}
 
 		} else {
 
@@ -422,8 +439,47 @@ jQuery(document).ready(function($){
 		// Load toolbar
 		loadToolbars( $panel, $editor );
 
-		// Load overlay
-		loadOverlay( $editor );
+		// Handle permission actions
+		$editor.delegate('.edit-perms', 'click', function (e) {
+			var $button = $(e.currentTarget),
+				$post = $button.closest('li'),
+				classes = $button.attr('class'),
+				action, isEditable;
+
+			e.stopPropagation();
+			e.preventDefault();
+
+			if (classes.indexOf('allowed') > -1 ) {
+				action = 'allowed';
+			} else if (classes.indexOf('denied') > -1 ) {
+				action = 'denied';
+			}
+
+			// Update post
+			isEditable = action == 'allowed' ? true : false;
+			setPostPermissions($post, isEditable, $editor);
+
+			// Notify
+			$editor.trigger('perm_updated', [{post: $post, action: action }]);
+
+		});
+
+		// Deselect all on click outside active perm panel
+		$(document).bind('click', function (e) {
+
+			var $active_perm_panel = $('.perm-panel.active');
+			var $editor = $('.perm-editor', $active_perm_panel);
+			var clickedActivePanel = $.contains( $active_perm_panel[0], e.target );
+
+			if (!clickedActivePanel) {
+				if ($editor.hasClass('hierarchical') && typeof $editor.jstree !== 'undefined') {
+					$editor.jstree('deselect_all');
+				} else {
+					$editor.find('.perm-item-selected').removeClass('perm-item-selected');
+				}
+			}
+
+		});
 
 		$panel.addClass('loaded');
 	}
@@ -462,9 +518,6 @@ jQuery(document).ready(function($){
 					s: term
 				}
 			};
-
-			// Clear any selections
-			hideOverlay( $editor );
 
 			// Render post list
 			displayPosts( $editor, args );
@@ -538,25 +591,34 @@ jQuery(document).ready(function($){
 
 		/* Bulk editor */
 
-		// Open editor
+		// Toggle bulk edit mode
 		$panel.delegate( 'a.perm-editor-bulk-edit', 'click', function(e) {
 			e.preventDefault();
-			$panel.addClass('bulk-edit');
-		});
+			var $a = $(this);
 
-		// Close editor
-		$panel.delegate( 'a.bulk-edit-close', 'click', function(e) {
-			e.preventDefault();
-			$panel.removeClass('bulk-edit');
+			if ($panel.hasClass('bulk-edit')) {
+				$a.removeClass('bulk-edit-close').attr('title','Enable bulk edit mode').text('Bulk Edit');
+				$panel.removeClass('bulk-edit');
+			} else {
+				$a.addClass('bulk-edit-close').attr('title','Disable bulk edit mode').text('Close Bulk Edit');
+				$panel.addClass('bulk-edit');
+			}
+
+			// Reset selections & bulk editor state
+			$editor.find('.perm-item-selected').removeClass('perm-item-selected');
+			$panel.find('input[type="checkbox"]').attr('checked', false);
+			$('.bulk-edit-actions select').val('none');
+
 		});
 
 		// Select all behavior toolbar checkbox
-		$panel.delegate( '.bulk-edit-select-all', 'click', function(e) {
-			$editor.find('input[type="checkbox"]').attr( 'checked', this.checked );
+		$panel.delegate('.bulk-edit-select-all', 'click', function(e) {
+			var $allposts = $editor.find('li');
+			$allposts.children('input[type="checkbox"]').attr( 'checked', this.checked );
 		});
 
 		// Apply bulk actions
-		$panel.delegate( '.bulk-edit-actions button', 'click', function(e) {
+		$panel.delegate('.bulk-edit-actions button', 'click', function(e) {
 			e.preventDefault();
 
 			var $selector = $(this).siblings('select');
@@ -577,6 +639,7 @@ jQuery(document).ready(function($){
 
 			}
 
+
 			// Reset bulk actions to default state
 			$panel.find('.bulk-edit-select-all').attr('checked', false);
 			$selector.val('none');
@@ -589,13 +652,17 @@ jQuery(document).ready(function($){
 		// Expand all
 		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
 			e.preventDefault();
-			$.jstree._reference($editor).open_all();
+			if(typeof $.jstree !== 'undefined') {
+				$.jstree._reference($editor).open_all();
+			}
 		});
 
 		// Collapse all
 		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
 			e.preventDefault();
-			$.jstree._reference($editor).close_all();
+			if(typeof $.jstree !== 'undefined') {
+				$.jstree._reference($editor).close_all();
+			}
 		});
 
 	}
@@ -621,9 +688,6 @@ jQuery(document).ready(function($){
 		if( term.length > 0 )
 			args['query']['s'] = term;
 
-		// Clear any selections
-		hideOverlay( $editor );
-
 		// Reset bulk edit toolbar
 		$panel.find('.bulk-edit-select-all').attr('checked',false );
 		$panel.find('.bulk-edit-actions select').val('none');
@@ -633,105 +697,14 @@ jQuery(document).ready(function($){
 
 	}
 
-	// _______________________ PERMISSIONS OVERLAY _______________________
+	// Toggle permissions action based in current value
+	var togglePermAction = function ($el) {
+		var previous = $el.hasClass('allowed') ? 'allowed' : 'denied';
+		var next = previous == 'allowed' ? 'denied' : 'allowed';
+		var label = next == 'allowed' ? 'Allow' : 'Deny';
 
-	// @todo test
-	// @todo encapsulate in a class
-
-	var overlayStates = {
-		'allowed' : {
-			'label' : 'Deny Editing',
-			'class' : 'allowed'
-		},
-		'allowed-desc-denied' : {
-			'label' : 'Deny Editing',
-			'class' : 'allowed'
-		},
-		'allowed-desc-unknown' : {
-			'label' : 'Deny Editing',
-			'class' : 'allowed'
-		},
-		'denied' : {
-			'label' : 'Allow Editing',
-			'class' : 'denied'
-		},
-		'denied-desc-allowed' : {
-			'label' : 'Allow Editing',
-			'class' : 'denied'
-		},
-		'denied-desc-unknown' : {
-			'label' : 'Allow Editing',
-			'class' : 'denied'
-		}
-	}
-
-	var loadOverlay = function( $editor ) {
-
-		// Insert markup
-		var inner = '<a href="#" class="buse-action"><ins class="buse-icon">&nbsp;</ins></a>';
-		var outer = '<span class="buse-overlay inactive"></span>';
-
-		// Start hidden
-		var o = $(outer).html(inner).insertAfter($editor);
-
-		// Trigger event on click
-		o.delegate( '.buse-action', 'click', function(e){
-
-			e.stopPropagation();
-			e.preventDefault();
-
-			// Hide overlay by default
-			hideOverlay( $editor );
-
-			// Provide hook for handling click actions
-			$editor.trigger('overlay_clicked.buse');
-
-		});
-
-	}
-
-	var showOverlay = function( $el, $ed ) {
-
-		// Generate appropriate label
-		var status = $el.attr('rel');
-		var $a = $el.children('a:first').first();
-		var $container = $('#perm-panel-container');
-		var $o = $ed.siblings('.buse-overlay').first();
-
-		// Current state
-		var st = overlayStates[status];
-
-		if( typeof st == 'undefined' )
-			return;
-
-		// Setup positioning
-		var pos = {
-			of: $a,
-			my: 'left center',
-			at: 'right center',
-			within: $container,
-			offset: '15 0',
-			collision: 'fit none'
-		};
-
-		// Switch label
-		$o.find('.buse-action').html('<ins class="buse-icon">&nbsp;</ins> ' + st['label'] );
-
-		// Display
-		$o.removeClass( 'inactive allowed allowed-desc-denied denied denied-desc-allowed')
-			.addClass( st['class'] )
-			.position( pos );
-
-	}
-
-	var hideOverlay = function( $ed ) {
-
-		// Remove all classes on the link
-		$ed.siblings('.buse-overlay')
-			.removeClass( 'allowed allowed-desc-denied denied denied-desc-allowed' )
-			.addClass('inactive')[0].removeAttribute('style');
-
-	}
+		$el.removeClass(previous).addClass(next).text(label);
+	};
 
 	// _______________________ Flat Permissions Editor _______________________
 
@@ -757,40 +730,16 @@ jQuery(document).ready(function($){
 					post_id = edits["allowed"][i];
 					$p = $editor.find('#p' + post_id );
 					if ($p.length) {
-						$p.attr('rel', 'allowed');
+						setPostPermissions($p, true, $editor);
 					}
 				}
 				for (i = 0; i < edits["denied"].length; i = i + 1) {
 					post_id = edits["denied"][i];
 					$p = $editor.find('#p' + post_id);
 					if ($p.length) {
-						$p.attr('rel', 'denied');
+						setPostPermissions($p, false, $editor);
 					}
 				}
-
-			})
-			.bind( 'select_post.buse', function(e, data) {
-				showOverlay( data.post, $editor );
-
-			})
-			.bind( 'deselect_all.buse', function(e, data) {
-				hideOverlay( $editor );
-
-			})
-			.bind( 'overlay_clicked.buse', function(e) {
-
-				$editor.find('.perm-item-selected').each(function(){
-
-					var $post = $(this);
-					var isEditable = $post.data('editable') ? false : true;
-
-					// Update permissions
-					setPostPermissions( $post, isEditable, $editor );
-
-					// Deselect
-					$(this).removeClass('perm-item-selected');
-
-				});
 
 			});
 
@@ -806,7 +755,6 @@ jQuery(document).ready(function($){
 
 		// Post selection
 		$editor.delegate( 'a', 'click', function (e) {
-
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -815,24 +763,17 @@ jQuery(document).ready(function($){
 
 			// Remove previous selections
 			$post.siblings('li.perm-item-selected').each( function () {
-
 				$(this).removeClass('perm-item-selected');
-
-				$editor.trigger( 'deselect_post.buse', { post: $(this) } );
-
 			});
 
 			$post.addClass('perm-item-selected');
 
-			// Trigger a post selection event
-			$editor.trigger( 'select_post.buse', { post: $post } );
-
 		});
 
-		// Deselect all on click within parent perm panel
-		$editor.closest('.perm-panel').bind( 'click', function (e) {
+		$editor.bind('perm_updated', function (e, data ) {
 
-			$editor.trigger( 'deselect_all.buse' );
+			// Deselect
+			data.post.removeClass('perm-item-selected');
 
 		});
 
@@ -865,45 +806,14 @@ jQuery(document).ready(function($){
 				}
 
 			})
-			.bind('select_node.jstree', function( event, data ) {
+			.bind('perm_updated', function (e, data) {
+				var $post = data.post;
 
-				if( data.inst.is_selected( data.rslt.obj ) ) {
-
-					showOverlay( data.rslt.obj, $editor );
-
+				if ($post.hasClass('jstree-closed')) {
+					$editor.jstree('open_all', $post);
 				}
 
-			})
-			.bind('deselect_node.jstree', function( event, data ) {
-
-				hideOverlay( $editor );
-
-			})
-			.bind('deselect_all.jstree', function( event, data ) {
-
-				hideOverlay( $editor );
-
-			})
-			.bind( 'overlay_clicked.buse', function(e) {
-
-				$editor.jstree( 'get_selected' ).each(function (){
-
-					var $post = $(this);
-					var isEditable = $post.data('editable') ? false : true;
-
-					if ($post.hasClass('jstree-closed')) {
-
-						$editor.jstree( 'open_all', $post );
-
-					}
-
-					// Diff the changes
-					setPostPermissions( $post, isEditable, $editor );
-
-					// Deselect
-					$editor.jstree('deselect_node', $post );
-
-				});
+				$editor.jstree('deselect_node', $post);
 
 			});
 
@@ -983,29 +893,40 @@ jQuery(document).ready(function($){
 		$next_page 		= $pagination.find('.next-page');
 		$last_page 		= $pagination.find('.last-page');
 
-		// Update found posts
-		var noun = ( parseInt( pageVars.found_posts ) == 1 ) ? ' item' : ' items';
-		$total_items.text( pageVars.found_posts + noun );
+		// Only show pagination if we have enough items to warrant it
+		if (pageVars.max_num_pages > 1) {
 
-		// Update page counts (current page, total pages)
-		$current_page.val( pageVars.page );
-		$total_pages.text( pageVars.max_num_pages );
+			// Update found posts
+			var noun = ( parseInt( pageVars.found_posts ) == 1 ) ? ' item' : ' items';
+			$total_items.text( pageVars.found_posts + noun );
 
-		// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
-		if( pageVars.page == 1 ) {
-			$first_page.addClass('disabled');
-			$prev_page.addClass('disabled');
+			// Update page counts (current page, total pages)
+			$current_page.val( pageVars.page );
+			$total_pages.text( pageVars.max_num_pages );
+
+			// Update classes for first-page, prev-page, next-page, last-page (disabled or not)
+			if( pageVars.page == 1 ) {
+				$first_page.addClass('disabled');
+				$prev_page.addClass('disabled');
+			} else {
+				$first_page.removeClass('disabled');
+				$prev_page.removeClass('disabled');
+			}
+
+			if( pageVars.page == pageVars.max_num_pages ) {
+				$next_page.addClass('disabled');
+				$last_page.addClass('disabled');
+			} else {
+				$next_page.removeClass('disabled');
+				$last_page.removeClass('disabled');
+			}
+
+			$pagination.show();
+
 		} else {
-			$first_page.removeClass('disabled');
-			$prev_page.removeClass('disabled');
-		}
 
-		if( pageVars.page == pageVars.max_num_pages ) {
-			$next_page.addClass('disabled');
-			$last_page.addClass('disabled');
-		} else {
-			$next_page.removeClass('disabled');
-			$last_page.removeClass('disabled');
+			$pagination.hide();
+
 		}
 	}
 
@@ -1016,21 +937,23 @@ jQuery(document).ready(function($){
 
 		var post_type = $editor.data('post-type');
 		var edits = $editor.data('perm-edits') || {'allowed':[], 'denied':[]};
+		var $section;
 
 		// Diff the changes
 		processUpdatesForPost( $post, isEditable, edits );
 
-		// Hierarchical post types
+		// Update icons for hierarchical post types
+		// @todo trigger updates through notifications
 		if( $editor.hasClass('hierarchical') ) {
 
 			// Correct icons for affected section
-			$root_post = $post.parentsUntil( '#' + $editor.attr('id'), 'li' ).last();
-
-			// Root post will be empty if we are a top-level post
-			if( $root_post.length ) {
-				// Correct icons for both descendents and ancestors affected by this change
-				correctIconsForSection( $root_post );
+			if ($post.parent('ul').parent('div').attr('id') != $editor.attr('id')) {
+				$section = $post.parents('li:last');
+			} else {
+				$section = $post;
 			}
+
+			correctIconsForSection( $section );
 
 		}
 
@@ -1038,7 +961,7 @@ jQuery(document).ready(function($){
 		$editor.data('perm-edits', edits);
 
 		// Update the stats widget counter
-		// @todo make this happen through notifications
+		// @todo trigger updates through notifications
 		updatePermStats( post_type );
 	}
 
@@ -1048,6 +971,12 @@ jQuery(document).ready(function($){
 	var processUpdatesForPost = function ($post, isEditable, edits ) {
 
 		var id = $post.attr('id').substr(1);
+
+		// Update perm action button if permission has changed
+		var $button = $post.find('.edit-perms').first();
+		if (isEditable != $post.data('editable')) {
+			togglePermAction($button);
+		}
 
 		// Track changes
 		var perm = isEditable ? 'allowed' : 'denied';
@@ -1109,20 +1038,30 @@ jQuery(document).ready(function($){
 				switch( state ) {
 
 					case 'allowed': case 'allowed-desc-denied': case 'allowed-desc-unknown':
-						mismatch = ($(this).find('li[rel="denied"],li[rel="denied-desc-allowed"],li[rel="denied-desc-unknown"]').length > 0 );
+						mismatch = $(this).find('li[rel="denied"],li[rel="denied-desc-allowed"],li[rel="denied-desc-unknown"]').length;
 
 						// Adjust state
-						if( mismatch ) $parent_post.attr('rel','allowed-desc-denied');
-						else $parent_post.attr('rel','allowed');
+						if( mismatch ) {
+							$parent_post.attr('rel','allowed-desc-denied');
+						} else {
+							$parent_post.attr('rel','allowed');
+						}
 
+						updatePostMismatchCount( $parent_post, mismatch );
 						break;
 
 					case 'denied': case 'denied-desc-allowed': case 'denied-desc-unknown':
-						mismatch = ( $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"],li[rel="allowed-desc-unknown"]').length > 0 );
+						mismatch = $(this).find('li[rel="allowed"],li[rel="allowed-desc-denied"],li[rel="allowed-desc-unknown"]').length;
 
 						// Adjust state
-						if( mismatch ) $parent_post.attr('rel','denied-desc-allowed');
-						else $parent_post.attr('rel','denied');
+						if( mismatch ) {
+							$parent_post.attr('rel','denied-desc-allowed');
+						} else {
+							$parent_post.attr('rel','denied');
+						}
+
+						updatePostMismatchCount( $parent_post, mismatch );
+						break;
 						break;
 
 				}
@@ -1132,6 +1071,28 @@ jQuery(document).ready(function($){
 		});
 
 	}
+
+	var updatePostMismatchCount = function ($parent, mismatches) {
+		var $stats = $parent.find('> a > .perm-stats');
+		var child_count;
+		var status = $parent.data('editable');
+
+		if ($stats.length === 0) {
+			$stats = $(' <span class="perm-stats"><ins class="jstree-icon">&nbsp;</ins><span class="label"></span></span>');
+			$parent.find('> a > .title-count').after($stats);
+		}
+
+		// Clear previous state
+		$stats.removeClass('allowed denied').children('.label').text('');
+
+		if (mismatches) {
+			if (status) {
+				$stats.addClass('denied').children('.label').text(mismatches + ' non-editable');
+			} else {
+				$stats.addClass('allowed').children('.label').text(mismatches + ' editable');
+			}
+		}
+	};
 
 	// ____________________ PERM STATS ______________________
 
