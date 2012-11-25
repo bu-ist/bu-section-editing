@@ -34,24 +34,13 @@ require_once(dirname(__FILE__) . '/classes.capabilities.php');
 require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
 
-if(!defined('BU_INCLUDES_PATH')) {
-	// @todo We should try to come up with a way of supporting
-	// bu-includes that makes use of submodules or some sort of simple build script
-	if(!defined('BU_NAVIGATION_LIB_LOADED') || BU_NAVIGATION_LIB_LOADED != true ) {
-		require_once(dirname(__FILE__) . '/lib/bu-navigation/bu-navigation.php');
-	}
-} else {
-	require_once(BU_INCLUDES_PATH . '/bu-navigation/bu-navigation.php');
-}
-
-
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
 /**
  * Plugin entry point
  */
 class BU_Section_Editing_Plugin {
-	
+
 	public static $caps;
 	public static $upgrader;
 
@@ -82,10 +71,10 @@ class BU_Section_Editing_Plugin {
 
 		// Admin requests
 		if( is_admin() ) {
-			
+
 			require_once(dirname(__FILE__) . '/admin.groups.php');
 			require_once(dirname(__FILE__) . '/admin-ajax.groups.php');
-			
+
 			BU_Groups_Admin::register_hooks();
 			BU_Groups_Admin_Ajax::register_hooks();
 
@@ -94,14 +83,14 @@ class BU_Section_Editing_Plugin {
 			if( function_exists( 'bu_navigation_get_pages' ) ) {
 				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation/bu-navigation.php' );
 			}
-			
+
 		}
 
 	}
 
 	/**
 	 * Callback that adds section editor role to BU list of allowed roles
-	 * 
+	 *
 	 */
 	public function allowed_roles( $roles ) {
 
@@ -138,7 +127,7 @@ class BU_Section_Editing_Plugin {
 	/**
 	 * Checks currently installed plugin version against last version stored in DB,
 	 * performing upgrades as needed.
-	 */ 
+	 */
 	public static function version_check() {
 
 		$existing_version = get_option( self::BUSE_VERSION_OPTION );

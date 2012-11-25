@@ -515,7 +515,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	/**
 	 * Custom query for hierarchical posts
 	 *
-	 * @uses BU Navigation library
+	 * @uses BU Navigation plugin
 	 */
 	public function query( $args = array() ) {
 
@@ -541,6 +541,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		// Don't load the whole tree at once
 		if( $this->child_of == 0 ) $section_args['depth'] = 1;
 		else $section_args['depth'] = 0;
+
+		// Make sure navigation plugin functions are available before querying
+		if( ! function_exists('bu_navigation_get_pages') ) {
+			$this->posts = array();
+			error_log('BU Navigation Plugin must be activated in order for hierarchical permissions editors to work');
+			return false;
+		}
 
 		// Get post IDs for this section
 		$sections = bu_navigation_gather_sections( $this->child_of, $section_args);
