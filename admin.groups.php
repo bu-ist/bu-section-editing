@@ -199,7 +199,7 @@ class BU_Groups_Admin {
 
 		$role = get_role( $newrole );
 
-		if( ! $role->has_cap('edit_in_section') ) {
+		if( ! is_null( $role ) && ! $role->has_cap('edit_in_section') ) {
 
 			// Remove members from any groups
 			$manager = BU_Edit_Groups::get_instance();
