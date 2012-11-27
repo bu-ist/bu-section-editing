@@ -33,7 +33,13 @@ jQuery(function($) {
 		var id = $(this).closest('tr').attr('id');
 		var parts = id.split('-');
 		var post_id =  parts[parts.length - 1];
+		var post_status = $('#edit-' + post_id + ' [name="_status"] option:selected').val();
 
+		// Allow post parent changes for unpublished content
+		if (post_status != 'publish') {
+			return;
+		}
+		
 		var data = {
 			action: 'buse_can_move',
 			post_id: post_id,
