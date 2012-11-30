@@ -840,9 +840,9 @@ jQuery(document).ready(function($){
 
 		// Set up loading spinner
 		if( editorData.query.offset ) {
-			$editor.append('<span class="loader">Loading...</span>');
+			$editor.append('<li class="loader">Loading...</li>');
 		} else {
-			$editor.html('<span class="loader">Loading...</span>');
+			$editor.html('<ul><li class="loader">Loading...</li></ul>');
 		}
 
 		$.ajax({

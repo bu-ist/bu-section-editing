@@ -165,10 +165,6 @@
 	margin: 15px;
 }
 
-.perm-editor.flat.loading {
-	padding: 10px 15px;
-}
-
 .perm-editor.flat .loader {
 	padding: none;
 	background: url('../images/loading.gif') no-repeat -9999px -9999px;
@@ -176,8 +172,13 @@
 
 .perm-editor.flat.loading .loader {
 	display: block;
-	background: url('../images/loading.gif') no-repeat 0 0;
+	padding: 10px 15px;
+	background: url('../images/loading.gif') no-repeat 10px center;
 	text-indent: -9999px;
+}
+
+.perm-editor li a {
+	cursor: default;
 }
 
 /* Flat Permissions */
@@ -267,6 +268,7 @@
 	float: right;
 	border: none;
 	width: 65px;
+	cursor: pointer;
 }
 
 .perm-editor.hierarchical .edit-perms {
@@ -296,7 +298,6 @@
 }
 
 .perm-editor.flat .edit-perms.denied {
-	cursor:	pointer;
 	border: 1px solid #7b4949;
 	background: #cf5b5b;
 	background: -moz-linear-gradient(top, #cf5b5b 0%, #a24a4a 100%);
@@ -310,7 +311,6 @@
 }
 
 .perm-editor.flat .edit-perms.allowed {
-	cursor:	pointer;
 	border: 1px solid #506527;
 	background: #6a9812;
 	background: -moz-linear-gradient(top, #6a9812 0%, #567812 100%);
