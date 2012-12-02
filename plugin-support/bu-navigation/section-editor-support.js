@@ -63,17 +63,12 @@
 	 * Prevent the Navman interface from showing the "Add a Link" button
 	 * when the current selection is not within an editable section
 	 */
-	var canAddLink = function (allowed, selection, parent) {
-		if (!selection || !parent) {
-			return false;
-		}
-
-		if (!parent.post_meta['canEdit']) {
+	var canAddLink = function (allowed, selection, tree) {
+		if (!selection) {
 			return false;
 		}
 
 		return allowed;
-
 	};
 
 	bu.hooks.addFilter('navmanCanAddLink', canAddLink);
