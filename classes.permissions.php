@@ -11,7 +11,7 @@ class BU_Group_Permissions {
 	 */
 	public static function get_supported_post_types( $output = 'objects') {
 
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		$post_types = get_post_types( array( 'show_ui' => true ), 'objects' );
 		$supported_post_types = array();
 
 		foreach( $post_types as $post_type ) {

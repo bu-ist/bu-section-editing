@@ -104,8 +104,8 @@ class BU_Section_Editing_Plugin {
 
 	public static function add_post_type_support() {
 
-		// Support posts and pages + all public custom post types by default
-		$post_types = get_post_types( array( 'public' => true, '_builtin' => false ) );
+		// Support posts and pages + all custom post types with show_ui by default
+		$post_types = get_post_types( array( 'show_ui' => true, '_builtin' => false ) );
 		$post_types = array_merge( $post_types, array('post','page') );
 
 		foreach( $post_types as $post_type ) {
