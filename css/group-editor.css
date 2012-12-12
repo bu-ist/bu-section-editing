@@ -1,4 +1,8 @@
 /* Group editor containers */
+#icon-section-groups,
+#icon-section-group {
+	background: url('../images/pages-menu-icon-32.png') no-repeat;
+}
 
 #section-group-editor h3.nav-tab-wrapper {
 	margin-bottom: 0;

@@ -436,7 +436,7 @@ class BU_Groups_Admin {
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
-			'',	// icon
+			plugins_url( '/images/pages-menu-icon-16.png', __FILE__ ),	
 			73	// position
 			);
 

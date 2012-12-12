@@ -1,5 +1,5 @@
 <div id="section-group-editor" class="wrap">
-	<?php screen_icon('users'); ?>
+	<div id="icon-section-group" class="icon32"></div>
 	<h2><?php echo $page_title; ?> <a href="<?php echo esc_attr(BU_Groups_Admin::manage_groups_url( 'add' ));?>" class="button add-new-h2">Add New</a></h2>
 	<div class="form-wrap">
 		<!-- Tab Interface -->
