@@ -7,32 +7,25 @@ class BU_Section_Editing_Upgrader {
 	 */
 	public function upgrade( $existing_version ) {
 
-		// Install section editor role if plugin wasn't previously installed
-		if( ! $existing_version ) {
-
+		// Add default roles and capabilities for fresh installs
+		if( version_compare( $existing_version, '0', '==' ) ) {
 			$this->populate_roles();
-
-		} else {
-
-			// @todo Delete these before final release
-			if( version_compare( $existing_version, '0.2', '<' ) )
-				$this->upgrade_02();
-
-			if( version_compare( $existing_version, '0.3', '<' ) )
-				$this->upgrade_03();
-
-			// Post alpha release
-
-			if( version_compare( $existing_version, '0.4', '<' ) )
-				$this->upgrade_04();
-
-			if( version_compare( $existing_version, '0.6', '<' ) )
-				$this->upgrade_06();
-
 		}
 
-		// Store new version
-		update_option( BU_Section_Editing_Plugin::BUSE_VERSION_OPTION, BU_Section_Editing_Plugin::BUSE_VERSION );
+		// Pre-alpha release
+		if( version_compare( $existing_version, '0.2', '<' ) ) {
+			$this->upgrade_02();
+		}
+		if( version_compare( $existing_version, '0.3', '<' ) ) {
+			$this->upgrade_03();
+		}
+		// Post alpha release
+		if( version_compare( $existing_version, '0.4', '<' ) ) {
+			$this->upgrade_04();
+		}
+		if( version_compare( $existing_version, '0.6', '<' ) ) {
+			$this->upgrade_06();
+		}
 
 	}
 

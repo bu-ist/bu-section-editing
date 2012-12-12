@@ -130,15 +130,20 @@ class BU_Section_Editing_Plugin {
 	 */
 	public static function version_check() {
 
-		$existing_version = get_option( self::BUSE_VERSION_OPTION );
+		$version = get_option( self::BUSE_VERSION_OPTION );
+		
+		if( empty( $version ) ) $version = '0';
 
 		// Check if plugin has been updated (or just installed) and store current version
-		if( $existing_version === false || $existing_version != self::BUSE_VERSION ) {
+		if( version_compare( $version, self::BUSE_VERSION, '<' ) ) {
 
 			require_once( dirname(__FILE__) . '/classes.upgrade.php' );
 
 			self::$upgrader = new BU_Section_Editing_Upgrader();
-			self::$upgrader->upgrade( $existing_version );
+			self::$upgrader->upgrade( $version );
+
+			// Store new version
+			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
 
 		}
 
