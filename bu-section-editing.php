@@ -47,7 +47,7 @@ class BU_Section_Editing_Plugin {
 	const BUSE_VERSION = '0.8';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
-	const TEXT_DOMAIN = 'bu_section_editing';
+	const TEXT_DOMAIN = 'bu-section-editing';
 
 	public static function register_hooks() {
 
@@ -131,7 +131,7 @@ class BU_Section_Editing_Plugin {
 	public static function version_check() {
 
 		$version = get_option( self::BUSE_VERSION_OPTION );
-		
+
 		if( empty( $version ) ) $version = '0';
 
 		// Check if plugin has been updated (or just installed) and store current version
