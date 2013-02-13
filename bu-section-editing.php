@@ -51,6 +51,8 @@ class BU_Section_Editing_Plugin {
 
 	public static function register_hooks() {
 
+		register_activation_hook( __FILE__, array( __CLASS__, 'on_activate' ) );
+
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
@@ -78,6 +80,7 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin::register_hooks();
 			BU_Groups_Admin_Ajax::register_hooks();
 
+			add_action( 'load-plugins.php', array( __CLASS__, 'load_plugins_screen' ) );
 			add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
 			if( function_exists( 'bu_navigation_get_pages' ) ) {
@@ -89,8 +92,55 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
+	 * Look for the BU Navigation plugin when this plugin activates
+	 */
+	public static function on_activate() {
+
+		$msg = '';
+
+		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
+			$link = 'http://wordpress.org/extend/plugins/bu-navigation'; // @todo replace with actual install link
+			$msg = __('<p>The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.</p>', self::TEXT_DOMAIN );
+			$msg .= __(sprintf('<p>Please install and activate the <a href="%s">BU Navigation plugin</a> in order to set permissions for hierarchical post types.</p>', $link ), self::TEXT_DOMAIN );
+		}
+
+		else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
+			$link = 'http://wordpress.org/extend/plugins/bu-navigation'; // @todo replace with actual upgrade link
+			$msg = __('<p>The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.</p>', self::TEXT_DOMAIN );
+			$msg .= __('<p>This version of BU Section Editing requires at least version 1.1 of BU Navigation.</p>', self::TEXT_DOMAIN );
+			$msg .= __(sprintf('<p>Please <a href="%s">upgrade your copy of BU Navigation</a> to enable permissions for hierarchical post types.</p>', $link ), self::TEXT_DOMAIN );
+		}
+
+		if ( $msg )
+			set_transient( 'buse_nav_dep_nag', $msg );
+
+	}
+
+	/**
+	 * Check for the BU Navigation plugin when the user vistis the "Plugins" page
+	 */
+	public static function load_plugins_screen() {
+
+		add_action( 'admin_notices', array( __CLASS__, 'plugin_dependency_nag' ) );
+
+	}
+
+	/**
+	 * Display a notice on the "Plugins" page if a sufficient version of the  BU Navigation plugin is not activated
+	 */
+	public static function plugin_dependency_nag() {
+
+		$notice = get_transient( 'buse_nav_dep_nag' );
+
+		if ( $notice ) {
+			echo "<div class=\"updated fade\">$notice</div>\n";
+			delete_transient( 'buse_nav_dep_nag' );
+		}
+
+	}
+
+	/**
 	 * Callback that adds section editor role to BU list of allowed roles
-	 *
 	 */
 	public function allowed_roles( $roles ) {
 
