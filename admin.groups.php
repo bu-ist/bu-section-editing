@@ -382,6 +382,7 @@ class BU_Groups_Admin {
 
 				$script_context = array(
 					'postStatuses' => array('publish'),
+					'loadInitialData' => false,
 					'lazyLoad' => true,
 					'showCounts' => false,
 					'showStatuses' => false,
@@ -416,7 +417,7 @@ class BU_Groups_Admin {
 
 		}
 
-		// Enforce section editor restrictions for inline/bulk edit actions 
+		// Enforce section editor restrictions for inline/bulk edit actions
 		if( 'edit.php' == $hook ) {
 			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), $version, true);
 		}
@@ -436,7 +437,7 @@ class BU_Groups_Admin {
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
-			plugins_url( '/images/pages-menu-icon-16.png', __FILE__ ),	
+			plugins_url( '/images/pages-menu-icon-16.png', __FILE__ ),
 			73	// position
 			);
 
