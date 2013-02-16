@@ -492,6 +492,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 /**
  * Permissions editor for hierarchical post types
  *
+ * @todo now that the navigation plugin has the BU_Navigation_Tree_View class, most of this
+ *  logic is redundant.  The only added complexity is the need for a "group_id" field for
+ *  filtering post meta.
+ *
  * @uses (depends on) BU Navigation library
  */
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
