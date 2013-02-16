@@ -345,8 +345,10 @@ class BU_Edit_Groups {
 			$post_type_clause = "AND post_type = '$post_type' ";
 
 			if( $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
-				if ( $bu_navigation_plugin->supports( 'links' ) )
-					$post_type_clause = "AND post_type IN ('page','link') ";
+				if ( $bu_navigation_plugin->supports( 'links' ) ) {
+					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
+					$post_type_clause = sprintf( "AND post_type IN ('page','%s') ", $link_post_type );
+				}
 			}
 
 		}
