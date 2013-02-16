@@ -254,7 +254,7 @@ abstract class BU_Permissions_Editor {
 			error_log('Not a valid group ID or object: ' . $group );
 		}
 
-		$this->post_type = $post_type == 'page' ? array('page','link') : $post_type;
+		$this->post_type = $post_type;
 
 		$this->load();
 
@@ -505,8 +505,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_external_links' );
 
 		// But we definitely need these
-		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
-		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
+		add_filter('bu_navigation_filter_pages', array( $this, 'filter_posts' ) );
 
 	}
 
@@ -753,22 +752,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		}
 
 		return $posts;
-
-	}
-
-	/**
-	 * Get only the post fields that we need
-	 */
-	public function filter_post_fields( $fields ) {
-
-		$fields = array(
-			'ID',
-			'post_title',
-			'post_type',
-			'post_parent'
-			);
-
-		return $fields;
 
 	}
 
