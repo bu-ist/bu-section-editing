@@ -127,10 +127,10 @@ class BU_Group_Permissions {
 				// Bulk deletion
 				if( ! empty( $denied_meta_ids ) ) {
 
+					$delete_query = sprintf( "DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)", implode( ',', $denied_meta_ids ) );
+
 					// Remove allowed status in one query
-					$results = $wpdb->query(
-						$wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_id IN (%s)", implode(',', $denied_meta_ids )  )
-						);
+					$results = $wpdb->query( $delete_query );
 
 					// Purge cache
 					foreach( $denied_ids as $post_id ) {
