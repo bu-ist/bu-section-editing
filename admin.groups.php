@@ -375,10 +375,23 @@ class BU_Groups_Admin {
 			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
 
 			// Group editor script
+			$data = array(
+				'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
+				'adminUrl' => admin_url( 'admin-ajax.php' ),
+				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
+				'usersUrl' => admin_url('users.php'),
+				'userNewUrl' => admin_url('user-new.php')
+			);
+
+			wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
+			wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
+
+			// Hierarchical permissions editor script
 			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
+			// @todo git rid of hierarchical permissions class, just use BU_Navigation_Tree_View / Query with filters as needed
 			if( class_exists( 'BU_Navigation_Tree_View' ) ) {
 
-				wp_register_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), $version, true );
+				wp_register_script( 'tree-perm-editor', plugins_url('/js/tree-perm-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete', 'bu-navigation'), $version, true );
 
 				$script_context = array(
 					'postStatuses' => array('publish'),
@@ -386,30 +399,13 @@ class BU_Groups_Admin {
 					'lazyLoad' => true,
 					'showCounts' => false,
 					'showStatuses' => false,
+					'loadInitialData' => false,
 					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
-					'adminUrl' => admin_url( 'admin-ajax.php' ),
-					'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
-					'usersUrl' => admin_url('users.php'),
-					'userNewUrl' => admin_url('user-new.php')
 				);
 
 				// Let the tree view class handle enqueing
-				$treeview = new BU_Navigation_Tree_View( 'buse_group_editor', $script_context );
-				$treeview->enqueue_script( 'group-editor' );
-
-			} else {
-
-				// Fallback if BU Navigation plugin is inactive -- disables hierarhical perm editors
-				$data = array(
-					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
-					'adminUrl' => admin_url( 'admin-ajax.php' ),
-					'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
-					'usersUrl' => admin_url('users.php'),
-					'userNewUrl' => admin_url('user-new.php')
-				);
-
-				wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
-				wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
+				$treeview = new BU_Navigation_Tree_View( 'buse_perm_editor', $script_context );
+				$treeview->enqueue_script( 'tree-perm-editor' );
 
 			}
 
