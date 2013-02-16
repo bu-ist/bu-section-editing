@@ -294,7 +294,7 @@ class BU_Edit_Groups {
 	 * @return int allowed post count for the given post type, group or user
 	 */
 	public function get_allowed_post_count( $args = array() ) {
-		global $wpdb;
+		global $wpdb, $bu_navigation_plugin;
 
 		$defaults = array(
 			'user_id' => null,
@@ -342,10 +342,11 @@ class BU_Edit_Groups {
 		// Maybe filter by post type and status
 		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			if( $post_type == 'page' ) {
-				$post_type_clause = "AND post_type IN ('page','link') ";
-			} else {
-				$post_type_clause = "AND post_type = '$post_type' ";
+			$post_type_clause = "AND post_type = '$post_type' ";
+
+			if( $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
+				if ( $bu_navigation_plugin->supports( 'links' ) )
+					$post_type_clause = "AND post_type IN ('page','link') ";
 			}
 
 		}
