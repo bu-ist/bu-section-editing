@@ -7,10 +7,8 @@ class BU_Section_Editing_Upgrader {
 	 */
 	public function upgrade( $existing_version ) {
 
-		// Add default roles and capabilities for fresh installs
-		if( version_compare( $existing_version, '0', '==' ) ) {
-			$this->populate_roles();
-		}
+		// Every version bump will trigger re-population of roles
+		$this->populate_roles();
 
 		// Pre-alpha release
 		if( version_compare( $existing_version, '0.2', '<' ) ) {
@@ -31,7 +29,7 @@ class BU_Section_Editing_Upgrader {
 
 	/**
 	 * Install default section editor role and capability set
-	 */ 
+	 */
 	private function populate_roles() {
 
 		// Allow plugins to skip installation of section editor role
@@ -52,15 +50,15 @@ class BU_Section_Editing_Upgrader {
 			$role->add_cap('read');
 			$role->add_cap('read_private_posts');
 			$role->add_cap('read_private_pages');
-			
+
 			$role->add_cap('edit_posts');
 			$role->add_cap('edit_others_posts');
 			$role->add_cap('edit_private_posts');
-			
+
 			$role->add_cap('edit_pages');
 			$role->add_cap('edit_others_pages');
 			$role->add_cap('edit_private_pages');
-			
+
 			$role->add_cap('delete_posts');
 			$role->add_cap('delete_pages');
 
@@ -68,7 +66,7 @@ class BU_Section_Editing_Upgrader {
 			$role->add_cap('level_0');
 
 			$caps = BU_Section_Editing_Plugin::$caps->get_caps();
-			
+
 			foreach( $caps as $cap ) {
 				$role->add_cap( $cap );
 			}
@@ -79,11 +77,13 @@ class BU_Section_Editing_Upgrader {
 
 		}
 
+		do_action( 'buse_populate_roles' );
+
 	}
 
 	/**
 	 * Switched data structure for perms
-	 */ 
+	 */
 	private function upgrade_02() {
 		global $wpdb;
 
@@ -105,7 +105,7 @@ class BU_Section_Editing_Upgrader {
 
 	/**
 	 * Switched data structure for perms (again)
-	 */ 
+	 */
 	private function upgrade_03() {
 		global $wpdb;
 
@@ -114,11 +114,11 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array('${1}' );
 
 		// Fetch existing values
-		$allowed_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s  WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%:allowed"', 
-			$wpdb->postmeta, 
+		$allowed_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s  WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%:allowed"',
+			$wpdb->postmeta,
 			BU_Group_Permissions::META_KEY
 			);
-		
+
 		$allowed_posts = $wpdb->get_results( $allowed_query );
 
 		foreach( $allowed_posts as $post ) {
@@ -127,7 +127,7 @@ class BU_Section_Editing_Upgrader {
 		}
 
 		// Fetch existing values
-		$denied_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%denied"', 
+		$denied_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%denied"',
 			$wpdb->postmeta,
 			BU_Group_Permissions::META_KEY
 			);
@@ -160,7 +160,7 @@ class BU_Section_Editing_Upgrader {
 
 	/**
 	 * Switched from options -> custom post type posts for group storage
-	 */ 
+	 */
 	private function upgrade_04() {
 		global $wpdb;
 
@@ -202,7 +202,7 @@ class BU_Section_Editing_Upgrader {
 	/**
 	 * Switched from <action>_published_in_section to <action>_<post_type>_in_section
 	 * Changes made in caps branch
-	 */ 
+	 */
 	private function upgrade_06() {
 
 		// Role/cap mods introduced in 114fcedf80ebdb0ef93948f41a6984006ff74031
@@ -213,7 +213,7 @@ class BU_Section_Editing_Upgrader {
 			$role->remove_cap( 'publish_in_section' );
 
 			$caps = BU_Section_Editing_Plugin::$caps->get_caps();
-			
+
 			foreach( $caps as $cap ) {
 				$role->add_cap( $cap );
 			}
