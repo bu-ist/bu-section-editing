@@ -133,8 +133,13 @@ class BU_Groups_Admin {
 
 		$pto = get_post_type_object( $post->post_type );
 
+		$is_nav_link = false;
+
+		if ( defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) )
+			$is_nav_link = BU_NAVIGATION_LINK_POST_TYPE == $post->post_type;
+
 		// We only need special logic for hierarchical post types and links
-		if( ( is_object( $pto ) && ! $pto->hierarchical ) || ! 'link' == $post->post_type ) {
+		if( ( is_object( $pto ) && ! $pto->hierarchical ) || ! $is_nav_link ) {
 			return;
 		}
 
@@ -150,7 +155,7 @@ class BU_Groups_Admin {
 			$parent = get_post( $post->post_parent );
 
 			// Copy post permissions from parent on publish
-			if( $parent && $parent->post_status == 'publish') {
+			if( $parent && $parent->post_status == 'publish' ) {
 
 				$group_controller = BU_Edit_Groups::get_instance();
 				$groups = $group_controller->get_groups();
