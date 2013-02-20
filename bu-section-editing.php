@@ -36,6 +36,10 @@ require_once(dirname(__FILE__) . '/classes.permissions.php');
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
 
+define( 'BUSE_NAV_INSTALL_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
+
+define( 'BUSE_NAV_UPGRADE_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
+
 /**
  * Plugin entry point
  */
@@ -134,7 +138,7 @@ class BU_Section_Editing_Plugin {
 		$notice = get_transient( 'buse_nav_dep_nag' );
 
 		if ( $notice ) {
-			echo "<div class=\"updated fade\">$notice</div>\n";
+			echo "<div class=\"error\">$notice</div>\n";
 			delete_transient( 'buse_nav_dep_nag' );
 		}
 

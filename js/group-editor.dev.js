@@ -304,8 +304,8 @@ jQuery(document).ready(function($){
 		if( $editor.hasClass('hierarchical') ) {
 
 			if (typeof Nav === 'undefined') {
-				alert('Warning: Hierarchical permission editors require the BU Navigation plugin.');
-				$editor.text('Please install the BU Navigation plugin in order to set permissions for post type: ' + $editor.data('post-type'));
+				alert(buse_group_editor_settings.navDepAlertText);
+				$editor.html(buse_group_editor_settings.navDepEditorText);
 			} else {
 				loadHierarchicalEditor( $editor );
 			}

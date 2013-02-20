@@ -378,17 +378,26 @@ class BU_Groups_Admin {
 			// Dynamic js file that contains a variable with all users for the current site
 			// Used to keep the autocomplete & add member functionality client-side
 			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+			wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
 
-			// Group editor script
+			$nav_alert_txt = sprintf(
+				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s",
+					BU_Section_Editing_Plugin::TEXT_DOMAIN ),
+				BUSE_NAV_INSTALL_LINK );
+			$nav_dep_txt = sprintf(
+				__( "Please install the <a href=\"%s\" target=\"_blank\">BU Navigation plugin</a> in order to set permissions for this post type.",
+					BU_Section_Editing_Plugin::TEXT_DOMAIN ),
+				BUSE_NAV_INSTALL_LINK );
+
 			$data = array(
 				'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
 				'adminUrl' => admin_url( 'admin-ajax.php' ),
 				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
 				'usersUrl' => admin_url('users.php'),
-				'userNewUrl' => admin_url('user-new.php')
+				'userNewUrl' => admin_url('user-new.php'),
+				'navDepAlertText' => $nav_alert_txt,
+				'navDepEditorText' => $nav_dep_txt
 			);
-
-			wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
 			wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
 
 			// Hierarchical permissions editor script
