@@ -83,8 +83,9 @@ class BU_Section_Editing_Plugin {
 			add_action( 'load-plugins.php', array( __CLASS__, 'load_plugins_screen' ) );
 			add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
-			if( function_exists( 'bu_navigation_get_pages' ) ) {
-				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation/bu-navigation.php' );
+			// Load support code for the BU Navigation plugin if it's active
+			if( class_exists( 'BU_Navigation_Plugin' ) ) {
+				require_once( dirname( __FILE__ ) . '/plugin-support/bu-navigation/section-editor-nav.php' );
 			}
 
 		}

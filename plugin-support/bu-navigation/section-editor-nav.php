@@ -7,14 +7,23 @@ if( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
 	add_filter( 'bu_nav_tree_script_context', 'buse_bu_navigation_script_context');
 
 	// Add custom filter to add editable status fields to post objects
-	add_filter( 'bu_nav_tree_view_filter_posts', 'buse_bu_navigation_filter_posts');
+	add_filter( 'bu_nav_tree_view_filter_posts', 'buse_bu_navigation_filter_posts' );
 	add_filter( 'bu_nav_tree_view_format_post_bu_navman', 'buse_bu_navigation_format_post', 10, 3 );
 	add_filter( 'bu_nav_tree_view_format_post_nav_metabox', 'buse_bu_navigation_format_post', 10, 3 );
 
 }
 
 function buse_bu_navigation_scripts() {
-	wp_enqueue_script( 'buse-navigation-support', plugins_url( 'section-editor-support.js', __FILE__ ), array('bu-navigation'), '1.0', true );
+
+	$screen = get_current_screen();
+
+	wp_enqueue_script( 'section-editor-nav', plugins_url( 'js/section-editor-nav.js', __FILE__ ), array( 'bu-navigation' ), BU_Section_Editing_Plugin::BUSE_VERSION, true );
+	
+	if ( function_exists( 'bu_navigation_supported_post_types' ) ) {
+		if ( 'post' == $screen->base && in_array( $screen->post_type, bu_navigation_supported_post_types() ) ) {
+			wp_enqueue_script( 'section-editor-nav-metabox', plugins_url( 'js/section-editor-nav-metabox.js', __FILE__ ), array( 'bu-navigation-metabox' ), BU_Section_Editing_Plugin::BUSE_VERSION, true );
+		}
+	}
 }
 
 function buse_bu_navigation_script_context( $config ) {
