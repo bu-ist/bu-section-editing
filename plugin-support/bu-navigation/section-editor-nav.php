@@ -11,6 +11,9 @@ if( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
 	add_filter( 'bu_nav_tree_view_format_post_bu_navman', 'buse_bu_navigation_format_post', 10, 3 );
 	add_filter( 'bu_nav_tree_view_format_post_nav_metabox', 'buse_bu_navigation_format_post', 10, 3 );
 
+	// Add custom fields
+	add_filter( 'bu_navigation_filter_fields', 'buse_bu_navigation_filter_fields' );
+
 }
 
 function buse_bu_navigation_scripts() {
@@ -19,7 +22,7 @@ function buse_bu_navigation_scripts() {
 	$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
 
 	wp_enqueue_script( 'section-editor-nav', plugins_url( 'js/section-editor-nav' . $suffix . '.js', __FILE__ ), array( 'bu-navigation' ), BU_Section_Editing_Plugin::BUSE_VERSION, true );
-	
+
 	if ( function_exists( 'bu_navigation_supported_post_types' ) ) {
 		if ( 'post' == $screen->base && in_array( $screen->post_type, bu_navigation_supported_post_types() ) ) {
 			wp_enqueue_script( 'section-editor-nav-metabox', plugins_url( 'js/section-editor-nav-metabox' . $suffix . '.js', __FILE__ ), array( 'bu-navigation-metabox' ), BU_Section_Editing_Plugin::BUSE_VERSION, true );
@@ -117,30 +120,11 @@ function buse_bu_navigation_format_post( $p, $post, $has_children ) {
 
 }
 
-/**
- * Unused -- This is the ideal filter in that it relies on current_user_can to determine the actual edit and delete capability
- *
- * The issue is that since we are bypassing WP_Query in favor of bu_navigation_get_pages, this approach winds up
- * using a lot of memory.  Also, since links are currently a non-registered custom post type, there's some extra
- * logic needed as well.
- */
-// function buse_bu_navigation_filter_pages_slow( $posts ) {
-// 		if( is_array( $posts ) && count( $posts ) > 0 ) {
-// 			foreach( $posts as $post ) {
+function buse_bu_navigation_filter_fields( $fields ) {
 
-// 				// Links, being a non-registered custom post type, bypass map_meta_cap and must be accounted for specially here
-// 				if( $post->post_type == 'link') {
+	if ( ! in_array( 'post_author', $fields ) )
+		$fields[] = 'post_author';
 
-// 					$post->can_edit = BU_Group_Permissions::can_edit_section( wp_get_current_user(), $post->ID );
-// 					$post->can_remove = $post->can_edit;
+	return $fields;
 
-// 				} else {
-
-// 					$post->can_edit = current_user_can( 'edit_post', $post->ID );
-// 					$post->can_remove = current_user_can( 'delete_post', $post->ID );
-
-// 				}
-// 			}
-// 		}
-// 		return $posts;
-// }
+}
