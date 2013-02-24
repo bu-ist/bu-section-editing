@@ -49,19 +49,28 @@ class BU_Edit_Groups {
 	 */
 	static public function register_post_type() {
 
+		$labels = array(
+			'name'                => _x( 'Section Groups', 'Post Type General Name', BUSE_TEXTDOMAIN ),
+			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', BUSE_TEXTDOMAIN ),
+		);
+
 		$args = array(
-			'label' => 'Section Groups',
-			'public' => false,
-			'publicly_queryable' => false,
-			'show_ui' => false,
-			'show_in_menu' => false,
-			'query_var' => true,
-			'rewrite' => false,
-			'capability_type' => 'post',
-			'has_archive' => false,
-			'hierarchical' => false,
-			'menu_position' => null,
-			'can_export' => true
+			'labels'              => $labels,
+			'supports'            => array(),
+			'hierarchical'        => false,
+			'public'              => false,
+			'show_ui'             => false,
+			'show_in_menu'        => false,
+			'show_in_nav_menus'   => false,
+			'show_in_admin_bar'   => false,
+			'menu_position'       => 5,
+			'menu_icon'           => '',
+			'can_export'          => true,
+			'has_archive'         => false,
+			'exclude_from_search' => false,
+			'publicly_queryable'  => false,
+			'rewrite'             => false,
+			'capability_type'     => 'post',
 		);
 
 		register_post_type( self::POST_TYPE_NAME, $args );
@@ -800,5 +809,3 @@ class BU_Edit_Group {
 	}
 
 }
-
-?>

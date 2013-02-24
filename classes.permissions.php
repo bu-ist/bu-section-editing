@@ -400,15 +400,17 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Publish information
 		$meta = '';
+		$published_label = __( 'Published on', BUSE_TEXTDOMAIN );
+		$draft_label = __( 'Draft', BUSE_TEXTDOMAIN );
 
 		switch( $p['metadata']['post_status'] ) {
 
 			case 'publish':
-				$meta = ' &mdash; Published on ' . $p['metadata']['post_date'];
+				$meta = " &mdash; $published_label {$p['metadata']['post_date']}";
 				break;
 
 			case 'draft':
-				$meta = ' &mdash; <em>Draft</em>';
+				$meta = " &mdash; <em>$draft_label</em>";
 				break;
 
 		}
@@ -421,7 +423,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Perm actions button
 		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
-		$perm_label = $perm_state == 'allowed' ? 'Allow' : 'Deny';
+		$perm_label = $perm_state == 'allowed' ? __( 'Allow', BUSE_TEXTDOMAIN ) : __( 'Deny', BUSE_TEXTDOMAIN );
 		$button = sprintf("<button class=\"edit-perms %s\">%s</button>", $perm_state, $perm_label );
 
 		// Anchor
@@ -459,7 +461,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
 		$perm = $editable ? 'allowed' : 'denied';
 
-		$post->post_title = empty( $post->post_title ) ? '(no title)' : $post->post_title;
+		$post->post_title = empty( $post->post_title ) ? __('(no title)', BUSE_TEXTDOMAIN ) : $post->post_title;
 
 		$p = array(
 			'attr' => array(

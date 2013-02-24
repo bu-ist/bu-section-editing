@@ -35,9 +35,9 @@ require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
+define( 'BUSE_TEXTDOMAIN', 'bu-section-editing' );
 
 define( 'BUSE_NAV_INSTALL_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
-
 define( 'BUSE_NAV_UPGRADE_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
 
 /**
@@ -104,16 +104,16 @@ class BU_Section_Editing_Plugin {
 		$msg = '';
 
 		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
-			$link = 'http://wordpress.org/extend/plugins/bu-navigation'; // @todo replace with actual install link
-			$msg = __('<p>The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.</p>', self::TEXT_DOMAIN );
-			$msg .= __(sprintf('<p>Please install and activate the <a href="%s">BU Navigation plugin</a> in order to set permissions for hierarchical post types.</p>', $link ), self::TEXT_DOMAIN );
-		}
-
-		else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
-			$link = 'http://wordpress.org/extend/plugins/bu-navigation'; // @todo replace with actual upgrade link
-			$msg = __('<p>The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.</p>', self::TEXT_DOMAIN );
-			$msg .= __('<p>This version of BU Section Editing requires at least version 1.1 of BU Navigation.</p>', self::TEXT_DOMAIN );
-			$msg .= __(sprintf('<p>Please <a href="%s">upgrade your copy of BU Navigation</a> to enable permissions for hierarchical post types.</p>', $link ), self::TEXT_DOMAIN );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' . sprintf(
+				__( 'Please install and activate the <a href="%s">BU Navigation plugin</a> in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				BUSE_NAV_INSTALL_LINK ) . '</p>';
+		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' . sprintf(
+				__( 'Please <a href="%s">upgrade your copy of BU Navigation</a> to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				BUSE_NAV_UPGRADE_LINK ) . '</p>';
 		}
 
 		if ( $msg )
@@ -174,7 +174,7 @@ class BU_Section_Editing_Plugin {
 			return $links;
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">Manage Groups</a>" );
+		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', BUSE_TEXTDOMAIN ) . "</a>" );
 
 		return $links;
 	}
@@ -256,5 +256,3 @@ class BU_Section_Editing_Plugin {
 }
 
 BU_Section_Editing_Plugin::register_hooks();
-
-?>

@@ -59,8 +59,7 @@ class BU_Groups_Admin {
 	 */
 	public static function add_manage_users_column( $columns ) {
 
-		$columns[self::MANAGE_USERS_COLUMN] = 'Section Groups';
-
+		$columns[self::MANAGE_USERS_COLUMN] = __( 'Section Groups', BUSE_TEXTDOMAIN );
 		return $columns;
 
 	}
@@ -78,7 +77,7 @@ class BU_Groups_Admin {
 
 			if( empty( $groups ) ) {
 
-				$content = 'None';
+				$content = __( 'None', BUSE_TEXTDOMAIN );
 
 			} else {
 
@@ -107,9 +106,12 @@ class BU_Groups_Admin {
 				$content = implode( ', ', $group_names );
 
 				if( $truncated_count > 0 ) {
-					$content .= sprintf( ' and <a href="%s"> ' . _n( '%s other', '%s others', $truncated_count, BU_Section_Editing_Plugin::TEXT_DOMAIN ) . '</a>',
-						admin_url(self::MANAGE_GROUPS_PAGE),
-						$truncated_count );
+					$content .= sprintf( ' %s <a href="%s"> %s %s</a>',
+						__( 'and', BUSE_TEXTDOMAIN ),
+						admin_url( self::MANAGE_GROUPS_PAGE ),
+						$truncated_count,
+						_n( 'other', 'others', $truncated_count, BUSE_TEXTDOMAIN )
+						);
 				}
 
 			}
@@ -234,7 +236,7 @@ class BU_Groups_Admin {
 			// Most of these options don't do anything at this time, but we should keep an eye
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
-				'label' => 'Editable',
+				'label' => __( 'Editable', BUSE_TEXTDOMAIN ),
 				'label_count' => true,
 				'public' => true,
 				'show_in_admin_all' => true,
@@ -279,7 +281,7 @@ class BU_Groups_Admin {
 
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views[self::EDITABLE_POST_STATUS] = "<a href=\"$edit_link\" $class>Editable <span class=\"count\">($count)</span></a>";
+		$views[self::EDITABLE_POST_STATUS] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . "<span class=\"count\">($count)</span></a>";
 
 		return $views;
 
@@ -382,11 +384,11 @@ class BU_Groups_Admin {
 
 			$nav_alert_txt = sprintf(
 				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s",
-					BU_Section_Editing_Plugin::TEXT_DOMAIN ),
+					BUSE_TEXTDOMAIN ),
 				BUSE_NAV_INSTALL_LINK );
 			$nav_dep_txt = sprintf(
 				__( "Please install the <a href=\"%s\" target=\"_blank\">BU Navigation plugin</a> in order to set permissions for this post type.",
-					BU_Section_Editing_Plugin::TEXT_DOMAIN ),
+					BUSE_TEXTDOMAIN ),
 				BUSE_NAV_INSTALL_LINK );
 
 			$data = array(
@@ -442,8 +444,8 @@ class BU_Groups_Admin {
 	public static function admin_menus() {
 
 		$groups_manage = add_menu_page(
-			'Section Groups',
-			'Section Groups',
+			__( 'Section Groups', BUSE_TEXTDOMAIN ),
+			__( 'Section Groups', BUSE_TEXTDOMAIN ),
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
@@ -453,8 +455,8 @@ class BU_Groups_Admin {
 
 		add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
-			'Section Groups',
-			'All Groups',
+			__( 'Section Groups', BUSE_TEXTDOMAIN ),
+			__( 'All Groups', BUSE_TEXTDOMAIN ),
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' )
@@ -462,8 +464,8 @@ class BU_Groups_Admin {
 
 		$groups_edit = add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
-			'Edit Section Group',
-			'Add New',
+			__( 'Edit Section Group', BUSE_TEXTDOMAIN ),
+			__( 'Add New', BUSE_TEXTDOMAIN ),
 			'promote_users',
 			self::NEW_GROUP_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' )
@@ -520,23 +522,24 @@ class BU_Groups_Admin {
 		if( isset( $_GET['status'] ) ) {
 
 			$groups_url = admin_url( self::MANAGE_GROUPS_PAGE );
+			$view_txt = __( 'View all groups', BUSE_TEXTDOMAIN );
 
 			switch( $_GET['status'] ) {
 
 				case 1:
-					$notices['error'][] = '<p>There was an error saving the group.</p>';
+					$notices['error'][] = '<p>' . __( 'There was an error saving the group.', BUSE_TEXTDOMAIN ) . '</p>';
 					break;
 
 				case 2:
-					$notices['update'][] = sprintf( '<p>Group added. <a href="%s">View all groups</a></p>', $groups_url );
+					$notices['update'][] = '<p>' . __( 'Group added.', BUSE_TEXTDOMAIN ) . " <a href=\"$groups_url\">$view_txt</a></p>";
 					break;
 
 				case 3:
-					$notices['update'][] = sprintf( '<p>Group updated. <a href="%s">View all groups</a></p>', $groups_url );
+					$notices['update'][] = '<p>' . __( 'Group updated.', BUSE_TEXTDOMAIN ) . " <a href=\"$groups_url\">$view_txt</a></p>";
 					break;
 
 				case 4:
-					$notices['update'][] = '<p>Group deleted.</p>';
+					$notices['update'][] = '<p>' . __( 'Group deleted.', BUSE_TEXTDOMAIN ) . '</p>';
 					break;
 
 				default:
@@ -551,13 +554,11 @@ class BU_Groups_Admin {
 		if( $valid_user_count == 0 ) {
 
 			$manage_users_url = admin_url('users.php');
+			$users_link = sprintf( '<a href="%s">%s</a>', $manage_users_url, __( 'users page', BUSE_TEXTDOMAIN ) );
+			$no_users_warning = __( 'There are currently no users on your site that are capable of being assigned to section editing groups.', BUSE_TEXTDOMAIN );
+			$role_notice = sprintf( __( 'To start using this plugin, visit the %s and change the role for any users you would like to add to a section editing group to "Section Editor".', BUSE_TEXTDOMAIN ), $users_link );
 
-			$msg  = <<< MSG
-<p>There are currently no users on your site that are capable of being assigned to section editing groups.</p>
-<p>To start using this plugin, visit the <a href="$manage_users_url">users page</a> and change the role for any users you would like to add to a section editing group to "Section Editor".</p>
-MSG;
-
-			$notices['error'][] = $msg;
+			$notices['error'][] = "<p>$no_users_warning</p><p>$role_notice</p>";
 		}
 
 		return $notices;
@@ -666,7 +667,7 @@ MSG;
 		if( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
 
 			add_screen_option( 'per_page', array(
-				'label' => 'Posts per page',
+				'label' => __( 'Posts per page', BUSE_TEXTDOMAIN ),
 				'default' => 10,
 				'option' => self::POSTS_PER_PAGE_OPTION
 				)
@@ -737,7 +738,7 @@ MSG;
 				if( $group_id > 0 ) {
 
 					$group = $groups->get( $group_id );
-					$page_title = __( 'Edit Section Group', BU_Section_Editing_Plugin::TEXT_DOMAIN );
+					$page_title = __( 'Edit Section Group', BUSE_TEXTDOMAIN );
 					$template_path = 'interface/edit-group.php';
 
 				} else {
@@ -751,7 +752,7 @@ MSG;
 			// New group page
 			case self::NEW_GROUP_SLUG:
 				$group = new BU_Edit_Group();
-				$page_title = __( 'Add Section Group', BU_Section_Editing_Plugin::TEXT_DOMAIN );
+				$page_title = __( 'Add Section Group', BUSE_TEXTDOMAIN );
 				$template_path = 'interface/edit-group.php';
 				break;
 		}
@@ -858,5 +859,3 @@ MSG;
 	}
 
 }
-
-?>
