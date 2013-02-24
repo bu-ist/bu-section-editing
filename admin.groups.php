@@ -272,7 +272,7 @@ class BU_Groups_Admin {
 
 		$edit_link = admin_url( "edit.php?post_type=$post_type&post_status=" . self::EDITABLE_POST_STATUS );
 
-		$args = array( 'user_id' => $user_id, 'post_type' => $post_type );
+		$args = array( 'user_id' => $user_id, 'post_type' => $post_type, 'include_links' => false );
 
 		if( $post_type_object->hierarchical )
 			$args['include_unpublished'] = true;
