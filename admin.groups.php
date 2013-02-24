@@ -413,7 +413,6 @@ class BU_Groups_Admin {
 					'lazyLoad' => true,
 					'showCounts' => false,
 					'showStatuses' => false,
-					'loadInitialData' => false,
 					'suppressUrls' => true,
 					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
 				);
