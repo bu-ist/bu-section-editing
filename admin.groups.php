@@ -445,6 +445,8 @@ class BU_Groups_Admin {
 			'deleteGroupNotice'         => __( 'You are about to permanently delete this section editing group.  This action is irreversible.', BUSE_TEXTDOMAIN ),
 			'dirtyLeaverNotice'         => __( 'Your group has pending edits.  If you leave now, your changes will be lost.', BUSE_TEXTDOMAIN ),
 			'loadingText'               => __( 'Loading...', BUSE_TEXTDOMAIN ),
+			'memberCountSingularLabel'  => __( 'member', BUSE_TEXTDOMAIN ),
+			'memberCountPluralLabel'    => __( 'members', BUSE_TEXTDOMAIN ),
 			'nameRequiredNotice'        => __( 'Section editing groups require a name.', BUSE_TEXTDOMAIN ),
 			'navDepAlertText'           => sprintf(
 				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s", BUSE_TEXTDOMAIN ),

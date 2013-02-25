@@ -281,10 +281,17 @@ jQuery(document).ready(function($){
 	 * Stats widget -- update member count on add/remove
 	 */
 	var updateMemberCount = function() {
+		var count, label;
 
-		var count = $members_list.children('.member').length;
+		count = $members_list.children('.member').length;
+		if (count == 1) {
+			label = buse_group_editor_settings.memberCountSingularLabel;
+		} else {
+			label = buse_group_editor_settings.memberCountPluralLabel;
+		}
 
-		$('.member-count').html( count );
+		$('.member-count').html(count);
+		$('.member-count-label').text(label);
 
 	}
 
