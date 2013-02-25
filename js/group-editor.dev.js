@@ -44,7 +44,7 @@ jQuery(document).ready(function($){
 		}
 
 		if( name.length < 1 ) {
-			addNotice( 'Section editing groups require a name.');
+			addNotice(buse_group_editor_settings.nameRequiredNotice);
 			return false;
 		}
 
@@ -90,7 +90,6 @@ jQuery(document).ready(function($){
 	 * the search term.
 	 */
 	var _match_section_editors_with_term = function( list, term ) {
-
 
 		return $.grep( list, function( el, i ) {
 
@@ -218,7 +217,6 @@ jQuery(document).ready(function($){
 
 			// Attempt to translate user input to valid login
 			var user = _translate_input_to_user( input );
-			var url = buse_group_editor_settings.usersUrl;
 
 			// Add member to this group
 			if( user ) {
@@ -227,14 +225,13 @@ jQuery(document).ready(function($){
 
 					// User is not capable of being added to section editing groups
 					// @todo rethink this error message...
-					url += '?s=' + user.login;
-					var msg = '<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.';
+					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userWrongRoleNotice;
 					addNotice( msg, 'members-message' );
 
 				} else if( _is_existing_member( user ) ) {
 
 					// User is already a member
-					var msg = '<b>' + user.display_name + '</b> is already a member of this group.';
+					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userAlreadyMemberNotice;
 					addNotice( msg, 'members-message' );
 
 				} else {
@@ -251,8 +248,7 @@ jQuery(document).ready(function($){
 
 				// No user exists on this site
 				// @todo rethink this error message...
-				url = buse_group_editor_settings.userNewUrl;
-				var msg = '<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.';
+				var msg = '<b>' + input + '</b> ' + buse_group_editor_settings.userNotExistsNotice;
 				addNotice( msg, 'members-message' );
 
 			}
@@ -477,10 +473,10 @@ jQuery(document).ready(function($){
 			var $a = $(this);
 
 			if ($panel.hasClass('bulk-edit')) {
-				$a.removeClass('bulk-edit-close').attr('title','Enable bulk edit mode').text('Bulk Edit');
+				$a.removeClass('bulk-edit-close').attr('title',buse_group_editor_settings.bulkEditOpenTitle).text(buse_group_editor_settings.bulkEditOpenText);
 				$panel.removeClass('bulk-edit');
 			} else {
-				$a.addClass('bulk-edit-close').attr('title','Disable bulk edit mode').text('Close Bulk Edit');
+				$a.addClass('bulk-edit-close').attr('title',buse_group_editor_settings.bulkEditCloseTitle).text(buse_group_editor_settings.bulkEditCloseText);
 				$panel.addClass('bulk-edit');
 			}
 
@@ -580,8 +576,14 @@ jQuery(document).ready(function($){
 	// Toggle permissions action based in current value
 	var togglePermAction = function ($el) {
 		var previous = $el.hasClass('allowed') ? 'allowed' : 'denied';
-		var next = previous == 'allowed' ? 'denied' : 'allowed';
-		var label = next == 'allowed' ? 'Allow' : 'Deny';
+		var next = ( previous == 'allowed' ) ? 'denied' : 'allowed';
+		var label = '';
+
+		if (next == 'allowed') {
+			label = buse_group_editor_settings.permAllowLabel;
+		} else {
+			label = buse_group_editor_settings.permDenyLabel;
+		}
 
 		$el.removeClass(previous).addClass(next).text(label);
 	};
@@ -720,9 +722,9 @@ jQuery(document).ready(function($){
 
 		// Set up loading spinner
 		if( editorData.query.offset ) {
-			$editor.append('<li class="loader">Loading...</li>');
+			$editor.append('<li class="loader">' + buse_group_editor_settings.loadingText + '</li>');
 		} else {
-			$editor.html('<ul><li class="loader">Loading...</li></ul>');
+			$editor.html('<ul><li class="loader">' + buse_group_editor_settings.loadingText + '</li></ul>');
 		}
 
 		$.ajax({
@@ -967,9 +969,9 @@ jQuery(document).ready(function($){
 
 		if (mismatches) {
 			if (status) {
-				$stats.addClass('denied').children('.label').text(mismatches + ' non-editable');
+				$stats.addClass('denied').children('.label').text(mismatches + ' ' + buse_group_editor_settings.permNonEditableLabel);
 			} else {
-				$stats.addClass('allowed').children('.label').text(mismatches + ' editable');
+				$stats.addClass('allowed').children('.label').text(mismatches + ' ' + buse_group_editor_settings.permEditableLabel);
 			}
 		}
 	};
@@ -1062,7 +1064,7 @@ jQuery(document).ready(function($){
 
 		// Detect if we have any changes...
 		if( hasEdits() ) {
-			return 'Your group has pending edits.  If you leave now, your changes will be lost.';
+			return buse_group_editor_settings.dirtyLeaverNotice;
 		}
 
 	};
@@ -1114,7 +1116,7 @@ jQuery(document).ready(function($){
 		var name = $.trim($('#edit-group-name').val());
 
 		if( name.length < 1 ) {
-			addNotice( 'Section editing groups require a name.');
+			addNotice( buse_group_editor_settings.nameRequiredNotice );
 			return false;
 		}
 
@@ -1133,8 +1135,7 @@ jQuery(document).ready(function($){
 
 		e.preventDefault();
 
-		var msg = "You are about to permanently delete this section editing group.  " +
-			"This action is irreversible.\n\nAre you sure you want to do this?";
+		var msg = buse_group_editor_settings.deleteGroupNotice + "\n\n" + buse_group_editor_settings.confirmActionNotice;
 
 		if( confirm(msg) ) {
 

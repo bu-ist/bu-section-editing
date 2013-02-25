@@ -314,7 +314,7 @@ class BU_Groups_Admin {
 				$meta_query[] = array(
 					'key' => BU_Group_Permissions::META_KEY,
 					'value' => $group->id,
-				    	'compare' => '='
+						'compare' => '='
 					);
 			}
 
@@ -380,27 +380,10 @@ class BU_Groups_Admin {
 			// Dynamic js file that contains a variable with all users for the current site
 			// Used to keep the autocomplete & add member functionality client-side
 			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+
+			// Group editor
 			wp_enqueue_script( 'group-editor', plugins_url('/js/group-editor' . $suffix . '.js', __FILE__), array('jquery', 'jquery-ui-autocomplete'), $version, true );
-
-			$nav_alert_txt = sprintf(
-				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s",
-					BUSE_TEXTDOMAIN ),
-				BUSE_NAV_INSTALL_LINK );
-			$nav_dep_txt = sprintf(
-				__( "Please install the <a href=\"%s\" target=\"_blank\">BU Navigation plugin</a> in order to set permissions for this post type.",
-					BUSE_TEXTDOMAIN ),
-				BUSE_NAV_INSTALL_LINK );
-
-			$data = array(
-				'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
-				'adminUrl' => admin_url( 'admin-ajax.php' ),
-				'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ),
-				'usersUrl' => admin_url('users.php'),
-				'userNewUrl' => admin_url('user-new.php'),
-				'navDepAlertText' => $nav_alert_txt,
-				'navDepEditorText' => $nav_dep_txt
-			);
-			wp_localize_script( 'group-editor', 'buse_group_editor_settings', $data );
+			wp_localize_script( 'group-editor', 'buse_group_editor_settings', array_merge( array( 'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ) ), self::group_editor_i10n() ) );
 
 			// Hierarchical permissions editor script
 			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
@@ -417,6 +400,8 @@ class BU_Groups_Admin {
 					'showStatuses' => false,
 					'suppressUrls' => true,
 					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list'),
+					'allowLabel' => __( 'Allow', BUSE_TEXTDOMAIN ),
+					'denyLabel' => __( 'Deny', BUSE_TEXTDOMAIN )
 				);
 
 				// Let the tree view class handle enqueing
@@ -431,9 +416,54 @@ class BU_Groups_Admin {
 
 		// Enforce section editor restrictions for inline/bulk edit actions
 		if( 'edit.php' == $hook ) {
+			$strings = array(
+				'cantEditParentNotice' => __( 'You are not able to edit the parent.', BUSE_TEXTDOMAIN ),
+				'cantMovePostNotice' => __( 'You are not able to edit the parent, so you cannot place this page under the parent.', BUSE_TEXTDOMAIN ),
+				'publishLabel' => __( 'Published', BUSE_TEXTDOMAIN )
+				);
 			wp_enqueue_script( 'bu-section-editor-post', plugins_url('/js/section-editor-post' . $suffix . '.js', __FILE__), array('jquery'), $version, true);
+			wp_localize_script( 'bu-section-editor-post', 'buse_post', $strings );
 		}
 
+	}
+
+	/**
+	 * Group editor interface translation strings
+	 */
+	public static function group_editor_i10n( ) {
+
+		$users_link = sprintf( '<a href="%s">%s</a>', admin_url( 'users.php' ), __( 'users page', BUSE_TEXTDOMAIN ) );
+		$add_user_link = sprintf( '<a href="%s">%s</a>', admin_url( 'user-new.php' ), __( 'add them to your site', BUSE_TEXTDOMAIN ) );
+		$nav_plugin_link = sprintf( '<a href="%s" target="_blank">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', BUSE_TEXTDOMAIN ) );
+
+		return array(
+			'bulkEditOpenText'          => __( 'Bulk Edit', BUSE_TEXTDOMAIN ),
+			'bulkEditCloseText'         => __( 'Close Bulk Edit', BUSE_TEXTDOMAIN ),
+			'bulkEditOpenTitle'         => __( 'Enable bulk edit mode', BUSE_TEXTDOMAIN ),
+			'bulkEditCloseTitle'        => __( 'Disable bulk edit mode', BUSE_TEXTDOMAIN ),
+			'confirmActionNotice'       => __( 'Are you sure you want to do this?', BUSE_TEXTDOMAIN ),
+			'deleteGroupNotice'         => __( 'You are about to permanently delete this section editing group.  This action is irreversible.', BUSE_TEXTDOMAIN ),
+			'dirtyLeaverNotice'         => __( 'Your group has pending edits.  If you leave now, your changes will be lost.', BUSE_TEXTDOMAIN ),
+			'loadingText'               => __( 'Loading...', BUSE_TEXTDOMAIN ),
+			'nameRequiredNotice'        => __( 'Section editing groups require a name.', BUSE_TEXTDOMAIN ),
+			'navDepAlertText'           => sprintf(
+				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s", BUSE_TEXTDOMAIN ),
+					BUSE_NAV_INSTALL_LINK ),
+			'navDepEditorText'           => sprintf(
+				__( "Please install the %s in order to set permissions for this post type.", BUSE_TEXTDOMAIN ),
+					$nav_plugin_link ),
+			'permAllowLabel'            => __( 'Allow', BUSE_TEXTDOMAIN ),
+			'permDenyLabel'             => __( 'Deny', BUSE_TEXTDOMAIN ),
+			'permEditableLabel'         => __( 'editable', BUSE_TEXTDOMAIN ),
+			'permNonEditableLabel'      => __( 'non-editable', BUSE_TEXTDOMAIN ),
+			'userWrongRoleNotice'       => sprintf(
+				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', BUSE_TEXTDOMAIN ),
+				$users_link ),
+			'userAlreadyMemberNotice'   => __( 'is already a member of this group.', BUSE_TEXTDOMAIN ),
+			'userNotExistsNotice'       => sprintf(
+				__( 'is not a member of this site.  Please %s with the "Section Editor" role.', BUSE_TEXTDOMAIN ),
+				$add_user_link )
+			);
 	}
 
 	/**
@@ -450,7 +480,7 @@ class BU_Groups_Admin {
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
 			plugins_url( '/images/pages-menu-icon-16.png', __FILE__ ),
-			73	// position
+			73  // position
 			);
 
 		add_submenu_page(

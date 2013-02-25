@@ -18,7 +18,7 @@ jQuery(function($) {
 			type: 'POST',
 			success: function(response) {
 				if(response.can_edit == false) {
-					alert("You are not able to edit the parent.");
+					alert(buse_post.cantEditParentNotice);
 					$('#bulk-edit #post_parent [value="-1"]').attr('selected', 'selected');
 				}
 			},
@@ -39,7 +39,7 @@ jQuery(function($) {
 		if (post_status != 'publish') {
 			return;
 		}
-		
+
 		var data = {
 			action: 'buse_can_move',
 			post_id: post_id,
@@ -52,7 +52,7 @@ jQuery(function($) {
 			type: 'POST',
 			success: function(response) {
 				if(response.can_edit == false) {
-					alert("You are not able to edit the parent, so you cannot place this page under the parent.");
+					alert(buse_post.cantMovePostNotice);
 					$('#post_parent [value="' + response.original_parent + '"]').attr('selected', 'selected');
 				}
 			},
@@ -86,7 +86,8 @@ jQuery(function($) {
 				var edit = '#edit-' + response.post_id;
 				if(response.can_edit == true) {
 					if($(edit + ' [name="_status"] [value="publish"]').length == 0) {
-						$(edit + ' [name="_status"]').prepend('<option value="publish">Published</option>');
+						console.log(buse_post);
+						$(edit + ' [name="_status"]').prepend('<option value="publish">' + buse_post.publishLabel + '</option>');
 					}
 				} else {
 					$(edit + ' [name="_status"] [value="publish"]').remove();

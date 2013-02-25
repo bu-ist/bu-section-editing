@@ -101,7 +101,12 @@
 				$li = $(this);
 				$li.find("li").andSelf().each(function () {
 					action_class = $(this).data('editable') ? 'denied' : 'allowed';
-					action_label = action_class == 'allowed' ? 'Allow' : 'Deny';
+
+					if (action_class == 'allowed') {
+						action_label = c.allowLabel;
+					} else {
+						action_label = c.denyLabel;
+					}
 
 					$button = $('<button class="edit-perms ' + action_class + '"></button>')
 						.text(action_label);
