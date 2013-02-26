@@ -49,19 +49,28 @@ class BU_Edit_Groups {
 	 */
 	static public function register_post_type() {
 
+		$labels = array(
+			'name'                => _x( 'Section Groups', 'Post Type General Name', BUSE_TEXTDOMAIN ),
+			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', BUSE_TEXTDOMAIN ),
+		);
+
 		$args = array(
-			'label' => 'Section Groups',
-			'public' => false,
-			'publicly_queryable' => false,
-			'show_ui' => false,
-			'show_in_menu' => false,
-			'query_var' => true,
-			'rewrite' => false,
-			'capability_type' => 'post',
-			'has_archive' => false,
-			'hierarchical' => false,
-			'menu_position' => null,
-			'can_export' => true
+			'labels'              => $labels,
+			'supports'            => array(),
+			'hierarchical'        => false,
+			'public'              => false,
+			'show_ui'             => false,
+			'show_in_menu'        => false,
+			'show_in_nav_menus'   => false,
+			'show_in_admin_bar'   => false,
+			'menu_position'       => 5,
+			'menu_icon'           => '',
+			'can_export'          => true,
+			'has_archive'         => false,
+			'exclude_from_search' => false,
+			'publicly_queryable'  => false,
+			'rewrite'             => false,
+			'capability_type'     => 'post',
 		);
 
 		register_post_type( self::POST_TYPE_NAME, $args );
@@ -294,13 +303,14 @@ class BU_Edit_Groups {
 	 * @return int allowed post count for the given post type, group or user
 	 */
 	public function get_allowed_post_count( $args = array() ) {
-		global $wpdb;
+		global $wpdb, $bu_navigation_plugin;
 
 		$defaults = array(
 			'user_id' => null,
 			'group' => null,
 			'post_type' => null,
-			'include_unpublished' => false
+			'include_unpublished' => false,
+			'include_links' => true
 			);
 
 		extract( wp_parse_args( $args, $defaults ) );
@@ -342,10 +352,13 @@ class BU_Edit_Groups {
 		// Maybe filter by post type and status
 		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			if( $post_type == 'page' ) {
-				$post_type_clause = "AND post_type IN ('page','link') ";
-			} else {
-				$post_type_clause = "AND post_type = '$post_type' ";
+			$post_type_clause = "AND post_type = '$post_type' ";
+
+			if( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
+				if ( $bu_navigation_plugin->supports( 'links' ) ) {
+					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
+					$post_type_clause = sprintf( "AND post_type IN ('page','%s') ", $link_post_type );
+				}
 			}
 
 		}
@@ -796,5 +809,3 @@ class BU_Edit_Group {
 	}
 
 }
-
-?>

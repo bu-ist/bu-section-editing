@@ -37,7 +37,7 @@ class BU_Groups_Admin_Ajax {
 
 			$return[] = array(
 				'autocomplete' => array(
-					'label' => sprintf( __( '%1$s%2$s' ), $user->display_name, $email ),
+					'label' => sprintf( '%1$s%2$s', $user->display_name, $email ),
 					'value' => $user->user_login
 				),
 				'user' => array(

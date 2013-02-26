@@ -1,123 +1,3 @@
-(function ($){
-
-	// Check prerequisites
-	if((typeof bu === 'undefined') ||
-		(typeof bu.plugins.navigation === 'undefined') ||
-		(typeof bu.plugins.navigation.tree === 'undefined'))
-			return;
-
-	var Nav = bu.plugins.navigation;
-
-	// ----------------------------
-	// Hierarchical perm editor
-	// ----------------------------
-	Nav.trees['buse_perm_editor'] = function (config, my) {
-		my = my || {};
-
-		// Functional inheritance
-		var that = Nav.trees.base( config, my );
-
-		// Aliases
-		var d = that.data;
-		var c = $.extend(that.config, config || {});	// instance configuration
-
-		var $tree = that.$el;
-
-		// Remove base plugins and config that we don't need
-		// @todo consider removing from bu-navigation base
-		var crrm = $.inArray('crrm', d.treeConfig['plugins']);
-		if (crrm > -1) {
-			d.treeConfig['plugins'].splice(crrm,1);
-			if (typeof d.treeConfig['crrm'] !== 'undefined' ) {
-				delete d.treeConfig['crrm'];
-			}
-		}
-		var dnd = $.inArray('dnd', d.treeConfig['plugins']);
-		if (dnd > -1) {
-			d.treeConfig['plugins'].splice(dnd,1);
-			if (typeof d.treeConfig['dnd'] !== 'undefined' ) {
-				delete d.treeConfig['dnd'];
-			}
-		}
-
-		// Custom tree types for perm editor (icon asset config is temporary)
-		d.treeConfig['types'] = {
-			"types" : {
-				'default' : {},
-				'denied' : {},
-				'denied-desc-allowed' : {},
-				'denied-desc-unknown' : {},
-				'allowed' : {},
-				'allowed-desc-denied' : {},
-				'allowed-desc-unknown' : {}
-			}
-		};
-
-		// UI plugin
-		d.treeConfig["ui"] = {
-			"select_limit": 1
-		}
-
-		// Append global jstree options with configuration for this post type
-		d.treeConfig['json_data']['ajax'] = {
-			url : c.rpcUrl,
-			type: 'GET',
-			cache: false,
-			data : function(n) {
-				return {
-					group_id : c.groupID,
-					node_prefix : c.nodePrefix,
-					post_type : c.postType,
-					query: {
-						child_of : n.attr ? my.stripNodePrefix(n.attr('id')) : 0
-					}
-				}
-			},
-			success: function( response ) {
-				return response.posts;
-			},
-			error: function( response ) {
-				// @todo handle error
-			}
-		};
-
-		// Interferes with icon state correction with lazy load
-		d.treeConfig['json_data']['progressive_render'] = false;
-
-		var _prepare_perm_actions = function (node) {
-			node = !node || node == -1 ? $tree.find("> ul > li") : $.jstree._reference($tree)._get_node(node);
-
-			var $li, $button, action_class, action_label;
-
-			node.each(function () {
-				$li = $(this);
-				$li.find("li").andSelf().each(function () {
-					action_class = $(this).data('editable') ? 'denied' : 'allowed';
-					action_label = action_class == 'allowed' ? 'Allow' : 'Deny';
-
-					$button = $('<button class="edit-perms ' + action_class + '"></button>')
-						.text(action_label);
-					$(this).children("a").not(":has(.edit-perms)").append($button);
-				});
-			});
-		};
-
-		// Add perm actions button to each node as needed
-		$tree.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", function (e, data) {
-			_prepare_perm_actions(data.rslt.obj);
-		});
-
-		$tree.bind("loaded.jstree", function (e) {
-			_prepare_perm_actions();
-		});
-
-		$tree.addClass('buse-perm-editor');
-
-		return that;
-	};
-
-}(jQuery));
-
 jQuery(document).ready(function($){
 	var Nav;
 
@@ -164,7 +44,7 @@ jQuery(document).ready(function($){
 		}
 
 		if( name.length < 1 ) {
-			addNotice( 'Section editing groups require a name.');
+			addNotice(buse_group_editor_settings.nameRequiredNotice);
 			return false;
 		}
 
@@ -210,7 +90,6 @@ jQuery(document).ready(function($){
 	 * the search term.
 	 */
 	var _match_section_editors_with_term = function( list, term ) {
-
 
 		return $.grep( list, function( el, i ) {
 
@@ -338,7 +217,6 @@ jQuery(document).ready(function($){
 
 			// Attempt to translate user input to valid login
 			var user = _translate_input_to_user( input );
-			var url = buse_group_editor_settings.usersUrl;
 
 			// Add member to this group
 			if( user ) {
@@ -347,14 +225,13 @@ jQuery(document).ready(function($){
 
 					// User is not capable of being added to section editing groups
 					// @todo rethink this error message...
-					url += '?s=' + user.login;
-					var msg = '<b>' + user.display_name + '</b> is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the <a href="'+ url +'">users page</a>.';
+					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userWrongRoleNotice;
 					addNotice( msg, 'members-message' );
 
 				} else if( _is_existing_member( user ) ) {
 
 					// User is already a member
-					var msg = '<b>' + user.display_name + '</b> is already a member of this group.';
+					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userAlreadyMemberNotice;
 					addNotice( msg, 'members-message' );
 
 				} else {
@@ -371,8 +248,7 @@ jQuery(document).ready(function($){
 
 				// No user exists on this site
 				// @todo rethink this error message...
-				url = buse_group_editor_settings.userNewUrl;
-				var msg = '<b>' + input + '</b> is not a member of this site.  Please <a href="'+ url +'">add them to your site</a> with the "Section Editor" role.';
+				var msg = '<b>' + input + '</b> ' + buse_group_editor_settings.userNotExistsNotice;
 				addNotice( msg, 'members-message' );
 
 			}
@@ -405,10 +281,17 @@ jQuery(document).ready(function($){
 	 * Stats widget -- update member count on add/remove
 	 */
 	var updateMemberCount = function() {
+		var count, label;
 
-		var count = $members_list.children('.member').length;
+		count = $members_list.children('.member').length;
+		if (count == 1) {
+			label = buse_group_editor_settings.memberCountSingularLabel;
+		} else {
+			label = buse_group_editor_settings.memberCountPluralLabel;
+		}
 
-		$('.member-count').html( count );
+		$('.member-count').html(count);
+		$('.member-count-label').text(label);
 
 	}
 
@@ -424,8 +307,8 @@ jQuery(document).ready(function($){
 		if( $editor.hasClass('hierarchical') ) {
 
 			if (typeof Nav === 'undefined') {
-				alert('Warning: Hierarchical permission editors require the BU Navigation plugin.');
-				$editor.text('Please install the BU Navigation plugin in order to set permissions for post type: ' + $editor.data('post-type'));
+				alert(buse_group_editor_settings.navDepAlertText);
+				$editor.html(buse_group_editor_settings.navDepEditorText);
 			} else {
 				loadHierarchicalEditor( $editor );
 			}
@@ -597,10 +480,10 @@ jQuery(document).ready(function($){
 			var $a = $(this);
 
 			if ($panel.hasClass('bulk-edit')) {
-				$a.removeClass('bulk-edit-close').attr('title','Enable bulk edit mode').text('Bulk Edit');
+				$a.removeClass('bulk-edit-close').attr('title',buse_group_editor_settings.bulkEditOpenTitle).text(buse_group_editor_settings.bulkEditOpenText);
 				$panel.removeClass('bulk-edit');
 			} else {
-				$a.addClass('bulk-edit-close').attr('title','Disable bulk edit mode').text('Close Bulk Edit');
+				$a.addClass('bulk-edit-close').attr('title',buse_group_editor_settings.bulkEditCloseTitle).text(buse_group_editor_settings.bulkEditCloseText);
 				$panel.addClass('bulk-edit');
 			}
 
@@ -700,8 +583,14 @@ jQuery(document).ready(function($){
 	// Toggle permissions action based in current value
 	var togglePermAction = function ($el) {
 		var previous = $el.hasClass('allowed') ? 'allowed' : 'denied';
-		var next = previous == 'allowed' ? 'denied' : 'allowed';
-		var label = next == 'allowed' ? 'Allow' : 'Deny';
+		var next = ( previous == 'allowed' ) ? 'denied' : 'allowed';
+		var label = '';
+
+		if (next == 'allowed') {
+			label = buse_group_editor_settings.permAllowLabel;
+		} else {
+			label = buse_group_editor_settings.permDenyLabel;
+		}
 
 		$el.removeClass(previous).addClass(next).text(label);
 	};
@@ -791,7 +680,7 @@ jQuery(document).ready(function($){
 			groupID: $('#group_id').val() || -1,
 			postType: $editor.data('post-type')
 		};
-		$.extend(settings, buse_group_editor_settings );
+		$.extend(settings, buse_perm_editor_settings );
 
 		// Create nav tree
 		Nav.tree( 'buse_perm_editor', settings );
@@ -840,9 +729,9 @@ jQuery(document).ready(function($){
 
 		// Set up loading spinner
 		if( editorData.query.offset ) {
-			$editor.append('<li class="loader">Loading...</li>');
+			$editor.append('<li class="loader">' + buse_group_editor_settings.loadingText + '</li>');
 		} else {
-			$editor.html('<ul><li class="loader">Loading...</li></ul>');
+			$editor.html('<ul><li class="loader">' + buse_group_editor_settings.loadingText + '</li></ul>');
 		}
 
 		$.ajax({
@@ -1087,9 +976,9 @@ jQuery(document).ready(function($){
 
 		if (mismatches) {
 			if (status) {
-				$stats.addClass('denied').children('.label').text(mismatches + ' non-editable');
+				$stats.addClass('denied').children('.label').text(mismatches + ' ' + buse_group_editor_settings.permNonEditableLabel);
 			} else {
-				$stats.addClass('allowed').children('.label').text(mismatches + ' editable');
+				$stats.addClass('allowed').children('.label').text(mismatches + ' ' + buse_group_editor_settings.permEditableLabel);
 			}
 		}
 	};
@@ -1182,7 +1071,7 @@ jQuery(document).ready(function($){
 
 		// Detect if we have any changes...
 		if( hasEdits() ) {
-			return 'Your group has pending edits.  If you leave now, your changes will be lost.';
+			return buse_group_editor_settings.dirtyLeaverNotice;
 		}
 
 	};
@@ -1234,7 +1123,7 @@ jQuery(document).ready(function($){
 		var name = $.trim($('#edit-group-name').val());
 
 		if( name.length < 1 ) {
-			addNotice( 'Section editing groups require a name.');
+			addNotice( buse_group_editor_settings.nameRequiredNotice );
 			return false;
 		}
 
@@ -1253,8 +1142,7 @@ jQuery(document).ready(function($){
 
 		e.preventDefault();
 
-		var msg = "You are about to permanently delete this section editing group.  " +
-			"This action is irreversible.\n\nAre you sure you want to do this?";
+		var msg = buse_group_editor_settings.deleteGroupNotice + "\n\n" + buse_group_editor_settings.confirmActionNotice;
 
 		if( confirm(msg) ) {
 

@@ -1,9 +1,13 @@
 <?php
 /*
- Plugin Name: BU Section Editing
- Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
- Version: 0.8
- Author: Boston University (IS&T)
+Plugin Name: BU Section Editing
+Plugin URI: http://developer.bu.edu/bu-section-editing/
+Author: Boston University (IS&T)
+Author URI: http://blogs.bu.edu/web/
+Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
+Version: 0.8
+Text Domain: bu-section-editing
+Domain Path: /languages
 */
 
 /**
@@ -35,6 +39,10 @@ require_once(dirname(__FILE__) . '/classes.groups.php');
 require_once(dirname(__FILE__) . '/classes.permissions.php');
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname(__FILE__) ) );
+define( 'BUSE_TEXTDOMAIN', 'bu-section-editing' );
+
+define( 'BUSE_NAV_INSTALL_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
+define( 'BUSE_NAV_UPGRADE_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
 
 /**
  * Plugin entry point
@@ -47,15 +55,22 @@ class BU_Section_Editing_Plugin {
 	const BUSE_VERSION = '0.8';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
-	const TEXT_DOMAIN = 'bu-section-editing';
-
 	public static function register_hooks() {
 
+		register_activation_hook( __FILE__, array( __CLASS__, 'on_activate' ) );
+
+		add_action( 'init', array( __CLASS__, 'l10n' ), 5 );
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
 
 		BU_Edit_Groups::register_hooks();
+
+	}
+
+	public static function l10n() {
+
+		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 
@@ -78,10 +93,12 @@ class BU_Section_Editing_Plugin {
 			BU_Groups_Admin::register_hooks();
 			BU_Groups_Admin_Ajax::register_hooks();
 
+			add_action( 'load-plugins.php', array( __CLASS__, 'load_plugins_screen' ) );
 			add_filter( 'plugin_action_links', array( __CLASS__, 'plugin_settings_link' ), 10, 2 );
 
-			if( function_exists( 'bu_navigation_get_pages' ) ) {
-				require_once( dirname(__FILE__) . '/plugin-support/bu-navigation/bu-navigation.php' );
+			// Load support code for the BU Navigation plugin if it's active
+			if( class_exists( 'BU_Navigation_Plugin' ) ) {
+				require_once( dirname( __FILE__ ) . '/plugin-support/bu-navigation/section-editor-nav.php' );
 			}
 
 		}
@@ -89,8 +106,57 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
+	 * Look for the BU Navigation plugin when this plugin activates
+	 */
+	public static function on_activate() {
+
+		$msg = '';
+
+		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
+			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __('BU Navigation plugin', BUSE_TEXTDOMAIN ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' . sprintf(
+				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				$install_link ) . '</p>';
+		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
+			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __('upgrade your copy of BU Navigation', BUSE_TEXTDOMAIN ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', BUSE_TEXTDOMAIN ) . '</p>';
+			$msg .= '<p>' . sprintf(
+				__( 'Please %s to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				$upgrade_link ) . '</p>';
+		}
+
+		if ( $msg )
+			set_transient( 'buse_nav_dep_nag', $msg );
+
+	}
+
+	/**
+	 * Check for the BU Navigation plugin when the user vistis the "Plugins" page
+	 */
+	public static function load_plugins_screen() {
+
+		add_action( 'admin_notices', array( __CLASS__, 'plugin_dependency_nag' ) );
+
+	}
+
+	/**
+	 * Display a notice on the "Plugins" page if a sufficient version of the  BU Navigation plugin is not activated
+	 */
+	public static function plugin_dependency_nag() {
+
+		$notice = get_transient( 'buse_nav_dep_nag' );
+
+		if ( $notice ) {
+			echo "<div class=\"error\">$notice</div>\n";
+			delete_transient( 'buse_nav_dep_nag' );
+		}
+
+	}
+
+	/**
 	 * Callback that adds section editor role to BU list of allowed roles
-	 *
 	 */
 	public function allowed_roles( $roles ) {
 
@@ -119,7 +185,7 @@ class BU_Section_Editing_Plugin {
 			return $links;
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">Manage Groups</a>" );
+		array_unshift($links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', BUSE_TEXTDOMAIN ) . "</a>" );
 
 		return $links;
 	}
@@ -201,5 +267,3 @@ class BU_Section_Editing_Plugin {
 }
 
 BU_Section_Editing_Plugin::register_hooks();
-
-?>

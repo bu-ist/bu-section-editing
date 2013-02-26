@@ -127,13 +127,10 @@ class BU_Group_Permissions {
 				// Bulk deletion
 				if( ! empty( $denied_meta_ids ) ) {
 
-					$denied_meta_delete = sprintf("DELETE FROM %s WHERE meta_id IN (%s)",
-						$wpdb->postmeta,
-						implode(',', $denied_meta_ids )
-						);
+					$delete_query = sprintf( "DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)", implode( ',', $denied_meta_ids ) );
 
 					// Remove allowed status in one query
-					$results = $wpdb->query( $wpdb->prepare( $denied_meta_delete ) );
+					$results = $wpdb->query( $delete_query );
 
 					// Purge cache
 					foreach( $denied_ids as $post_id ) {
@@ -254,7 +251,7 @@ abstract class BU_Permissions_Editor {
 			error_log('Not a valid group ID or object: ' . $group );
 		}
 
-		$this->post_type = $post_type == 'page' ? array('page','link') : $post_type;
+		$this->post_type = $post_type;
 
 		$this->load();
 
@@ -403,15 +400,17 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Publish information
 		$meta = '';
+		$published_label = __( 'Published on', BUSE_TEXTDOMAIN );
+		$draft_label = __( 'Draft', BUSE_TEXTDOMAIN );
 
 		switch( $p['metadata']['post_status'] ) {
 
 			case 'publish':
-				$meta = ' &mdash; Published on ' . $p['metadata']['post_date'];
+				$meta = " &mdash; $published_label {$p['metadata']['post_date']}";
 				break;
 
 			case 'draft':
-				$meta = ' &mdash; <em>Draft</em>';
+				$meta = " &mdash; <em>$draft_label</em>";
 				break;
 
 		}
@@ -424,7 +423,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Perm actions button
 		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
-		$perm_label = $perm_state == 'allowed' ? 'Allow' : 'Deny';
+		$perm_label = $perm_state == 'allowed' ? __( 'Allow', BUSE_TEXTDOMAIN ) : __( 'Deny', BUSE_TEXTDOMAIN );
 		$button = sprintf("<button class=\"edit-perms %s\">%s</button>", $perm_state, $perm_label );
 
 		// Anchor
@@ -462,7 +461,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
 		$perm = $editable ? 'allowed' : 'denied';
 
-		$post->post_title = empty( $post->post_title ) ? '(no title)' : $post->post_title;
+		$post->post_title = empty( $post->post_title ) ? __('(no title)', BUSE_TEXTDOMAIN ) : $post->post_title;
 
 		$p = array(
 			'attr' => array(
@@ -492,6 +491,10 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 /**
  * Permissions editor for hierarchical post types
  *
+ * @todo now that the navigation plugin has the BU_Navigation_Tree_View class, most of this
+ *  logic is redundant.  The only added complexity is the need for a "group_id" field for
+ *  filtering post meta.
+ *
  * @uses (depends on) BU Navigation library
  */
 class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
@@ -505,8 +508,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		remove_filter('bu_navigation_filter_pages', 'bu_navigation_filter_pages_external_links' );
 
 		// But we definitely need these
-		add_filter('bu_navigation_filter_pages', array( &$this, 'filter_posts' ) );
-		add_filter('bu_navigation_filter_fields', array( &$this, 'filter_post_fields' ) );
+		add_filter('bu_navigation_filter_pages', array( $this, 'filter_posts' ) );
 
 	}
 
@@ -753,22 +755,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		}
 
 		return $posts;
-
-	}
-
-	/**
-	 * Get only the post fields that we need
-	 */
-	public function filter_post_fields( $fields ) {
-
-		$fields = array(
-			'ID',
-			'post_title',
-			'post_type',
-			'post_parent'
-			);
-
-		return $fields;
 
 	}
 
