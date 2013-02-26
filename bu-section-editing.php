@@ -1,9 +1,13 @@
 <?php
 /*
- Plugin Name: BU Section Editing
- Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
- Version: 0.8
- Author: Boston University (IS&T)
+Plugin Name: BU Section Editing
+Plugin URI: http://developer.bu.edu/bu-section-editing/
+Author: Boston University (IS&T)
+Author URI: http://blogs.bu.edu/web/
+Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
+Version: 0.8
+Text Domain: bu-section-editing
+Domain Path: /languages
 */
 
 /**
@@ -51,17 +55,22 @@ class BU_Section_Editing_Plugin {
 	const BUSE_VERSION = '0.8';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
-	const TEXT_DOMAIN = 'bu-section-editing';
-
 	public static function register_hooks() {
 
 		register_activation_hook( __FILE__, array( __CLASS__, 'on_activate' ) );
 
+		add_action( 'init', array( __CLASS__, 'l10n' ), 5 );
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
 
 		BU_Edit_Groups::register_hooks();
+
+	}
+
+	public static function l10n() {
+
+		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 

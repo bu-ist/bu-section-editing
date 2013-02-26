@@ -1,0 +1,402 @@
+# Copyright (C) 2013 BU Section Editing
+# This file is distributed under the same license as the BU Section Editing package.
+msgid ""
+msgstr ""
+"Project-Id-Version: BU Section Editing 0.9\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/bu-section-editing\n"
+"POT-Creation-Date: 2013-02-26 01:03:28+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2013-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: admin.groups.php:62 admin.groups.php:479 admin.groups.php:480
+#: admin.groups.php:490 interface/groups.php:3
+msgid "Section Groups"
+msgstr ""
+
+#: admin.groups.php:80
+msgid "None"
+msgstr ""
+
+#: admin.groups.php:110
+msgid "and"
+msgstr ""
+
+#: admin.groups.php:113
+msgid "other"
+msgid_plural "others"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin.groups.php:239 admin.groups.php:284 interface/groups.php:11
+#: interface/groups.php:20
+msgid "Editable"
+msgstr ""
+
+#: admin.groups.php:403 admin.groups.php:457 classes.permissions.php:426
+msgid "Allow"
+msgstr ""
+
+#: admin.groups.php:404 admin.groups.php:458 classes.permissions.php:426
+msgid "Deny"
+msgstr ""
+
+#: admin.groups.php:420
+msgid "You are not able to edit the parent."
+msgstr ""
+
+#: admin.groups.php:421
+msgid ""
+"You are not able to edit the parent, so you cannot place this page under the "
+"parent."
+msgstr ""
+
+#: admin.groups.php:422
+msgid "Published"
+msgstr ""
+
+#: admin.groups.php:435 admin.groups.php:589
+msgid "users page"
+msgstr ""
+
+#: admin.groups.php:436
+msgid "add them to your site"
+msgstr ""
+
+#: admin.groups.php:437 bu-section-editing.php:111
+msgid "BU Navigation plugin"
+msgstr ""
+
+#: admin.groups.php:440 interface/group-permissions.php:30
+msgid "Bulk Edit"
+msgstr ""
+
+#: admin.groups.php:441
+msgid "Close Bulk Edit"
+msgstr ""
+
+#: admin.groups.php:442 interface/group-permissions.php:30
+msgid "Enable bulk edit mode"
+msgstr ""
+
+#: admin.groups.php:443
+msgid "Disable bulk edit mode"
+msgstr ""
+
+#: admin.groups.php:444
+msgid "Are you sure you want to do this?"
+msgstr ""
+
+#: admin.groups.php:445
+msgid ""
+"You are about to permanently delete this section editing group.  This action "
+"is irreversible."
+msgstr ""
+
+#: admin.groups.php:446
+msgid ""
+"Your group has pending edits.  If you leave now, your changes will be lost."
+msgstr ""
+
+#: admin.groups.php:447
+msgid "Loading..."
+msgstr ""
+
+#: admin.groups.php:448 interface/group-members.php:18
+msgid "member"
+msgstr ""
+
+#: admin.groups.php:449
+msgid "members"
+msgstr ""
+
+#: admin.groups.php:450
+msgid "Section editing groups require a name."
+msgstr ""
+
+#: admin.groups.php:452
+msgid ""
+"In order to set permissions for hierarchical post types, the BU Navigation "
+"plugin must be activated.\n"
+"\n"
+"Please install BU Navigation:\n"
+"%s"
+msgstr ""
+
+#: admin.groups.php:455
+msgid "Please install the %s in order to set permissions for this post type."
+msgstr ""
+
+#: admin.groups.php:459
+msgid "editable"
+msgstr ""
+
+#: admin.groups.php:460
+msgid "non-editable"
+msgstr ""
+
+#: admin.groups.php:462
+msgid ""
+"is not a section editor.  Before you can assign them to a group, you must "
+"change their role to \"Section Editor\" on the %s."
+msgstr ""
+
+#: admin.groups.php:464
+msgid "is already a member of this group."
+msgstr ""
+
+#: admin.groups.php:466
+msgid ""
+"is not a member of this site.  Please %s with the \"Section Editor\" role."
+msgstr ""
+
+#: admin.groups.php:491
+msgid "All Groups"
+msgstr ""
+
+#: admin.groups.php:499 admin.groups.php:773
+msgid "Edit Section Group"
+msgstr ""
+
+#: admin.groups.php:500 interface/edit-group.php:3
+msgid "Add New"
+msgstr ""
+
+#: admin.groups.php:557
+msgid "View all groups"
+msgstr ""
+
+#: admin.groups.php:562
+msgid "There was an error saving the group."
+msgstr ""
+
+#: admin.groups.php:566
+msgid "Group added."
+msgstr ""
+
+#: admin.groups.php:570
+msgid "Group updated."
+msgstr ""
+
+#: admin.groups.php:574
+msgid "Group deleted."
+msgstr ""
+
+#: admin.groups.php:590
+msgid ""
+"There are currently no users on your site that are capable of being assigned "
+"to section editing groups."
+msgstr ""
+
+#: admin.groups.php:591
+msgid ""
+"To start using this plugin, visit the %s and change the role for any users "
+"you would like to add to a section editing group to \"Section Editor\"."
+msgstr ""
+
+#: admin.groups.php:702
+msgid "Posts per page"
+msgstr ""
+
+#: admin.groups.php:787
+msgid "Add Section Group"
+msgstr ""
+
+#: bu-section-editing.php:112
+msgid "upgrade your copy of BU Navigation"
+msgstr ""
+
+#: bu-section-editing.php:113 bu-section-editing.php:118
+msgid ""
+"The BU Section Editing plugin relies on the BU Navigation plugin for "
+"displaying hierarchical permission editors."
+msgstr ""
+
+#: bu-section-editing.php:115
+msgid ""
+"Please install and activate the %s in order to set permissions for "
+"hierarchical post types."
+msgstr ""
+
+#: bu-section-editing.php:119
+msgid ""
+"This version of BU Section Editing requires at least version 1.1 of BU "
+"Navigation."
+msgstr ""
+
+#: bu-section-editing.php:121
+msgid "Please %s to enable permissions for hierarchical post types."
+msgstr ""
+
+#: bu-section-editing.php:183
+msgid "Manage Groups"
+msgstr ""
+
+#: classes.groups.php:53
+msgctxt "Post Type General Name"
+msgid "Section Groups"
+msgstr ""
+
+#: classes.groups.php:54
+msgctxt "Post Type Singular Name"
+msgid "Section Group"
+msgstr ""
+
+#: classes.permissions.php:403
+msgid "Published on"
+msgstr ""
+
+#: classes.permissions.php:404
+msgid "Draft"
+msgstr ""
+
+#: classes.permissions.php:464
+msgid "(no title)"
+msgstr ""
+
+#: interface/edit-group.php:6
+msgid "Properties"
+msgstr ""
+
+#: interface/edit-group.php:7 interface/group-stats.php:7
+#: interface/groups.php:10 interface/groups.php:19
+msgid "Members"
+msgstr ""
+
+#: interface/edit-group.php:8
+msgid "Permissions"
+msgstr ""
+
+#: interface/group-members.php:3
+msgid "Add User to this Group"
+msgstr ""
+
+#: interface/group-members.php:8
+msgid ""
+"Enter the email address of an existing user on this network to add them to "
+"this Editor Group."
+msgstr ""
+
+#: interface/group-members.php:10
+msgid "Add"
+msgstr ""
+
+#: interface/group-members.php:20
+msgid "Group Member List"
+msgstr ""
+
+#: interface/group-members.php:28 interface/groups.php:12
+#: interface/groups.php:21
+msgid "Remove"
+msgstr ""
+
+#: interface/group-permissions.php:21
+msgid "Expand All"
+msgstr ""
+
+#: interface/group-permissions.php:22
+msgid "Collapse All"
+msgstr ""
+
+#: interface/group-permissions.php:27
+msgid "Search %s"
+msgstr ""
+
+#: interface/group-permissions.php:39
+msgid "Bulk Actions"
+msgstr ""
+
+#: interface/group-permissions.php:40
+msgid "Allow selected"
+msgstr ""
+
+#: interface/group-permissions.php:41
+msgid "Deny selected"
+msgstr ""
+
+#: interface/group-permissions.php:43
+msgid "Apply"
+msgstr ""
+
+#: interface/group-permissions.php:55
+msgid "0 items"
+msgstr ""
+
+#: interface/group-permissions.php:57
+msgid "Go to the first page"
+msgstr ""
+
+#: interface/group-permissions.php:58
+msgid "Go to the previous page"
+msgstr ""
+
+#: interface/group-permissions.php:62
+msgid "Go to the next page"
+msgstr ""
+
+#: interface/group-permissions.php:63
+msgid "Go to the last page"
+msgstr ""
+
+#: interface/group-properties.php:3 interface/group-stats.php:6
+#: interface/groups.php:8 interface/groups.php:17
+msgid "Name"
+msgstr ""
+
+#: interface/group-properties.php:7 interface/groups.php:9
+#: interface/groups.php:18
+msgid "Description"
+msgstr ""
+
+#: interface/group-stats.php:2
+msgid "Modify Group"
+msgstr ""
+
+#: interface/group-stats.php:8
+msgid "Permission to Edit"
+msgstr ""
+
+#: interface/group-stats.php:13
+msgid "Add Group"
+msgstr ""
+
+#: interface/group-stats.php:18
+msgid "Delete group"
+msgstr ""
+
+#: interface/group-stats.php:18 interface/groups.php:40
+msgid "Delete"
+msgstr ""
+
+#: interface/group-stats.php:21
+msgid "Update Group"
+msgstr ""
+
+#: interface/groups.php:4 interface/groups.php:48
+msgid "Add an Editor Group"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "BU Section Editing"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://developer.bu.edu/bu-section-editing/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Enhances WordPress content editing workflow by providing section editing "
+"groups and permissions"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Boston University (IS&T)"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://blogs.bu.edu/web/"
+msgstr ""
