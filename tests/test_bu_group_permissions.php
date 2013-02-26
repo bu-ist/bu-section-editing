@@ -1,7 +1,5 @@
 <?php
 
-require_once( dirname(__FILE__) . '/includes/classes.group-factory.php' );
-
 /**
  * Integration tests for group permissions operations
  *
