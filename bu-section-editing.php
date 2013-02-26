@@ -104,16 +104,18 @@ class BU_Section_Editing_Plugin {
 		$msg = '';
 
 		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
+			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __('BU Navigation plugin', BUSE_TEXTDOMAIN ) );
 			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please install and activate the <a href="%s">BU Navigation plugin</a> in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
-				BUSE_NAV_INSTALL_LINK ) . '</p>';
+				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				$install_link ) . '</p>';
 		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
+			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __('upgrade your copy of BU Navigation', BUSE_TEXTDOMAIN ) );
 			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
 			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', BUSE_TEXTDOMAIN ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please <a href="%s">upgrade your copy of BU Navigation</a> to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
-				BUSE_NAV_UPGRADE_LINK ) . '</p>';
+				__( 'Please %s to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				$upgrade_link ) . '</p>';
 		}
 
 		if ( $msg )
