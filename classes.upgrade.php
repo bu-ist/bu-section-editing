@@ -30,7 +30,7 @@ class BU_Section_Editing_Upgrader {
 	/**
 	 * Install default section editor role and capability set
 	 */
-	private function populate_roles() {
+	public function populate_roles() {
 
 		// Allow plugins to skip installation of section editor role
 		$create_section_editor = apply_filters( 'buse_create_section_editor_role', true );
@@ -65,11 +65,8 @@ class BU_Section_Editing_Upgrader {
 			$role->add_cap('level_1');
 			$role->add_cap('level_0');
 
-			$caps = BU_Section_Editing_Plugin::$caps->get_caps();
-
-			foreach( $caps as $cap ) {
-				$role->add_cap( $cap );
-			}
+			// Add post type specific section editing capabilities
+			BU_Section_Editing_Plugin::$caps->add_caps( $role );
 
 			if(defined('BU_CMS') && BU_CMS == true) {
 				$role->add_cap('unfiltered_html');

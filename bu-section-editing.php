@@ -62,7 +62,10 @@ class BU_Section_Editing_Plugin {
 		add_action( 'init', array( __CLASS__, 'l10n' ), 5 );
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
-		add_action( 'init', array( __CLASS__, 'version_check' ), 99 );
+		add_action( 'admin_init', array( __CLASS__, 'version_check' ) );
+
+		add_action( 'load-plugins.php', array( __CLASS__, 'repopulate_roles' ) );
+		add_action( 'load-themes.php', array( __CLASS__, 'repopulate_roles' ) );
 
 		BU_Edit_Groups::register_hooks();
 
@@ -210,6 +213,26 @@ class BU_Section_Editing_Plugin {
 
 			// Store new version
 			update_option( self::BUSE_VERSION_OPTION, self::BUSE_VERSION );
+
+		}
+
+	}
+
+	/**
+	 * Regenerate roles & capabilities when a plugin is activated or theme as switched
+	 *
+	 * Both actions potentially introduce new post types, which require a repopulation of the
+	 * per-post type section editing caps -- (edit|publish|delete)_in_section
+	 */
+	public static function repopulate_roles() {
+
+		// Look for any query params that signify updates
+		if ( array_key_exists( 'activated', $_GET ) || array_key_exists( 'activate', $_GET ) || array_key_exists( 'activate-multi', $_GET ) ) {
+
+			require_once( dirname(__FILE__) . '/classes.upgrade.php' );
+
+			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader->populate_roles();
 
 		}
 

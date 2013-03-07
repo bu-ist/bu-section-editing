@@ -27,6 +27,28 @@ class BU_Section_Capabilities {
 	}
 
 	/**
+	 * Add (edit|publish|delete)_*_in_section caps to the given role.
+	 *
+	 * @param mixed $role a WP_Role object, or string representation of a role name
+	 */
+	public function add_caps( $role ) {
+
+		if ( is_string( $role ) ) {
+			$role = get_role( $role );
+		}
+
+		if ( empty( $role ) || ! is_object( $role ) ) {
+			error_log( __METHOD__ . ' - Invalid role!' );
+			return false;
+		}
+
+		foreach( $this->get_caps() as $cap ) {
+			$role->add_cap( $cap );
+		}
+
+	}
+
+	/**
 	 * Filter that modifies the caps needing to take certain actions in cases
 	 * where the user ($user_id) does not have the capabilities that WordPress
 	 * has mapped to the meta capability. The mapping is based on which post is
