@@ -225,13 +225,13 @@ jQuery(document).ready(function($){
 
 					// User is not capable of being added to section editing groups
 					// @todo rethink this error message...
-					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userWrongRoleNotice;
+					var msg = '<b>' + user.display_name + '</b> ' + $('<p/>').html(buse_group_editor_settings.userWrongRoleNotice).text();
 					addNotice( msg, 'members-message' );
 
 				} else if( _is_existing_member( user ) ) {
 
 					// User is already a member
-					var msg = '<b>' + user.display_name + '</b> ' + buse_group_editor_settings.userAlreadyMemberNotice;
+					var msg = '<b>' + user.display_name + '</b> ' + $('<p/>').html(buse_group_editor_settings.userAlreadyMemberNotice).text();
 					addNotice( msg, 'members-message' );
 
 				} else {
@@ -248,7 +248,7 @@ jQuery(document).ready(function($){
 
 				// No user exists on this site
 				// @todo rethink this error message...
-				var msg = '<b>' + input + '</b> ' + buse_group_editor_settings.userNotExistsNotice;
+				var msg = '<b>' + input + '</b> ' + $('<p/>').html(buse_group_editor_settings.userNotExistsNotice).text();
 				addNotice( msg, 'members-message' );
 
 			}
