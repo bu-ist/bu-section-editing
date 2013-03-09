@@ -73,13 +73,13 @@ For more information on creating roles for use with section editing groups, see 
 
 ## Changelog ##
 
-### 0.8 ###
+### 0.9 ###
 * Initial WordPress.org release
 * Added localization support
 * Added notices if BU Navigation plugin is not active
 * General cleanup and bug fixes
 
-### 0.7 ###
+### 0.8 ###
 * Initial Boston University release
 * UI updates to match navigation trees used for other BU plugins (props clrux)
 * Added hard dependency on BU Navigation plugin for hierarchical permissions editors
