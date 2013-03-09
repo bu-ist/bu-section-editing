@@ -3,7 +3,7 @@
 Plugin Name: BU Section Editing
 Plugin URI: http://developer.bu.edu/bu-section-editing/
 Author: Boston University (IS&T)
-Author URI: http://blogs.bu.edu/web/
+Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
 Version: 0.9
 Text Domain: bu-section-editing
@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 **/
 
 /*
-@author Gregory Cornelius <gcorne@bu.edu>
+@author Gregory Cornelius <gcorne@gmail.com>
 @author Mike Burns <mgburns@bu.edu>
 */
 
