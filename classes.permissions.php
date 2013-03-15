@@ -177,7 +177,7 @@ class BU_Group_Permissions {
 
 		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
 
-		return in_array( $group_id, $allowed_groups ) ? true : false;
+		return ( is_array( $allowed_groups ) && in_array( $group_id, $allowed_groups ) ) ? true : false;
 
 	}
 

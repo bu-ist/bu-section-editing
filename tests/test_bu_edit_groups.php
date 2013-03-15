@@ -381,8 +381,8 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$users = $this->factory->user->create_many(2,array('role'=>'section_editor'));
 		$posts = $this->factory->post->create_many(2,array('post_type'=>'post'));
 		$pages = $this->factory->post->create_many(2,array('post_type'=>'page'));
-		$allowedposts = array_combine($posts,array('allowed','allowed'));
-		$allowedpages = array_combine($pages,array('allowed','allowed'));
+		$allowedposts = array( 'allowed' => $posts );
+		$allowedpages = array( 'allowed' => $pages );
 
 		$defaults = array(
 			'name' => 'Test group',
