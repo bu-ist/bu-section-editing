@@ -102,8 +102,6 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
 		add_action( 'transition_post_status', array( 'BU_Groups_Admin', 'transition_post_status' ), 10, 3 );
 
-		$this->assertTrue( is_admin() );
-
 		// 1. New top-level page (should not be editable)
 		$post = $this->factory->post->create( array( 'post_type' => 'page', 'post_parent' => 0, 'post_status' => 'publish' ) );
 		$this->assertFalse( BU_Group_Permissions::group_can_edit( $group->id, $post ) );
