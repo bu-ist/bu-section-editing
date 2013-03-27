@@ -3,7 +3,7 @@ Contributors: mgburns, gcorne
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 3.1
 Tested up to: 3.5
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,10 @@ For more information on creating roles for use with section editing groups, see 
 5. Fully integrated with navigation management views presented by the BU Navigation plugin
 
 == Changelog ==
+
+= 0.9.2 =
+* Added hook for modifying section editor caps
+* Removed BU-specific handling from plugin
 
 = 0.9.1 =
 * Initial WordPress.org release
