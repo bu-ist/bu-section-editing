@@ -84,9 +84,6 @@ class BU_Section_Editing_Plugin {
 		// Roles and capabilities
 		add_filter( 'map_meta_cap', array( self::$caps, 'map_meta_cap' ), 10, 4 );
 
-		// @todo move this to the bu_user_manager plugin
-		add_filter( 'bu_user_manager_allowed_roles', array( __CLASS__, 'allowed_roles' ) );
-
 		// Admin requests
 		if( is_admin() ) {
 
@@ -155,19 +152,6 @@ class BU_Section_Editing_Plugin {
 			echo "<div class=\"error\">$notice</div>\n";
 			delete_transient( 'buse_nav_dep_nag' );
 		}
-
-	}
-
-	/**
-	 * Callback that adds section editor role to BU list of allowed roles
-	 */
-	public function allowed_roles( $roles ) {
-
-		if( ! array_key_exists( 'section_editor', $roles ) ) {
-			$roles[] = 'section_editor';
-		}
-
-		return $roles;
 
 	}
 
