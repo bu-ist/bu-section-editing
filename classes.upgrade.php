@@ -68,9 +68,8 @@ class BU_Section_Editing_Upgrader {
 			// Add post type specific section editing capabilities
 			BU_Section_Editing_Plugin::$caps->add_caps( $role );
 
-			if(defined('BU_CMS') && BU_CMS == true) {
-				$role->add_cap('unfiltered_html');
-			}
+			// Allow others to customize default section editor caps
+			do_action( 'buse_section_editor_caps', $role );
 
 		}
 
