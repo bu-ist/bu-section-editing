@@ -20,5 +20,3 @@ $GLOBALS['wp_tests_options'] = array(
 );
 
 require getenv( 'WP_TESTS_DIR' ) . '/includes/bootstrap.php';
-
-require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';

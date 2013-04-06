@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname( __FILE__ ) . '/../tests/includes/classes.group-factory.php';
+
 /**
  * @group bu-section-editing-selenium
  */
@@ -13,7 +15,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
 
 		// Create global state programmatically
-		$this->factory->user->create(array('user_login' => 'section_editor','user_pass'=>'buse_test_pass','role'=>'section_editor'));
+		$this->factory->user->create(array('role'=>'section_editor'));
 
 	}
 

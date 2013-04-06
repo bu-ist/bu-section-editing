@@ -1,8 +1,11 @@
 <?php
 
+require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
+
 /**
  * More traditional unit tests against the BU_Edit_Group class
- * 
+ *
+ * @group bu
  * @group bu-section-editing
  **/
 class Test_BU_Edit_Group extends WP_UnitTestCase {

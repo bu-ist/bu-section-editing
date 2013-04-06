@@ -1,10 +1,13 @@
 <?php
 
+require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
+
 /**
  * Integration tests for BU_Edit_Groups controller class
  *
  * @todo investigate using mock objects here
  *
+ * @group bu
  * @group bu-section-editing
  **/
 class Test_BU_Edit_Groups extends WP_UnitTestCase {

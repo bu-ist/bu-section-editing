@@ -1,6 +1,9 @@
 <?php
 
+require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
+
 /**
+ * @group bu
  * @group bu-section-editing
  **/
 class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {

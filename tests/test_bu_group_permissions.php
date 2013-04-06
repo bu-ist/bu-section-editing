@@ -1,8 +1,11 @@
 <?php
 
+require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
+
 /**
  * Integration tests for group permissions operations
  *
+ * @group bu
  * @group bu-section-editing
  **/
 class Test_BU_Group_Permissions extends WP_UnitTestCase {
