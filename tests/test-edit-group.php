@@ -1,7 +1,5 @@
 <?php
 
-require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
-
 /**
  * More traditional unit tests against the BU_Edit_Group class
  *
