@@ -19,7 +19,7 @@ if( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
 function buse_bu_navigation_scripts() {
 
 	$screen = get_current_screen();
-	$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
+	$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
 
 	wp_enqueue_script( 'section-editor-nav', plugins_url( 'js/section-editor-nav' . $suffix . '.js', __FILE__ ), array( 'bu-navigation' ), BU_Section_Editing_Plugin::BUSE_VERSION, true );
 
