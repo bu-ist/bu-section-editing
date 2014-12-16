@@ -168,7 +168,8 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$gc->load();
 		$this->assertNotEmpty( $gc->get_groups() );
 
-		$group_after = array_shift($gc->get_groups());
+		$groups = $gc->get_groups();
+		$group_after = array_shift($groups);
 
 		$this->assertEquals( $group->name, $group_after->name );
 		$this->assertEquals( $group->description, $group_after->description );
