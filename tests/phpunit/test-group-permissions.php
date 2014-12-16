@@ -36,9 +36,10 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
 		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'post', 'fields' => 'ids' ));
 		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'page', 'fields' => 'ids' ));
-
-		$this->assertEquals( asort( $posts ), asort( array_map( 'intval', $allowedposts ) ) );
-		$this->assertEquals( asort( $pages ), asort( array_map( 'intval', $allowedpages ) ) );
+		$allowedposts = array_map( 'intval', $allowedposts );
+		$allowedpages = array_map( 'intval', $allowedpages );
+		$this->assertEquals( asort( $posts ), asort( $allowedposts ) );
+		$this->assertEquals( asort( $pages ), asort( $allowedpages ) );
 
 	}
 
@@ -58,9 +59,10 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
 		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'post', 'fields' => 'ids' ));
 		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'page', 'fields' => 'ids' ));
-
-		$this->assertEquals( asort( $posts ), asort( array_map( 'intval', $allowedposts ) ) );
-		$this->assertEquals( asort( $pages ), asort( array_map( 'intval', $allowedpages ) ) );
+		$allowedposts = array_map( 'intval', $allowedposts );
+		$allowedpages = array_map( 'intval', $allowedpages );
+		$this->assertEquals( asort( $posts ), asort( $allowedposts ) );
+		$this->assertEquals( asort( $pages ), asort( $allowedpages ) );
 
 		BU_Group_Permissions::delete_group_permissions( $group->id );
 

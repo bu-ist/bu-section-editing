@@ -76,8 +76,12 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'post', 'fields' => 'ids' ));
 		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'page', 'fields' => 'ids' ));
 
-		$this->assertEquals( asort( array_keys($data['perms']['post']) ), asort( array_map( 'intval', $allowedposts ) ) );
-		$this->assertEquals( asort( array_keys($data['perms']['page']) ), asort( array_map( 'intval', $allowedpages ) ) );
+		$expected_allowed_posts = array_keys($data['perms']['post']);
+		$expected_allowed_pages = array_keys($data['perms']['page']);
+		$actual_allowed_posts = array_map( 'intval', $allowedposts );
+		$actual_allowed_pages = array_map( 'intval', $allowedpages );
+		$this->assertEquals( asort( $expected_allowed_posts ), asort( $actual_allowed_posts ) );
+		$this->assertEquals( asort( $expected_allowed_pages ), asort( $actual_allowed_pages ) );
 
 	}
 
@@ -113,8 +117,12 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'post', 'fields' => 'ids' ));
 		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array('post_type' => 'page', 'fields' => 'ids' ));
 
-		$this->assertEquals( asort( array_keys($updates['perms']['post']) ), asort( array_map( 'intval', $allowedposts ) ) );
-		$this->assertEquals( asort( array_keys($updates['perms']['page']) ), asort( array_map( 'intval', $allowedpages ) ) );
+		$expected_allowed_posts = array_keys($updates['perms']['post']);
+		$expected_allowed_pages = array_keys($updates['perms']['page']);
+		$actual_allowed_posts = array_map( 'intval', $allowedposts );
+		$actual_allowed_pages = array_map( 'intval', $allowedpages );
+		$this->assertEquals( asort( $expected_allowed_posts ), asort( $actual_allowed_posts ) );
+		$this->assertEquals( asort( $expected_allowed_pages ), asort( $actual_allowed_pages ) );
 
 	}
 
