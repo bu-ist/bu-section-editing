@@ -43,7 +43,7 @@ class BU_Section_Editing_Upgrader {
 				add_role('section_editor', 'Section Editor');
 			}
 
-			$role =& get_role('section_editor');
+			$role = get_role('section_editor');
 
 			$role->add_cap('upload_files');
 
@@ -135,7 +135,7 @@ class BU_Section_Editing_Upgrader {
 		}
 
 		// Role/cap changes in 04b54ea79c1bc935eee5ce04118812c1d8dad229
-		if( $role =& get_role('section_editor') ) {
+		if( $role = get_role('section_editor') ) {
 
 			$role->remove_cap('edit_published_posts');
 			$role->remove_cap('edit_published_pages');
@@ -202,7 +202,7 @@ class BU_Section_Editing_Upgrader {
 	private function upgrade_06() {
 
 		// Role/cap mods introduced in 114fcedf80ebdb0ef93948f41a6984006ff74031
-		if( $role =& get_role('section_editor') ) {
+		if( $role = get_role('section_editor') ) {
 
 			$role->remove_cap( 'delete_published_in_section' );
 			$role->remove_cap( 'edit_published_in_section' );
