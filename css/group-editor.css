@@ -185,6 +185,10 @@
 	cursor: default;
 }
 
+.perm-editor li {
+	position: relative;
+}
+
 /* Flat Permissions */
 
 .perm-list {
@@ -196,7 +200,9 @@
 	padding: 0;
 	border-top: 1px solid #dfdfdf;
 	margin: 0;
-	position: relative;
+	height: 36px;
+	line-height: 36px;
+	font-size: 13px;
 }
 
 .perm-editor.flat li:first-child {
@@ -240,24 +246,28 @@
 
 .perm-editor.flat a {
 	display: block;
-	padding: 10px 0 10px 0;
 	color: inherit;
 	text-decoration: none;
 	white-space: nowrap;
 	cursor:	default;
+	height: 100%;
 }
 
-.perm-editor.flat a:hover,
-.perm-editor.flat a:focus {
+#section-group-editor a:focus,
+#section-group-editor a:active,
+#section-group-editor button:focus,
+#section-group-editor button:active {
 	outline: none;
+	box-shadow: none;
 }
 
 .perm-editor.flat li a .title {
 	max-width: 50%;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	display: inline-block;    
+	display: inline-block;
 	*display: inline;
+	vertical-align: top;
 }
 
 .perm-editor.flat .perm-item-selected a {
@@ -269,16 +279,19 @@
 
 .edit-perms {
 	display: none;
-	float: right;
+	position: absolute;
+	top: 0;
+	right: 0;
 	border: none;
 	width: 65px;
 	cursor: pointer;
 }
 
 .perm-editor.hierarchical .edit-perms {
-	margin: -6px -1px;
-	padding: 4px 0 5px 0;
+	margin: 0;
+	padding: 0;
 	color: white;
+	height: 26px;
 	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
 	border-top-right-radius: 3px;
 	border-bottom-right-radius: 3px;
@@ -291,14 +304,10 @@
 }
 
 .perm-editor.flat .edit-perms {
-	margin: -10px -1px;
-	padding: 9px 9px 10px 9px;
+	height: 100%;
 	color: white;
 	text-shadow: 0 0 3px rgba(0, 0, 0, .25);
 	font-size: 100%;
-	position: absolute;
-	top: 10px;
-	right: 0;
 }
 
 .perm-editor.flat .edit-perms.denied {
@@ -329,17 +338,15 @@
 
 /* Bulk Edit */
 .perm-panel.bulk-edit input[type="checkbox"] {
-	display: inline;
-	vertical-align: middle;
-}
-
-.perm-panel.bulk-edit li input[type="checkbox"] {
-	float: left;
-	margin: 14px 12px 0 0;
+	display: inline-block;
+	position: absolute;
+	top: 50%;
+	margin-top: -8px;
 }
 
 .perm-editor-bulk-edit-panel {
 	display: none;
+	position: relative;
 }
 
 .perm-panel.bulk-edit .perm-editor-bulk-edit-panel {
@@ -355,6 +362,10 @@
 	background-image: -webkit-gradient(linear,left top,left bottom,from(#ECECEC),to(#DFDFDF));
 	background-image: -webkit-linear-gradient(top,#ECECEC,#DFDFDF);
 	background-image: linear-gradient(top,#ECECEC,#DFDFDF);
+}
+
+.bulk-edit .perm-editor.flat a {
+	padding-left: 50px;
 }
 
 .bulk-edit .perm-editor.flat .perm-item-selected a {
@@ -383,6 +394,7 @@
 
 .bulk-edit-actions select {
 	width: 150px;
+	margin-left: 24px;
 }
 
 .perm-editor-bulk-edit {
@@ -393,6 +405,7 @@
 .bulk-edit-close {
 	padding-left: 20px;
 	background: url('../images/close_icons.png') no-repeat 0px 0px;
+	transition: none;
 }
 
 .bulk-edit-close:hover {
