@@ -359,7 +359,7 @@ class BU_Groups_Admin {
 		if( is_null( self::$manage_groups_hooks ) )
 			return;
 
-		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '.dev' : '';
+		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
 		$version = BU_Section_Editing_Plugin::BUSE_VERSION;
 
 		if( in_array( $hook, self::$manage_groups_hooks ) ) {
@@ -368,7 +368,7 @@ class BU_Groups_Admin {
 			if( ! wp_script_is( 'jquery-ui-autocomplete', 'registered' ) ) {
 
 				// Register local fallback copy of autocomplete
-				wp_register_script( 'jquery-ui-autocomplete', plugins_url('/js/lib/jquery.ui.autocomplete'.$suffix.'.js', __FILE__), array('jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-position'), '1.8.23', true );
+				wp_register_script( 'jquery-ui-autocomplete', plugins_url('/js/vendor/jquery.ui.autocomplete'.$suffix.'.js', __FILE__), array('jquery-ui-core', 'jquery-ui-widget', 'jquery-ui-position'), '1.8.23', true );
 
 			}
 

@@ -189,7 +189,7 @@ class BU_Group_Permissions {
 	 * @param array $args an optional array of WP_Query arguments, will override defaults
 	 * @return array an array of posts that have section editing permissions for this group
 	 */
-	public function get_allowed_posts_for_group( $group_id, $args = array() ) {
+	public static function get_allowed_posts_for_group( $group_id, $args = array() ) {
 
 		$defaults = array(
 			'post_type' => 'page',

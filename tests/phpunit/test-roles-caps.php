@@ -1,7 +1,5 @@
 <?php
 
-require_once dirname( __FILE__ ) . '/includes/classes.group-factory.php';
-
 /**
  * @group bu
  * @group bu-section-editing
@@ -10,6 +8,13 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 	function setUp() {
 		parent::setUp();
+
+		// Ensure that the section editor role exists
+		// TODO: This shouldn't be this hard
+		require_once __DIR__ . '/../../classes.upgrade.php';
+		$upgrader = new BU_Section_Editing_Upgrader();
+		$upgrader->populate_roles();
+
 		$this->groups = array();
 		$pages = array(
 			'top-level1' => array(

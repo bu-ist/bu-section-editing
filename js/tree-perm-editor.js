@@ -1,4 +1,132 @@
-(function(b){if(!("undefined"===typeof bu||"undefined"===typeof bu.plugins.navigation||"undefined"===typeof bu.plugins.navigation.tree)){var g=bu.plugins.navigation;g.trees.buse_perm_editor=function(j,e){e=e||{};var c=g.trees.base(j,e),a=c.data,f=b.extend(c.config,j||{}),h=c.$el,d=b.inArray("crrm",a.treeConfig.plugins);-1<d&&(a.treeConfig.plugins.splice(d,1),"undefined"!==typeof a.treeConfig.crrm&&delete a.treeConfig.crrm);d=b.inArray("dnd",a.treeConfig.plugins);-1<d&&(a.treeConfig.plugins.splice(d,
-1),"undefined"!==typeof a.treeConfig.dnd&&delete a.treeConfig.dnd);a.treeConfig.types={types:{"default":{},denied:{},"denied-desc-allowed":{},"denied-desc-unknown":{},allowed:{},"allowed-desc-denied":{},"allowed-desc-unknown":{}}};a.treeConfig.ui={select_limit:1};a.treeConfig.json_data.ajax={url:f.rpcUrl,type:"GET",cache:!1,data:function(a){return{group_id:f.groupID,node_prefix:f.nodePrefix,post_type:f.postType,query:{child_of:a.attr?e.stripNodePrefix(a.attr("id")):0}}},success:function(a){return a.posts},
-error:function(){}};a.treeConfig.json_data.progressive_render=!1;var k=function(a){a=!a||-1==a?h.find("> ul > li"):b.jstree._reference(h)._get_node(a);var d,e,c,g;a.each(function(){d=b(this);d.find("li").andSelf().each(function(){c=b(this).data("editable")?"denied":"allowed";g="allowed"==c?f.allowLabel:f.denyLabel;e=b('<button class="edit-perms '+c+'"></button>').text(g);b(this).children("a").not(":has(.edit-perms)").append(e)})})};h.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree",
-function(a,b){k(b.rslt.obj)});h.bind("loaded.jstree",function(){k()});h.addClass("buse-perm-editor");return c}}})(jQuery);
+/**
+ * ========================================================================
+ * BU Section Editing plugin - Hierarchiacl Permissions Editor
+ * ========================================================================
+ */
+
+/*jslint browser: true, todo: true */
+/*global bu: true, jQuery: false, console: false, window: false, document: false */
+(function ($) {
+
+	// Check prerequisites
+	if((typeof bu === 'undefined') ||
+		(typeof bu.plugins.navigation === 'undefined') ||
+		(typeof bu.plugins.navigation.tree === 'undefined'))
+			return;
+
+	var Nav = bu.plugins.navigation;
+
+	// ----------------------------
+	// Hierarchical perm editor
+	// ----------------------------
+	Nav.trees['buse_perm_editor'] = function (config, my) {
+		my = my || {};
+
+		// Functional inheritance
+		var that = Nav.trees.base( config, my );
+
+		// Aliases
+		var d = that.data;
+		var c = $.extend(that.config, config || {});	// instance configuration
+
+		var $tree = that.$el;
+
+		// Remove base plugins and config that we don't need
+		// @todo consider removing from bu-navigation base
+		var crrm = $.inArray('crrm', d.treeConfig['plugins']);
+		if (crrm > -1) {
+			d.treeConfig['plugins'].splice(crrm,1);
+			if (typeof d.treeConfig['crrm'] !== 'undefined' ) {
+				delete d.treeConfig['crrm'];
+			}
+		}
+		var dnd = $.inArray('dnd', d.treeConfig['plugins']);
+		if (dnd > -1) {
+			d.treeConfig['plugins'].splice(dnd,1);
+			if (typeof d.treeConfig['dnd'] !== 'undefined' ) {
+				delete d.treeConfig['dnd'];
+			}
+		}
+
+		// Custom tree types for perm editor (icon asset config is temporary)
+		d.treeConfig['types'] = {
+			"types" : {
+				'default' : {},
+				'denied' : {},
+				'denied-desc-allowed' : {},
+				'denied-desc-unknown' : {},
+				'allowed' : {},
+				'allowed-desc-denied' : {},
+				'allowed-desc-unknown' : {}
+			}
+		};
+
+		// UI plugin
+		d.treeConfig["ui"] = {
+			"select_limit": 1
+		}
+
+		// Append global jstree options with configuration for this post type
+		d.treeConfig['json_data']['ajax'] = {
+			url : c.rpcUrl,
+			type: 'GET',
+			cache: false,
+			data : function(n) {
+				return {
+					group_id : c.groupID,
+					node_prefix : c.nodePrefix,
+					post_type : c.postType,
+					query: {
+						child_of : n.attr ? my.stripNodePrefix(n.attr('id')) : 0
+					}
+				}
+			},
+			success: function( response ) {
+				return response.posts;
+			},
+			error: function( response ) {
+				// @todo handle error
+			}
+		};
+
+		// Interferes with icon state correction with lazy load
+		d.treeConfig['json_data']['progressive_render'] = false;
+
+		var _prepare_perm_actions = function (node) {
+			node = !node || node == -1 ? $tree.find("> ul > li") : $.jstree._reference($tree)._get_node(node);
+
+			var $li, $button, action_class, action_label;
+
+			node.each(function () {
+				$li = $(this);
+				$li.find("li").andSelf().each(function () {
+					action_class = $(this).data('editable') ? 'denied' : 'allowed';
+
+					if (action_class == 'allowed') {
+						action_label = c.allowLabel;
+					} else {
+						action_label = c.denyLabel;
+					}
+
+					$button = $('<button class="edit-perms ' + action_class + '"></button>')
+						.text(action_label);
+					$(this).children("a").not(":has(.edit-perms)").append($button);
+				});
+			});
+		};
+
+		// Add perm actions button to each node as needed
+		$tree.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", function (e, data) {
+			_prepare_perm_actions(data.rslt.obj);
+		});
+
+		$tree.bind("loaded.jstree", function (e) {
+			_prepare_perm_actions();
+		});
+
+		$tree.addClass('buse-perm-editor');
+
+		return that;
+	};
+
+}(jQuery));
