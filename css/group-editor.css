@@ -620,10 +620,19 @@ body.section-groups_page_buse_new_group .ui-autocomplete .ui-menu-item {
 	margin-bottom: 0;
 	white-space: nowrap;
 	text-align: left;
-	display: block;
-	height: 100%;
 	padding: 4px 10px;
 	color: #333;
+}
+
+/* For jQuery UI autocomplete < 1.11.0 */
+body.toplevel_page_buse_edit_groups .ui-autocomplete .ui-menu-item[role="presentation"],
+body.section-groups_page_buse_new_group .ui-autocomplete .ui-menu-item[role="presentation"] {
+	padding: 0;
+}
+
+body.toplevel_page_buse_edit_groups .ui-autocomplete .ui-menu-item[role="presentation"] a,
+body.section-groups_page_buse_new_group .ui-autocomplete .ui-menu-item[role="presentation"] a {
+	padding: 4px 10px;
 }
 
 body.toplevel_page_buse_edit_groups .ui-autocomplete .ui-state-hover,
