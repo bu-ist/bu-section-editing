@@ -394,8 +394,6 @@ class BU_Edit_Groups {
 			$post_status_clause
 			);
 
-		print_r($count_query."\n\n");
-
 		// Execute query
 		$ids = $wpdb->get_col( $count_query );
 
