@@ -385,7 +385,7 @@ class BU_Edit_Groups {
 
 		}
 
-		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s AS p JOIN %s AS m ON p.ID = m.post_ID WHERE ( m.meta_key = '%s' AND m.meta_value IN (%s) %s ) %s",
+		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s AS p LEFT JOIN %s AS m ON p.ID = m.post_ID WHERE ( m.meta_key = '%s' AND m.meta_value IN (%s) %s ) %s",
 			$wpdb->posts,
 			$wpdb->postmeta,
 			BU_Group_Permissions::META_KEY,
