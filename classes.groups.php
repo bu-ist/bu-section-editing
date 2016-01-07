@@ -294,8 +294,7 @@ class BU_Edit_Groups {
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
 	 *
-	 * @todo implement cacheing with md5 of args
-	 * @todo re-examine and optimize this query
+	 * @todo implement caching with md5 of args
 	 * @todo possibly move to BU_Group_Permissions
 	 *
 	 * @param $args array optional args
@@ -385,7 +384,7 @@ class BU_Edit_Groups {
 
 		}
 
-		$count_query = sprintf( "SELECT DISTINCT( ID ) FROM %s AS p LEFT JOIN %s AS m ON p.ID = m.post_ID WHERE ( m.meta_key = '%s' AND m.meta_value IN (%s) %s ) %s",
+		$count_query = sprintf( "SELECT ID FROM %s WHERE ( ID IN ( SELECT post_ID from %s WHERE meta_key = '%s' AND meta_value IN (%s) ) %s) %s",
 			$wpdb->posts,
 			$wpdb->postmeta,
 			BU_Group_Permissions::META_KEY,
