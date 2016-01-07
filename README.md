@@ -1,11 +1,19 @@
 # BU Section Editing #
-**Contributors:** mgburns, gcorne
+
+**Contributors:** mgburns, gcorne, awbauer
+
 **Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
+
 **Requires at least:** 3.1
-**Tested up to:** 4.2
-**Stable tag:** 0.9.4
+
+**Tested up to:** 4.4.1
+
+**Stable tag:** 0.9.5
+
 **License:** GPLv2 or later
+
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html
+
 
 Advanced content editing workflow in WordPress through the use of section editing groups and permissions.
 
@@ -71,6 +79,10 @@ For more information on creating roles for use with section editing groups, see 
 ![5. Fully integrated with navigation management views presented by the BU Navigation plugin](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-5.png)
 
 ## Changelog ##
+
+### 0.9.5 ###
+* Fixed slow SQL affecting large sites
+* Confirmed 4.4.1 compatibility
 
 ### 0.9.4 ###
 * Confirmed 4.2 compatibility
