@@ -15,7 +15,11 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$upgrader = new BU_Section_Editing_Upgrader();
 		$upgrader->populate_roles();
 
-		$this->groups = array();
+		$this->groups 	= array();
+		$this->users 	= array();
+		$this->posts 	= array();
+		$this->pages 	= array();
+
 		$pages = array(
 			'top-level1' => array(
 				'status' => 'publish'
@@ -71,8 +75,10 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		);
 		$this->addUser('section_editor1');
 		$this->addUser('section_editor2');
+		
 		$section_editor1 = get_user_by('login', 'section_editor1');
 		$section_editor2 = get_user_by('login', 'section_editor2');
+		
 		$this->insertPosts($pages, 'page');
 		$this->insertPosts($posts, 'post');
 		$perms = $this->getEditable('alpha');
