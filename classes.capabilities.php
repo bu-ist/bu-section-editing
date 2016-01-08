@@ -107,6 +107,13 @@ class BU_Section_Capabilities {
 
 		$parent_id = null;
 		$post = get_post( $post_id );
+
+		// Use main post if evaluating a revision
+		if( 'revision' == $post->post_type ){
+			$post_id = $post->post_parent;
+			$post = get_post( $post_id );
+		}
+
 		$post_type = get_post_type_object( $post->post_type );
 
 		if( $post_type->hierarchical != true ) {
@@ -127,6 +134,7 @@ class BU_Section_Capabilities {
 				$caps = array($this->get_section_cap('edit', $post->post_type));
 			}
 		}
+
 		return $caps;
 	}
 
