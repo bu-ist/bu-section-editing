@@ -24,4 +24,3 @@ class WP_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
 	}
 }
 
-?>

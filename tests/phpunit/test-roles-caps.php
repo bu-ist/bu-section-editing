@@ -305,5 +305,3 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 	}
 }
 
-
-?>

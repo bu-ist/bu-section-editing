@@ -65,7 +65,6 @@ class BU_Section_Capabilities {
 	public function map_meta_cap($caps, $cap, $user_id, $args) {
 		global $post_ID;
 
-
 		$user = new WP_User( intval( $user_id ) );
 
 		// if user alread has the caps as passed by map_meta_cap() pre-filter or
@@ -88,7 +87,6 @@ class BU_Section_Capabilities {
 		if( $this->is_post_cap( $cap, 'publish_posts' ) ) {
 			$caps = $this->_override_publish_caps( $user, $post_ID, $caps );
 		}
-
 
 		return $caps;
 	}
@@ -269,4 +267,3 @@ class BU_Section_Capabilities {
 	}
 }
 
-?>
