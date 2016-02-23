@@ -469,6 +469,12 @@ class BU_Groups_Admin {
 	 * @hook admin_menus
 	 */
 	public static function admin_menus() {
+		global $wp_version;
+
+		$menu_icon = plugins_url( '/images/pages-menu-icon-16.png', __FILE__ );
+		if ( version_compare( $wp_version, '3.8', '>=' ) ) {
+			$menu_icon = 'dashicons-forms';
+		}
 
 		$groups_manage = add_menu_page(
 			__( 'Section Groups', BUSE_TEXTDOMAIN ),
@@ -476,7 +482,7 @@ class BU_Groups_Admin {
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
-			plugins_url( '/images/pages-menu-icon-16.png', __FILE__ ),
+			$menu_icon,
 			73  // position
 			);
 
