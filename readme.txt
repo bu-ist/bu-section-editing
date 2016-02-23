@@ -3,7 +3,7 @@ Contributors: mgburns, gcorne
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 3.1
 Tested up to: 4.4.1
-Stable tag: 0.9.5
+Stable tag: 0.9.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,9 @@ For more information on creating roles for use with section editing groups, see 
 5. Fully integrated with navigation management views presented by the BU Navigation plugin
 
 == Changelog ==
+
+= 0.9.6 =
+* Replace menu icon with dashicon for WP >= 3.8
 
 = 0.9.5 =
 * Fixed slow SQL affecting large sites
