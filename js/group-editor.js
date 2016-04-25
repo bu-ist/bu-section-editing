@@ -16,7 +16,7 @@ jQuery(document).ready(function($){
 	$nav_links.click(function(e){
 		e.preventDefault();
 
-		var $tab = $('a.nav-tab[href=' + this.hash + ']');
+		var $tab = $('a.nav-tab[href="' + this.hash + '"]');
 		var $target = $(this.hash);
 
 		// Update hidden inputs
