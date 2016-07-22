@@ -105,10 +105,28 @@ class BU_Section_Capabilities {
 		return (int) $_POST['parent_id'];
 	}
 
+	/**
+	 * When working with revisions, check for parent post's permissions.
+	 * Returns the parent post ID if `$post_id` points to a revision.
+	 *
+	 * @param  int $post_id
+	 * @return int
+	 */
+	private function switch_revision_to_parent( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( 'revision' == $post->post_type ) {
+			$post_id = $post->post_parent;
+		}
+
+		return $post_id;
+	}
+
 	private function _override_edit_caps(WP_User $user, $post_id, $caps) {
 
 		$parent_id = null;
-		$post = get_post( $post_id );
+		$post_id   = $this->switch_revision_to_parent( $post_id );
+		$post      = get_post( $post_id );
 		$post_type = get_post_type_object( $post->post_type );
 
 		if( $post_type->hierarchical != true ) {
