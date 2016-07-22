@@ -6,9 +6,9 @@
 
 **Requires at least:** 3.1
 
-**Tested up to:** 4.4.1
+**Tested up to:** 4.5.1
 
-**Stable tag:** 0.9.6
+**Stable tag:** 0.9.7
 
 **License:** GPLv2 or later
 
@@ -79,6 +79,8 @@ For more information on creating roles for use with section editing groups, see 
 ![5. Fully integrated with navigation management views presented by the BU Navigation plugin](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-5.png)
 
 ## Changelog ##
+### 0.9.7 ### 
+* Fix broken admin-side JS in WP 4.5
 
 ### 0.9.6 ###
 * Replace menu icon with dashicon for WP >= 3.8
