@@ -120,7 +120,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->assertTrue( current_user_can( 'edit_page', $post_id ) );
 
 		$post_id = $this->pages['third-level2']->ID;
-		$this->assertTrue( current_user_can( 'edit_page', $post_id ) );
+		$this->assertFalse( current_user_can( 'edit_page', $post_id ) );
 
 		// posts
 		$post_id = $this->posts['draft1']->ID;
@@ -315,46 +315,13 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->groups[] = $groups->add_group( $args );
 	}
 
-	/**
-	 * Tests if a page or its parent pages allow a specific group.
-	 * Since permissions can be inherited, this is crucial
-	 * to support hierarchical post types.
-	 *
-	 * @param  int    $post_id
-	 * @param  string $group_name
-	 * @return boolean             true|false
-	 */
-	function isAllowedByPage( $post_id, $group_name ) {
-
-		$page = get_post( $post_id );
-		if ( is_wp_error( $page ) ) {
-			return false;
-		}
-
-		if ( ! isset( $this->pages[ $page->post_title ] ) ) {
-			return false;
-		}
-
-		// switch to `$this->pages`, which has custom `groups` attribute
-		$page = $this->pages[ $page->post_title ];
-		if ( isset( $page->groups ) && in_array( $group_name, $page->groups ) ) {
-			return true;
-		}
-
-		if ( $page->post_parent ) {
-			return $this->isAllowedByPage( $page->post_parent, $group_name );
-		}
-
-		return false;
-	}
-
 	function getEditable( $group_name ) {
 		$perms = array();
 
 		if ( is_array( $this->pages ) ) {
 			$perms['page']['allowed'] = array();
 			foreach ( $this->pages as $page ) {
-				if ( $this->isAllowedByPage( $page->ID, $group_name ) ) {
+				if ( isset( $page->groups ) && in_array( $group_name, $page->groups ) ) {
 					$perms['page']['allowed'][] = $page->ID;
 				}
 			}
