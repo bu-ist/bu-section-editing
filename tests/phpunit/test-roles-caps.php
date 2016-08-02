@@ -22,7 +22,12 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$pages = array(
 			'top-level1' => array(
-				'status' => 'publish'
+				'status' => 'publish',
+				'children' => array(
+					'second-level0' => array(
+						'status' => 'publish',
+					),
+				),
 			),
 			'top-level2' => array(
 				'groups' => array('alpha'),
@@ -100,11 +105,24 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
 
+		// pages
 		$post_id = $this->pages['section_editor-draft']->ID;
 		$this->assertTrue(current_user_can('edit_page', $post_id));
+
 		$post_id = $this->pages['top-level1']->ID;
 		$this->assertFalse(current_user_can('edit_page', $post_id));
 
+		// page children
+		$post_id = $this->pages['second-level0']->ID;
+		$this->assertFalse(current_user_can('edit_page', $post_id));
+
+		$post_id = $this->pages['third-level1']->ID;
+		$this->assertTrue(current_user_can('edit_page', $post_id));
+
+		$post_id = $this->pages['third-level2']->ID;
+		$this->assertTrue(current_user_can('edit_page', $post_id));
+
+		// posts
 		$post_id = $this->posts['draft1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
 
@@ -116,6 +134,93 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$post_id = $this->posts['nogroups-published']->ID;
 		$this->assertFalse(current_user_can('edit_post', $post_id));
+	}
+
+	function test_revisions_post() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->posts['publish1']->ID;
+
+		// can edit post via group
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can edit revisions of editable post
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertTrue(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
+	function test_revisions_page() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['top-level1']->ID;
+
+		// can't access page
+		$this->assertFalse(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can't edit uneditable page's revisions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertFalse(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
+	function test_revisions_page_children_accessible() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['second-level1']->ID;
+
+		// can edit child page through parent's permissions
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can edit child page's revisions through parent's permissions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertTrue(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
+	function test_revisions_page_children_inaccessible() {
+
+		$editor = get_user_by('login', 'section_editor2');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['third-level2']->ID;
+
+		// can't edit child page through parent's permissions
+		$this->assertFalse(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can't edit child page's revisions through parent's permissions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertFalse(current_user_can('edit_post', $revision_id));
+		}
 	}
 
 	function test_delete() {
@@ -212,13 +317,48 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->groups[] = $groups->add_group($args);
 	}
 
+	/**
+	 * Tests if a page or its parent pages allow a specific group.
+	 * Since permissions can be inherited, this is crucial
+	 * to support hierarchical post types.
+	 *
+	 * @param  int     $post_id
+	 * @param  string  $group_name
+	 * @return boolean             true|false
+	 */
+	function isAllowedByPage( $post_id, $group_name ) {
+
+		$page = get_post( $post_id );
+
+		if ( is_wp_error( $page ) ) {
+			return false;
+		}
+
+		if ( ! isset( $this->pages[ $page->post_title ] ) ) {
+			return false;
+		}
+
+		// switch to `$this->pages`, which has custom `groups` attribute
+		$page = $this->pages[ $page->post_title ];
+
+		if ( isset($page->groups) && in_array($group_name, $page->groups) ) {
+			return true;
+		}
+
+		if ( $page->post_parent ) {
+			return $this->isAllowedByPage( $page->post_parent, $group_name );
+		}
+
+		return false;
+	}
+
 	function getEditable($group_name) {
 		$perms = array();
 
 		if(is_array($this->pages)) {
 			$perms['page']['allowed'] = array();
 			foreach($this->pages as $page) {
-				if(isset($page->groups) && in_array($group_name, $page->groups)) {
+				if ( $this->isAllowedByPage( $page->ID, $group_name ) ) {
 					$perms['page']['allowed'][] = $page->ID;
 				}
 			}
