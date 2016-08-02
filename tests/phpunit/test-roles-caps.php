@@ -180,6 +180,49 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 	}
 
+	function test_revisions_page_children_accessible() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['second-level1']->ID;
+
+		// can edit child page through parent's permissions
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can edit child page's revisions through parent's permissions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertTrue(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
+	function test_revisions_page_children_inaccessible() {
+
+		$editor = get_user_by('login', 'section_editor2');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['third-level2']->ID;
+
+		// can't edit child page through parent's permissions
+		$this->assertFalse(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can't edit child page's revisions through parent's permissions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertFalse(current_user_can('edit_post', $revision_id));
+		}
+	}
+
 	function test_delete() {
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
