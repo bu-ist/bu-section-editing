@@ -136,6 +136,50 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->assertFalse(current_user_can('edit_post', $post_id));
 	}
 
+	function test_revisions_post() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->posts['publish1']->ID;
+
+		// can edit post via group
+		$this->assertTrue(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can edit revisions of editable post
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertTrue(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
+	function test_revisions_page() {
+
+		$editor = get_user_by('login', 'section_editor1');
+		wp_set_current_user($editor->ID);
+
+		$post_id = $this->pages['top-level1']->ID;
+
+		// can't access page
+		$this->assertFalse(current_user_can('edit_post', $post_id));
+
+		$post = get_post( $post_id );
+		$post->post_content = 'new content';
+		wp_update_post( $post );
+
+		// can't edit uneditable page's revisions
+		$revisions = wp_get_post_revisions( $post_id );
+		foreach ( $revisions as $revision_id => $revision ) {
+			$this->assertFalse(current_user_can('edit_post', $revision_id));
+		}
+
+	}
+
 	function test_delete() {
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
