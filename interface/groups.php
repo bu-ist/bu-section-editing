@@ -22,13 +22,13 @@
 			</tr>
 		</tfoot>
 		<tbody>
-		<?php if($group_list->have_groups()): ?>
+		<?php if ( $group_list->have_groups() ) : ?>
 			<?php $count = 0; ?>
-			<?php while($group_list->have_groups()): $group = $group_list->the_group(); ?>
+			<?php while ( $group_list->have_groups() ) : $group = $group_list->the_group(); ?>
 			<?php
 			$li_class = $count % 2 ? '' : 'class="alternate"';
 			$edit_url = BU_Groups_Admin::manage_groups_url( 'edit', array( 'id' => $group->id ) );
-			$description = (strlen($group->description) > 60) ? substr($group->description, 0, 60) . ' [...]' : $group->description;
+			$description = (strlen( $group->description ) > 60) ? substr( $group->description, 0, 60 ) . ' [...]' : $group->description;
 			?>
 			<tr <?php echo $li_class; ?>>
 				<td><a href="<?php echo $edit_url ?>"><?php echo $group->name; ?></a></td>
