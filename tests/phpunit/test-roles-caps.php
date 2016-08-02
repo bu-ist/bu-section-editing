@@ -185,13 +185,15 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$editor = get_user_by( 'login', 'section_editor1' );
 		wp_set_current_user( $editor->ID );
 
-		$post_id = $this->pages['second-level1']->ID;
+		$post_id = $this->pages['section_editor-draft']->ID;
 
 		// can edit child page through parent's permissions
 		$this->assertTrue( current_user_can( 'edit_post', $post_id ) );
 
 		$post = get_post( $post_id );
 		$post->post_content = 'new content';
+		wp_update_post( $post );
+		$post->post_content = 'new content 2';
 		wp_update_post( $post );
 
 		// can edit child page's revisions through parent's permissions
