@@ -10,11 +10,11 @@ class BU_Groups_Admin_Ajax {
 
 	static public function register_hooks() {
 
-		add_action('wp_ajax_buse_site_users_script', array( __CLASS__, 'site_users_script' ) );
-		add_action('wp_ajax_buse_search_posts', array( __CLASS__, 'search_posts' ) );
-		add_action('wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
-		add_action('wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit'));
-		add_action('wp_ajax_buse_can_move', array( __CLASS__, 'can_move'));
+		add_action( 'wp_ajax_buse_site_users_script', array( __CLASS__, 'site_users_script' ) );
+		add_action( 'wp_ajax_buse_search_posts', array( __CLASS__, 'search_posts' ) );
+		add_action( 'wp_ajax_buse_render_post_list', array( __CLASS__, 'render_post_list' ) );
+		add_action( 'wp_ajax_buse_can_edit', array( __CLASS__, 'can_edit' ) );
+		add_action( 'wp_ajax_buse_can_move', array( __CLASS__, 'can_move' ) );
 
 	}
 
@@ -38,7 +38,7 @@ class BU_Groups_Admin_Ajax {
 			$return[] = array(
 				'autocomplete' => array(
 					'label' => sprintf( '%1$s%2$s', $user->display_name, $email ),
-					'value' => $user->user_login
+					'value' => $user->user_login,
 				),
 				'user' => array(
 					'id' => (int) $user->ID,
@@ -46,13 +46,13 @@ class BU_Groups_Admin_Ajax {
 					'nicename' => $user->user_nicename,
 					'display_name' => $user->display_name,
 					'email' => $user->user_email,
-					'is_section_editor' => (bool) BU_Section_Editing_Plugin::is_allowed_user( $user->ID )
-				)
+					'is_section_editor' => (bool) BU_Section_Editing_Plugin::is_allowed_user( $user->ID ),
+				),
 			);
 
 		}
 
-		header("Content-type: application/x-javascript");
+		header( 'Content-type: application/x-javascript' );
 		echo 'var buse_site_users = ' . json_encode( $return );
 		die();
 
@@ -67,21 +67,21 @@ class BU_Groups_Admin_Ajax {
 	 */
 	static public function render_post_list() {
 
-		if( defined('DOING_AJAX') && DOING_AJAX ) {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
-			$group_id = intval(trim($_REQUEST['group_id']));
-			$post_type = trim($_REQUEST['post_type']);
-			$query_vars = isset($_REQUEST['query']) ? $_REQUEST['query'] : array();
+			$group_id = intval( trim( $_REQUEST['group_id'] ) );
+			$post_type = trim( $_REQUEST['post_type'] );
+			$query_vars = isset( $_REQUEST['query'] ) ? $_REQUEST['query'] : array();
 			$post_type_obj = get_post_type_object( $post_type );
 
-			if( is_null( $post_type_obj ) ) {
-				error_log('Bad post type: ' . $post_type );
+			if ( is_null( $post_type_obj ) ) {
+				error_log( 'Bad post type: ' . $post_type );
 				die();
 			}
 
 			$perm_editor = null;
 
-			if( $post_type_obj->hierarchical ) {
+			if ( $post_type_obj->hierarchical ) {
 
 				$perm_editor = new BU_Hierarchical_Permissions_Editor( $group_id, $post_type_obj->name );
 				$perm_editor->format = 'json';
@@ -103,8 +103,8 @@ class BU_Groups_Admin_Ajax {
 			$response->post_count = $perm_editor->post_count;
 			$response->max_num_pages = $perm_editor->max_num_pages;
 
-			header("Content-type: application/json");
-			echo json_encode($response);
+			header( 'Content-type: application/json' );
+			echo json_encode( $response );
 			die();
 
 		}
@@ -118,16 +118,16 @@ class BU_Groups_Admin_Ajax {
 	 */
 	static public function search_posts() {
 
-		if( defined('DOING_AJAX') && DOING_AJAX ) {
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
-			$group_id = intval(trim($_REQUEST['group_id']));
-			$post_type = trim($_REQUEST['post_type']);
-			$search_term = trim($_REQUEST['search']) ? $_REQUEST['search'] : '';
+			$group_id = intval( trim( $_REQUEST['group_id'] ) );
+			$post_type = trim( $_REQUEST['post_type'] );
+			$search_term = trim( $_REQUEST['search'] ) ? $_REQUEST['search'] : '';
 
 			$post_type_obj = get_post_type_object( $post_type );
 
-			if( is_null( $post_type_obj ) ) {
-				error_log('Bad post type: ' . $post_type );
+			if ( is_null( $post_type_obj ) ) {
+				error_log( 'Bad post type: ' . $post_type );
 				die();
 			}
 
@@ -138,64 +138,63 @@ class BU_Groups_Admin_Ajax {
 	}
 
 	static public function can_move() {
-			$post_id = (int) trim($_POST['post_id']);
-			$parent_id = (int) trim($_POST['parent_id']);
+		$post_id = (int) trim( $_POST['post_id'] );
+		$parent_id = (int) trim( $_POST['parent_id'] );
 
-			if(!isset($post_id) || !isset($parent_id)) {
-				echo '-1';
-				die();
-			}
-
-			$post = get_post($post_id);
-			$post_type_obj = get_post_type_object($post->post_type);
-
-			if($parent_id == 0 && $post->post_parent == 0) {
-				$answer = current_user_can($post_type_obj->cap->edit_post, $post_id);
-			} else {
-				$answer = current_user_can($post_type_obj->cap->edit_post, $parent_id);
-			}
-
-			$response = new stdClass();
-
-			$response->post_id = $post_id;
-			$response->parent_id = $parent_id;
-			$response->can_edit = $answer;
-			$response->original_parent = $post->post_parent;
-			$response->status = $post->post_status;
-
-			header("Content-type: application/json");
-			echo json_encode( $response );
+		if ( ! isset( $post_id ) || ! isset( $parent_id ) ) {
+			echo '-1';
 			die();
+		}
+
+		$post = get_post( $post_id );
+		$post_type_obj = get_post_type_object( $post->post_type );
+
+		if ( $parent_id == 0 && $post->post_parent == 0 ) {
+			$answer = current_user_can( $post_type_obj->cap->edit_post, $post_id );
+		} else {
+			$answer = current_user_can( $post_type_obj->cap->edit_post, $parent_id );
+		}
+
+		$response = new stdClass();
+
+		$response->post_id = $post_id;
+		$response->parent_id = $parent_id;
+		$response->can_edit = $answer;
+		$response->original_parent = $post->post_parent;
+		$response->status = $post->post_status;
+
+		header( 'Content-type: application/json' );
+		echo json_encode( $response );
+		die();
 	}
 
 	static public function can_edit() {
 
-			$post_id = (int) trim($_POST['post_id']);
+		$post_id = (int) trim( $_POST['post_id'] );
 
-			if(!isset($post_id)) {
-				echo '-1';
-				die();
-			}
-
-			$post = get_post($post_id);
-			$post_type_obj = get_post_type_object($post->post_type);
-
-			if($post->post_status != 'publish') {
-				$answer = current_user_can($post_type_obj->cap->edit_post, $post->post_parent);
-			} else {
-				$answer = current_user_can($post_type_obj->cap->edit_post, $post_id);
-			}
-
-			$response = new stdClass();
-
-			$response->post_id = $post_id;
-			$response->parent_id = $post->post_parent;
-			$response->can_edit = $answer;
-			$response->status = $post->post_status;
-
-			header("Content-type: application/json");
-			echo json_encode( $response );
+		if ( ! isset( $post_id ) ) {
+			echo '-1';
 			die();
-	}
+		}
 
+		$post = get_post( $post_id );
+		$post_type_obj = get_post_type_object( $post->post_type );
+
+		if ( $post->post_status != 'publish' ) {
+			$answer = current_user_can( $post_type_obj->cap->edit_post, $post->post_parent );
+		} else {
+			$answer = current_user_can( $post_type_obj->cap->edit_post, $post_id );
+		}
+
+		$response = new stdClass();
+
+		$response->post_id = $post_id;
+		$response->parent_id = $post->post_parent;
+		$response->can_edit = $answer;
+		$response->status = $post->post_status;
+
+		header( 'Content-type: application/json' );
+		echo json_encode( $response );
+		die();
+	}
 }

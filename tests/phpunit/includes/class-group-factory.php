@@ -6,8 +6,8 @@ class WP_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
 	function __construct( $factory = null ) {
 		parent::__construct( $factory );
 		$this->default_generation_definitions = array(
-			'name' => new WP_UnitTest_Generator_Sequence( "Test Group %s" ),
-			'description' => new WP_UnitTest_Generator_Sequence( "Group description %s" ),
+			'name' => new WP_UnitTest_Generator_Sequence( 'Test Group %s' ),
+			'description' => new WP_UnitTest_Generator_Sequence( 'Group description %s' ),
 		);
 	}
 
@@ -23,5 +23,3 @@ class WP_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
 		return BU_Edit_Groups::get_instance()->get( $group_id );
 	}
 }
-
-?>

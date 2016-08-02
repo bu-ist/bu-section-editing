@@ -31,7 +31,7 @@ class BU_Edit_Groups {
 	 */
 	static public function get_instance() {
 
-		if(!isset(BU_Edit_Groups::$instance)) {
+		if ( ! isset( BU_Edit_Groups::$instance ) ) {
 			BU_Edit_Groups::$instance = new BU_Edit_Groups();
 		}
 
@@ -78,7 +78,6 @@ class BU_Edit_Groups {
 	}
 
 	// ___________________PUBLIC_INTERFACE_____________________
-
 	/**
 	 * Returns a group by ID from internal groups array
 	 *
@@ -87,9 +86,10 @@ class BU_Edit_Groups {
 	 */
 	public function get( $id ) {
 
-		foreach( $this->groups as $group ) {
-			if( $group->id == $id )
+		foreach ( $this->groups as $group ) {
+			if ( $group->id == $id ) {
 				return $group;
+			}
 		}
 
 		return false;
@@ -102,8 +102,9 @@ class BU_Edit_Groups {
 	 */
 	public function add( $group ) {
 
-		if( ! $group instanceof BU_Edit_Group )
+		if ( ! $group instanceof BU_Edit_Group ) {
 			return false;
+		}
 
 		$this->groups[] = $group;
 
@@ -117,10 +118,10 @@ class BU_Edit_Groups {
 	 */
 	public function delete( $id ) {
 
-		foreach( $this->groups as $i => $g ) {
-			if( $g->id == $id ) {
-				unset($this->groups[$i] );
-				$this->groups = array_values($this->groups);	// reindex
+		foreach ( $this->groups as $i => $g ) {
+			if ( $g->id == $id ) {
+				unset( $this->groups[ $i ] );
+				$this->groups = array_values( $this->groups );	// reindex
 				return $g;
 			}
 		}
@@ -161,7 +162,7 @@ class BU_Edit_Groups {
 	 * @param array $data an array of parameters for group initialization
 	 * @return BU_Edit_Group the group that was just added
 	 */
-	public function add_group($data) {
+	public function add_group( $data ) {
 
 		// Sanitize input
 		$this->_clean_group_data( $data );
@@ -169,12 +170,14 @@ class BU_Edit_Groups {
 		// Create new group from args
 		$group = $this->insert( $data );
 
-		if( ! $group instanceof BU_Edit_Group )
+		if ( ! $group instanceof BU_Edit_Group ) {
 			return false;
+		}
 
 		// Set permissions
-		if( isset( $data['perms'] ) )
+		if ( isset( $data['perms'] ) ) {
 			BU_Group_Permissions::update_group_permissions( $group->id, $data['perms'] );
+		}
 
 		// Notify
 		add_action( 'bu_add_section_editing_group', $group );
@@ -186,27 +189,30 @@ class BU_Edit_Groups {
 	/**
 	 * Update an existing section editing group
 	 *
-	 * @param int $id the id of the group to update
+	 * @param int   $id the id of the group to update
 	 * @param array $data an array of parameters with group fields to update
 	 * @return BU_Edit_Group|bool the group that was just updated or false if none existed
 	 */
-	public function update_group($id, $data = array()) {
+	public function update_group( $id, $data = array() ) {
 
-		if( $this->get($id) === false )
+		if ( $this->get( $id ) === false ) {
 			return false;
+		}
 
 		// Sanitize.
 		$this->_clean_group_data( $data );
 
 		// Update group.
-		$group = $this->update( $id, $data);
+		$group = $this->update( $id, $data );
 
-		if( ! $group instanceof BU_Edit_Group )
+		if ( ! $group instanceof BU_Edit_Group ) {
 			return false;
+		}
 
 		// Update permissions.
-		if( isset( $data['perms'] ) )
+		if ( isset( $data['perms'] ) ) {
 			BU_Group_Permissions::update_group_permissions( $group->id, $data['perms'] );
+		}
 
 		return $group;
 
@@ -218,24 +224,25 @@ class BU_Edit_Groups {
 	 * @param int $id the id of the group to delete
 	 * @return bool true on success, false on failure
 	 */
-	public function delete_group($id) {
+	public function delete_group( $id ) {
 
 		// Remove group.
 		$group = $this->delete( $id );
 
-		if( ! $group ) {
-			error_log('Error deleting group: ' . $id );
+		if ( ! $group ) {
+			error_log( 'Error deleting group: ' . $id );
 			return false;
 		}
 
 		// Delete from db
 		$result = wp_delete_post( $id, true );
 
-		if( $result === false )
+		if ( $result === false ) {
 			return false;
+		}
 
 		// Remove group permissions.
-		BU_Group_Permissions::delete_group_permissions($id);
+		BU_Group_Permissions::delete_group_permissions( $id );
 
 		return true;
 
@@ -247,19 +254,19 @@ class BU_Edit_Groups {
 	 * @param int $user_id WordPress user id
 	 * @return array array of group ids for which the specified user belongs
 	 */
-	public function find_groups_for_user($user_id, $output = 'objects' ) {
+	public function find_groups_for_user( $user_id, $output = 'objects' ) {
 
 		$groups = array();
 
-		foreach ($this->groups as $group) {
-			if($group->has_user($user_id)) {
+		foreach ( $this->groups as $group ) {
+			if ( $group->has_user( $user_id ) ) {
 
-				if( $output === 'objects' )
-					$groups[$group->id] = $group;
-				else if( $output === 'ids' )
+				if ( $output === 'objects' ) {
+					$groups[ $group->id ] = $group;
+				} else if ( $output === 'ids' ) {
 					array_push( $groups, $group->id );
+				}
 			}
-
 		}
 
 		return $groups;
@@ -271,22 +278,22 @@ class BU_Edit_Groups {
 	 * @todo remove this if it unused
 	 *
 	 * @param array $groups an array of BU_Edit_Group objects to check
-	 * @param int $user_id WordPress user id to check
+	 * @param int   $user_id WordPress user id to check
 	 */
-	public function has_user($groups, $user_id) {
+	public function has_user( $groups, $user_id ) {
 
-			if( ! is_array( $groups ) )
-				$groups = array( $groups );
+		if ( ! is_array( $groups ) ) {
+			$groups = array( $groups );
+		}
 
-			foreach($groups as $group_id) {
+		foreach ( $groups as $group_id ) {
 
-				$group = $this->get($group_id);
+			$group = $this->get( $group_id );
 
-				if( $group && $group->has_user($user_id)) {
-					return true;
-				}
-
+			if ( $group && $group->has_user( $user_id ) ) {
+				return true;
 			}
+		}
 
 			return false;
 	}
@@ -309,7 +316,7 @@ class BU_Edit_Groups {
 			'group' => null,
 			'post_type' => null,
 			'include_unpublished' => false,
-			'include_links' => true
+			'include_links' => true,
 			);
 
 		extract( wp_parse_args( $args, $defaults ) );
@@ -317,10 +324,10 @@ class BU_Edit_Groups {
 		$group_ids = array();
 
 		// If user_id is passed, populate group ID's from their memberships
-		if( $user_id ) {
+		if ( $user_id ) {
 
-			if( is_null( get_userdata( $user_id ) ) ) {
-				error_log('No user found for ID: ' . $user_id );
+			if ( is_null( get_userdata( $user_id ) ) ) {
+				error_log( 'No user found for ID: ' . $user_id );
 				return false;
 			}
 
@@ -330,18 +337,19 @@ class BU_Edit_Groups {
 		}
 
 		// If no user ID is passed, but a group is, convert to array
-		if( is_null( $user_id ) && $group ) {
+		if ( is_null( $user_id ) && $group ) {
 
-			if( is_array( $group ) )
+			if ( is_array( $group ) ) {
 				$group_ids = $group;
+			}
 
-			if( is_numeric( $group ) && $group > 0 )
-				$group_ids = array($group);
-
+			if ( is_numeric( $group ) && $group > 0 ) {
+				$group_ids = array( $group );
+			}
 		}
 
 		// Bail if we don't have any valid groups by now
-		if( empty( $group_ids ) ) {
+		if ( empty( $group_ids ) ) {
 			return false;
 		}
 
@@ -349,39 +357,36 @@ class BU_Edit_Groups {
 		$post_type_clause = $post_status_clause = '';
 
 		// Maybe filter by post type and status
-		if( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
+		if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
 			$post_type_clause = "AND post_type = '$post_type' ";
 
-			if( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
+			if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
 				if ( $bu_navigation_plugin->supports( 'links' ) ) {
 					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
 					$post_type_clause = sprintf( "AND post_type IN ('page','%s') ", $link_post_type );
 				}
 			}
-
 		}
 
 		// Include unpublished should only work for hierarchical post types
-		if( $include_unpublished ) {
+		if ( $include_unpublished ) {
 
 			// Flat post types are not allowed to include unpublished, as perms can be set for drafts
-			if( $post_type ) {
+			if ( $post_type ) {
 
 				$pto = get_post_type_object( $post_type );
 
-				if( $pto->hierarchical ) {
+				if ( $pto->hierarchical ) {
 
 					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
 
 				}
-
 			} else {
 
 				$post_status_clause = "OR post_status IN ('draft','pending')";
 
 			}
-
 		}
 
 		$count_query = sprintf( "SELECT ID FROM %s WHERE ( ID IN ( SELECT post_ID from %s WHERE meta_key = '%s' AND meta_value IN (%s) ) %s) %s",
@@ -391,7 +396,7 @@ class BU_Edit_Groups {
 			implode( ',', $group_ids ),
 			$post_type_clause,
 			$post_status_clause
-			);
+		);
 
 		// Execute query
 		$ids = $wpdb->get_col( $count_query );
@@ -402,28 +407,26 @@ class BU_Edit_Groups {
 	}
 
 	// ____________________PERSISTENCE________________________
-
 	/**
 	 * Load all groups
 	 */
 	public function load() {
 
 		$args = array(
-			'post_type'=>self::POST_TYPE_NAME,
-			'numberposts'=>-1,
-			'order' => 'ASC'
+			'post_type' => self::POST_TYPE_NAME,
+			'numberposts' => -1,
+			'order' => 'ASC',
 			);
 
-		$group_posts = get_posts($args);
+		$group_posts = get_posts( $args );
 
-		if(is_array($group_posts)) {
+		if ( is_array( $group_posts ) ) {
 
-			foreach( $group_posts as $group_post ) {
+			foreach ( $group_posts as $group_post ) {
 
 				$this->groups[] = $this->_post_to_group( $group_post );
 
 			}
-
 		}
 
 	}
@@ -438,7 +441,7 @@ class BU_Edit_Groups {
 
 		$result = true;
 
-		foreach( $this->groups as $group ) {
+		foreach ( $this->groups as $group ) {
 
 			$postdata = $this->_group_to_post( $group );
 
@@ -446,11 +449,12 @@ class BU_Edit_Groups {
 			$result = wp_insert_post( $postdata );
 
 			// Set group ID with post ID if needed
-			if( $group->id < 0 )
+			if ( $group->id < 0 ) {
 				$group->id = $result;
+			}
 
-			if( is_wp_error( $result ) ) {
-				error_log(sprintf('Error updating group %s: %s', $group->id, $result->get_error_message()));
+			if ( is_wp_error( $result ) ) {
+				error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 				$result = false;
 			}
 
@@ -473,7 +477,7 @@ class BU_Edit_Groups {
 	protected function insert( $data ) {
 
 		// Create new group
-		$group = new BU_Edit_Group($data);
+		$group = new BU_Edit_Group( $data );
 
 		// Map group data to post for insertion
 		$postdata = $this->_group_to_post( $group );
@@ -481,8 +485,8 @@ class BU_Edit_Groups {
 		// Insert into DB
 		$result = wp_insert_post( $postdata );
 
-		if( is_wp_error( $result ) ) {
-			error_log(sprintf('Error adding group: %s', $result->get_error_message()));
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( 'Error adding group: %s', $result->get_error_message() ) );
 			return false;
 		}
 
@@ -497,14 +501,14 @@ class BU_Edit_Groups {
 
 		return $group;
 
-	 }
+	}
 
 	/**
 	 * Update an existing group
 	 *
 	 * @todo test coverage
 	 *
-	 * @param int $id ID of group to update
+	 * @param int   $id ID of group to update
 	 * @param array $data a parameter list of group data for update
 	 * @return bool|BU_Edit_Group False on failure.  A BU_Edit_Group instance for the updated group on success.
 	 */
@@ -513,8 +517,9 @@ class BU_Edit_Groups {
 	 	// Fetch existing group
 		$group = $this->get( $id );
 
-		if( ! $group instanceof BU_Edit_Group )
+		if ( ! $group instanceof BU_Edit_Group ) {
 			return false;
+		}
 
 		// Update group data
 		$group->update( $data );
@@ -525,116 +530,117 @@ class BU_Edit_Groups {
 		// Update DB
 		$result = wp_update_post( $postdata );
 
-		if( is_wp_error( $result ) ) {
-			error_log(sprintf('Error updating group %s: %s', $group->id, $result->get_error_message()));
+		if ( is_wp_error( $result ) ) {
+			error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 			return false;
 		}
 
 		// Update modified time stamp
-		$group->modified = get_post_modified_time('U',false,$result);
+		$group->modified = get_post_modified_time( 'U',false,$result );
 
 		// Update group member meta
 		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
 
 		// Update internal groups store
-		foreach( $this->groups as $i => $g ) {
+		foreach ( $this->groups as $i => $g ) {
 
-			if( $g->id == $group->id )
-				$this->groups[$i] = $group;
-
+			if ( $g->id == $group->id ) {
+				$this->groups[ $i ] = $group;
+			}
 		}
 
 		return $group;
 
-	}
+		}
 
-	/**
-	 * Sanitizes array of group data prior to group creation or updating
-	 */
-	protected function _clean_group_data( &$args ) {
+		/**
+		 * Sanitizes array of group data prior to group creation or updating
+		 */
+		protected function _clean_group_data( &$args ) {
 
-		// Process input
-		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-		$args['description'] = isset($args['description']) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
-		$args['users'] = isset($args['users']) ? array_map( 'absint', $args['users'] ) : array();
+			// Process input
+			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
+			$args['description'] = isset( $args['description'] ) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
+			$args['users'] = isset( $args['users'] ) ? array_map( 'absint', $args['users'] ) : array();
 
-		if( isset($args['perms']) && is_array($args['perms'])) {
+			if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
 
-			foreach( $args['perms'] as $post_type => $ids_by_status ) {
+				foreach ( $args['perms'] as $post_type => $ids_by_status ) {
 
-				if( ! is_array( $ids_by_status ) ) {
+					if ( ! is_array( $ids_by_status ) ) {
 
-					error_log("Unepected value for permissions data: $ids_by_status" );
-					unset( $args['perms'][$post_type]);
-					continue;
-				}
-
-				if( !isset( $ids_by_status['allowed'] ) ) $args['perms'][$post_type]['allowed'] = array();
-				if( !isset( $ids_by_status['denied'] ) ) $args['perms'][$post_type]['denied'] = array();
-
-				foreach( $ids_by_status as $status => $post_ids ) {
-
-					if( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log("Unexpected status: $status" );
-						unset( $args['perms'][$post_type][$status] );
+						error_log( "Unepected value for permissions data: $ids_by_status" );
+						unset( $args['perms'][ $post_type ] );
+						continue;
 					}
 
-				}
+					if ( ! isset( $ids_by_status['allowed'] ) ) {
+						$args['perms'][ $post_type ]['allowed'] = array();
+					}
+					if ( ! isset( $ids_by_status['denied'] ) ) {
+						$args['perms'][ $post_type ]['denied'] = array();
+					}
 
+					foreach ( $ids_by_status as $status => $post_ids ) {
+
+						if ( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+							error_log( "Unexpected status: $status" );
+							unset( $args['perms'][ $post_type ][ $status ] );
+						}
+					}
+				}
 			}
 
 		}
 
-	}
+		/**
+		 * Maps a group object to post object
+		 *
+		 * @param BU_Edit_Group $group Group object for translation
+		 * @return StdClass $post Resulting post object
+		 */
+		protected function _group_to_post( $group ) {
 
-	/**
-	 * Maps a group object to post object
-	 *
-	 * @param BU_Edit_Group $group Group object for translation
-	 * @return StdClass $post Resulting post object
-	 */
-	protected function _group_to_post( $group ) {
+			$post = new stdClass();
 
-		$post = new stdClass();
+			if ( $group->id > 0 ) {
+				$post->ID = $group->id;
+			}
 
-		if( $group->id > 0 )
-			$post->ID = $group->id;
+			$post->post_type = self::POST_TYPE_NAME;
+			$post->post_title = $group->name;
+			$post->post_content = $group->description;
+			$post->post_status = 'publish';
 
-		$post->post_type = self::POST_TYPE_NAME;
-		$post->post_title = $group->name;
-		$post->post_content = $group->description;
-		$post->post_status = 'publish';
+			return $post;
 
-		return $post;
+		}
 
-	}
+		/**
+		 * Maps a WP post object to group object
+		 *
+		 * @param StdClass $post Post object for translation
+		 * @return BU_Edit_Group $group Resulting group object
+		 */
+		protected function _post_to_group( $post ) {
 
-	/**
-	 * Maps a WP post object to group object
-	 *
-	 * @param StdClass $post Post object for translation
-	 * @return BU_Edit_Group $group Resulting group object
-	 */
-	protected function _post_to_group( $post ) {
+			// Map post -> group fields
+			$data['id'] = $post->ID;
+			$data['name'] = $post->post_title;
+			$data['description'] = $post->post_content;
+			$data['created'] = strtotime( $post->post_date );
+			$data['modified'] = strtotime( $post->post_modified );
 
-		// Map post -> group fields
-		$data['id'] = $post->ID;
-		$data['name'] = $post->post_title;
-		$data['description'] = $post->post_content;
-		$data['created'] = strtotime($post->post_date);
-		$data['modified'] = strtotime($post->post_modified);
+			// Users are stored in post meta
+			$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
+			$data['users'] = $users ? $users : array();
 
-		// Users are stored in post meta
-		$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
-		$data['users'] = $users ? $users : array();
+			// Create a new group
+			$group = new BU_Edit_Group( $data );
 
-		// Create a new group
-		$group = new BU_Edit_Group( $data );
+			return $group;
 
-		return $group;
-
-	}
-
+		}
 }
 
 /**
@@ -653,7 +659,7 @@ class BU_Groups_List {
 	}
 
 	function have_groups() {
-		if(count($this->edit_groups->groups) > 0 && $this->current_group < (count($this->edit_groups->groups) - 1)) {
+		if ( count( $this->edit_groups->groups ) > 0 && $this->current_group < (count( $this->edit_groups->groups ) - 1) ) {
 			return true;
 		} else {
 			return false;
@@ -662,13 +668,12 @@ class BU_Groups_List {
 
 	function the_group() {
 		$this->current_group++;
-		return $this->edit_groups->groups[$this->current_group];
+		return $this->edit_groups->groups[ $this->current_group ];
 	}
 
 	function rewind() {
 		$this->current_group = -1;
 	}
-
 }
 
 /**
@@ -697,9 +702,9 @@ class BU_Edit_Group {
 		$args = wp_parse_args( $args, $defaults );
 
 		// Update fields based on incoming parameter list
-		$fields = array_keys($this->get_attributes());
-		foreach( $fields as $key ) {
-			$this->$key = $args[$key];
+		$fields = array_keys( $this->get_attributes() );
+		foreach ( $fields as $key ) {
+			$this->$key = $args[ $key ];
 		}
 
 	}
@@ -717,7 +722,7 @@ class BU_Edit_Group {
 			'description' => '',
 			'users' => array(),
 			'created' => time(),
-			'modified' => time()
+			'modified' => time(),
 			);
 
 		return $fields;
@@ -730,8 +735,8 @@ class BU_Edit_Group {
 	 *
 	 * @return bool true if user exists, false otherwise
 	 */
-	public function has_user($user_id) {
-		return in_array($user_id, $this->users);
+	public function has_user( $user_id ) {
+		return in_array( $user_id, $this->users );
 	}
 
 	/**
@@ -741,11 +746,11 @@ class BU_Edit_Group {
 	 *
 	 * @param int $user_id WordPress user ID to add for this group
 	 */
-	public function add_user($user_id) {
+	public function add_user( $user_id ) {
 
 		// need to make sure the user is a member of the site
-		if(!$this->has_user($user_id)) {
-			array_push($this->users, $user_id);
+		if ( ! $this->has_user( $user_id ) ) {
+			array_push( $this->users, $user_id );
 		}
 
 	}
@@ -757,10 +762,10 @@ class BU_Edit_Group {
 	 *
 	 * @param int $user_id WordPress user ID to remove from this group
 	 */
-	public function remove_user($user_id) {
+	public function remove_user( $user_id ) {
 
-		if($this->has_user($user_id)) {
-			unset($this->users[array_search($user_id, $this->users)]);
+		if ( $this->has_user( $user_id ) ) {
+			unset( $this->users[ array_search( $user_id, $this->users ) ] );
 		}
 
 	}
@@ -770,12 +775,12 @@ class BU_Edit_Group {
 	 *
 	 * @param array $args an array of key => value parameters to update
 	 */
-	public function update($args = array()) {
+	public function update( $args = array() ) {
 
 		$valid_fields = array_keys( $this->get_attributes() );
 
-		foreach( $args as $key => $val ) {
-			if( in_array($key, $valid_fields)) {
+		foreach ( $args as $key => $val ) {
+			if ( in_array( $key, $valid_fields ) ) {
 				$this->$key = $val;
 			}
 		}
@@ -795,8 +800,9 @@ class BU_Edit_Group {
 
 	public function __get( $key ) {
 
-		if( isset( $this->$key ) )
+		if ( isset( $this->$key ) ) {
 			return $this->$key;
+		}
 
 		return null;
 	}
@@ -806,5 +812,4 @@ class BU_Edit_Group {
 		$this->$key = $val;
 
 	}
-
 }
