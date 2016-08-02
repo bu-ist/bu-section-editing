@@ -14,7 +14,7 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 		$groupdata = array(
 			'name' => 'Test group',
 			'description' => 'Test group description',
-			'users' => array(1,2),
+			'users' => array( 1,2 ),
 			);
 
 		$group = new BU_Edit_Group( $groupdata );
@@ -32,7 +32,7 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 
 		$groupdata = array(
 			'name' => 'Test group',
-			'users' => array(1,2),
+			'users' => array( 1,2 ),
 			);
 
 		$group = new BU_Edit_Group( $groupdata );
@@ -49,7 +49,7 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 
 		$groupdata = array(
 			'name' => 'Test group',
-			'users' => array(1,2),
+			'users' => array( 1,2 ),
 			);
 
 		$group = new BU_Edit_Group( $groupdata );
@@ -70,7 +70,7 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 		$groupdata = array(
 			'name' => 'Test group',
 			'description' => 'Test description',
-			'users' => array(1,2),
+			'users' => array( 1,2 ),
 			);
 
 		$group = new BU_Edit_Group( $groupdata );
@@ -82,7 +82,7 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 		$updates = array(
 			'name' => 'Test group renamed',
 			'description' => 'Test description change',
-			'users' => array(3,4)
+			'users' => array( 3,4 ),
 			);
 
 		$group->update( $updates );
@@ -92,7 +92,4 @@ class Test_BU_Edit_Group extends WP_UnitTestCase {
 		$this->assertEquals( $updates['users'], $group->users );
 
 	}
-
 }
-
-?>

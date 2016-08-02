@@ -22,9 +22,9 @@
 	<div class="buse-widget-body">
 		<ul id="group-member-list">
 			<?php $users = BU_Section_Editing_Plugin::get_allowed_users(); ?>
-			<?php foreach( $users as $user ): ?>
+			<?php foreach ( $users as $user ) :  ?>
 			<?php $checked = $group->has_user( $user->ID ) ? 'checked="checked"' : ''; ?>
-			<li class="member<?php if( $group->has_user( $user->ID ) ): ?> active<?php endif; ?>" >
+			<li class="member<?php if ( $group->has_user( $user->ID ) ) :  ?> active<?php endif; ?>" >
 				<a id="remove_member_<?php echo $user->ID; ?>" class="remove_member" href="#"><?php _e( 'Remove', BUSE_TEXTDOMAIN ); ?></a>
 				<input id="member_<?php echo $user->ID; ?>" type="checkbox" name="group[users][]" value="<?php echo $user->ID; ?>" <?php echo $checked; ?> />
 				<label for="member_<?php echo $user->ID; ?>"><?php echo $user->display_name; ?></label>
