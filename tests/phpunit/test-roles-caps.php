@@ -22,7 +22,12 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
 		$pages = array(
 			'top-level1' => array(
-				'status' => 'publish'
+				'status' => 'publish',
+				'children' => array(
+					'second-level0' => array(
+						'status' => 'publish',
+					),
+				),
 			),
 			'top-level2' => array(
 				'groups' => array('alpha'),
@@ -100,11 +105,24 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$editor = get_user_by('login', 'section_editor1');
 		wp_set_current_user($editor->ID);
 
+		// pages
 		$post_id = $this->pages['section_editor-draft']->ID;
 		$this->assertTrue(current_user_can('edit_page', $post_id));
+
 		$post_id = $this->pages['top-level1']->ID;
 		$this->assertFalse(current_user_can('edit_page', $post_id));
 
+		// page children
+		$post_id = $this->pages['second-level0']->ID;
+		$this->assertFalse(current_user_can('edit_page', $post_id));
+
+		$post_id = $this->pages['third-level1']->ID;
+		$this->assertTrue(current_user_can('edit_page', $post_id));
+
+		$post_id = $this->pages['third-level2']->ID;
+		$this->assertTrue(current_user_can('edit_page', $post_id));
+
+		// posts
 		$post_id = $this->posts['draft1']->ID;
 		$this->assertTrue(current_user_can('edit_post', $post_id));
 
