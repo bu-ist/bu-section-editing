@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the BU Section Editing package.
 msgid ""
 msgstr ""
-"Project-Id-Version: BU Section Editing 0.9.7\n"
+"Project-Id-Version: BU Section Editing 0.9.8\n"
 "Report-Msgid-Bugs-To: http://wordpress.org/support/plugin/bu-section-"
 "editing\n"
 "POT-Creation-Date: 2015-04-22 07:41:45+00:00\n"
