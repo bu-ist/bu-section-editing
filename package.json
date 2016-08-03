@@ -1,6 +1,6 @@
 {
   "name": "bu-section-editing",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "Enhances WordPress content editing workflow by providing section editing groups and permissions",
   "main": "bu-section-editing.php",
   "directories": {

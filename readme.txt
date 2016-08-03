@@ -62,6 +62,11 @@ For more information on creating roles for use with section editing groups, see 
 5. Fully integrated with navigation management views presented by the BU Navigation plugin
 
 == Changelog ==
+= 0.9.8 =
+* Show revisions to section editors
+* Add unit tests
+* Conform to WP Coding Standards
+
 = 0.9.7 =
 * Fix broken admin-side JS in WP 4.5
 
