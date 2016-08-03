@@ -1,19 +1,11 @@
 # BU Section Editing #
-
-**Contributors:** mgburns, gcorne, awbauer, inderpreet99
-
-**Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
-
-**Requires at least:** 3.1
-
-**Tested up to:** 4.5.1
-
-**Stable tag:** 0.9.7
-
-**License:** GPLv2 or later
-
-**License URI:** http://www.gnu.org/licenses/gpl-2.0.html
-
+**Contributors:** mgburns, gcorne, awbauer, inderpreet99  
+**Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu  
+**Requires at least:** 3.1  
+**Tested up to:** 4.5.1  
+**Stable tag:** 0.9.7  
+**License:** GPLv2 or later  
+**License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
 Advanced content editing workflow in WordPress through the use of section editing groups and permissions.
 
@@ -63,23 +55,29 @@ For more information on creating roles for use with section editing groups, see 
 
 ## Screenshots ##
 
-### 1. Manage content editing permissions using “section groups” ###
-![1. Manage content editing permissions using “section groups”](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-1.png)
+###1. Manage content editing permissions using “section groups”###
+![Manage content editing permissions using “section groups”](https://ps.w.org/bu-section-editing/assets/screenshot-1.png)
 
-### 2. Each section group can contain multiple members or “section editors” ###
-![2. Each section group can contain multiple members or “section editors”](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-2.png)
+###2. Each section group can contain multiple members or “section editors”###
+![Each section group can contain multiple members or “section editors”](https://ps.w.org/bu-section-editing/assets/screenshot-2.png)
 
-### 3. Manage editing & publishing permissions for all of your post types ###
-![3. Manage editing & publishing permissions for all of your post types](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-3.png)
+###3. Manage editing & publishing permissions for all of your post types###
+![Manage editing & publishing permissions for all of your post types](https://ps.w.org/bu-section-editing/assets/screenshot-3.png)
 
-### 4. Section editors are only allowed to edit published content if their group memberships permit it ###
-![4. Section editors are only allowed to edit published content if their group memberships permit it](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-4.png)
+###4. Section editors are only allowed to edit published content if their group memberships permit it###
+![Section editors are only allowed to edit published content if their group memberships permit it](https://ps.w.org/bu-section-editing/assets/screenshot-4.png)
 
-### 5. Fully integrated with navigation management views presented by the BU Navigation plugin ###
-![5. Fully integrated with navigation management views presented by the BU Navigation plugin](http://s.wordpress.org/extend/plugins/bu-section-editing/assets/screenshot-5.png)
+###5. Fully integrated with navigation management views presented by the BU Navigation plugin###
+![Fully integrated with navigation management views presented by the BU Navigation plugin](https://ps.w.org/bu-section-editing/assets/screenshot-5.png)
+
 
 ## Changelog ##
-### 0.9.7 ### 
+### 0.9.8 ###
+* Show revisions to section editors
+* Add unit tests
+* Conform to WP Coding Standards
+
+### 0.9.7 ###
 * Fix broken admin-side JS in WP 4.5
 
 ### 0.9.6 ###
