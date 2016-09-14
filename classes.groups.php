@@ -295,7 +295,7 @@ class BU_Edit_Groups {
 			}
 		}
 
-			return false;
+		return false;
 	}
 
 	/**
@@ -551,96 +551,96 @@ class BU_Edit_Groups {
 
 		return $group;
 
-		}
+	}
 
-		/**
-		 * Sanitizes array of group data prior to group creation or updating
-		 */
-		protected function _clean_group_data( &$args ) {
+	/**
+	 * Sanitizes array of group data prior to group creation or updating
+	 */
+	protected function _clean_group_data( &$args ) {
 
-			// Process input
-			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
-			$args['description'] = isset( $args['description'] ) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
-			$args['users'] = isset( $args['users'] ) ? array_map( 'absint', $args['users'] ) : array();
+		// Process input
+		$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
+		$args['description'] = isset( $args['description'] ) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
+		$args['users'] = isset( $args['users'] ) ? array_map( 'absint', $args['users'] ) : array();
 
-			if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
+		if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
 
-				foreach ( $args['perms'] as $post_type => $ids_by_status ) {
+			foreach ( $args['perms'] as $post_type => $ids_by_status ) {
 
-					if ( ! is_array( $ids_by_status ) ) {
+				if ( ! is_array( $ids_by_status ) ) {
 
-						error_log( "Unepected value for permissions data: $ids_by_status" );
-						unset( $args['perms'][ $post_type ] );
-						continue;
-					}
+					error_log( "Unepected value for permissions data: $ids_by_status" );
+					unset( $args['perms'][ $post_type ] );
+					continue;
+				}
 
-					if ( ! isset( $ids_by_status['allowed'] ) ) {
-						$args['perms'][ $post_type ]['allowed'] = array();
-					}
-					if ( ! isset( $ids_by_status['denied'] ) ) {
-						$args['perms'][ $post_type ]['denied'] = array();
-					}
+				if ( ! isset( $ids_by_status['allowed'] ) ) {
+					$args['perms'][ $post_type ]['allowed'] = array();
+				}
+				if ( ! isset( $ids_by_status['denied'] ) ) {
+					$args['perms'][ $post_type ]['denied'] = array();
+				}
 
-					foreach ( $ids_by_status as $status => $post_ids ) {
+				foreach ( $ids_by_status as $status => $post_ids ) {
 
-						if ( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-							error_log( "Unexpected status: $status" );
-							unset( $args['perms'][ $post_type ][ $status ] );
-						}
+					if ( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
+						error_log( "Unexpected status: $status" );
+						unset( $args['perms'][ $post_type ][ $status ] );
 					}
 				}
 			}
-
 		}
 
-		/**
-		 * Maps a group object to post object
-		 *
-		 * @param BU_Edit_Group $group Group object for translation
-		 * @return StdClass $post Resulting post object
-		 */
-		protected function _group_to_post( $group ) {
+	}
 
-			$post = new stdClass();
+	/**
+	 * Maps a group object to post object
+	 *
+	 * @param BU_Edit_Group $group Group object for translation
+	 * @return StdClass $post Resulting post object
+	 */
+	protected function _group_to_post( $group ) {
 
-			if ( $group->id > 0 ) {
-				$post->ID = $group->id;
-			}
+		$post = new stdClass();
 
-			$post->post_type = self::POST_TYPE_NAME;
-			$post->post_title = $group->name;
-			$post->post_content = $group->description;
-			$post->post_status = 'publish';
-
-			return $post;
-
+		if ( $group->id > 0 ) {
+			$post->ID = $group->id;
 		}
 
-		/**
-		 * Maps a WP post object to group object
-		 *
-		 * @param StdClass $post Post object for translation
-		 * @return BU_Edit_Group $group Resulting group object
-		 */
-		protected function _post_to_group( $post ) {
+		$post->post_type = self::POST_TYPE_NAME;
+		$post->post_title = $group->name;
+		$post->post_content = $group->description;
+		$post->post_status = 'publish';
 
-			// Map post -> group fields
-			$data['id'] = $post->ID;
-			$data['name'] = $post->post_title;
-			$data['description'] = $post->post_content;
-			$data['created'] = strtotime( $post->post_date );
-			$data['modified'] = strtotime( $post->post_modified );
+		return $post;
 
-			// Users are stored in post meta
-			$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
-			$data['users'] = $users ? $users : array();
+	}
 
-			// Create a new group
-			$group = new BU_Edit_Group( $data );
+	/**
+	 * Maps a WP post object to group object
+	 *
+	 * @param StdClass $post Post object for translation
+	 * @return BU_Edit_Group $group Resulting group object
+	 */
+	protected function _post_to_group( $post ) {
 
-			return $group;
+		// Map post -> group fields
+		$data['id'] = $post->ID;
+		$data['name'] = $post->post_title;
+		$data['description'] = $post->post_content;
+		$data['created'] = strtotime( $post->post_date );
+		$data['modified'] = strtotime( $post->post_modified );
 
-		}
+		// Users are stored in post meta
+		$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
+		$data['users'] = $users ? $users : array();
+
+		// Create a new group
+		$group = new BU_Edit_Group( $data );
+
+		return $group;
+
+	}
 }
 
 /**
