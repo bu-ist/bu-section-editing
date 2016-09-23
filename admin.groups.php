@@ -227,7 +227,7 @@ class BU_Groups_Admin {
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
 				'label' => __( 'Editable', BUSE_TEXTDOMAIN ),
-				'label_count' => true,
+				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>' ),
 				'public' => true,
 				'show_in_admin_all' => true,
 				'publicly_queryable' => true,
