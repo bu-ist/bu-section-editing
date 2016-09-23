@@ -272,7 +272,7 @@ class BU_Groups_Admin {
 
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . "<span class=\"count\">($count)</span></a>";
+		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . " <span class=\"count\">($count)</span></a>";
 
 		return $views;
 
