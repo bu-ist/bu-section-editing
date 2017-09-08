@@ -604,6 +604,29 @@ jQuery(document).ready(function($){
 
 		var pt = $editor.data('post-type');
 
+		var global_edit = $editor.data('original-global-edit');
+		var $panel = jQuery('#perm-panel-' + pt).children().filter(':not(.perm-global-edit)');
+		var $stats = jQuery('#' + pt + '-stats');
+
+		$editor.data('global-edit', global_edit);
+
+		if (global_edit) {
+			$panel.hide();
+		}
+
+		jQuery('#perm-global-edit-' + pt).change(function () {
+			if (this.checked) {
+				$editor.data('global-edit', true);
+				$stats.addClass('global-edit');
+				$panel.hide();
+			}
+			else {
+				$editor.data('global-edit', false);
+				$stats.removeClass('global-edit');
+				$panel.show();
+			}
+		});
+
 		// Attach event handlers
 		attachFlatEditorHandlers( $editor );
 
@@ -622,6 +645,7 @@ jQuery(document).ready(function($){
 						setPostPermissions($p, true, $editor);
 					}
 				}
+
 				for (i = 0; i < edits["denied"].length; i = i + 1) {
 					post_id = edits["denied"][i];
 					$p = $editor.find('#p' + post_id);
@@ -1100,6 +1124,18 @@ jQuery(document).ready(function($){
 				}
 			}
 		}
+
+		// Check global_edit option
+		$('.perm-editor').each(function () {
+			var $editor = jQuery(this);
+
+			if ($editor.hasClass('flat')) {
+				// Use "!!" to cast to boolean.
+				if (!!$editor.data('original-global-edit') != !!$editor.data('global-edit')) {
+					hasEdits = true;
+				}
+			}
+		});
 
 		// Check permissions editors for all post types
 		$('.perm-editor').each(function () {

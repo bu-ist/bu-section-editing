@@ -433,6 +433,26 @@
 
 /* Stats widget */
 
+#group-stats-widget .perm-stats.global-edit .perm-stat-global {
+    display: inline;
+}
+
+#group-stats-widget .perm-stats .perm-stat-global {
+    display: none;
+}
+
+#group-stats-widget .perm-stats .perm-stat-count, #group-stats-widget .perm-stats .perm-stats-diff {
+    display: inline;
+}
+
+#group-stats-widget .perm-stats.global-edit .perm-stat-count, #group-stats-widget .perm-stats.global-edit .perm-stats-diff {
+    display: none;
+}
+
+#group-stats-widget .perm-stats.global-edit {
+    display: block;
+}
+
 #group-stats-widget .buse-widget-body {
 	padding: 0;
 }
@@ -456,7 +476,8 @@
 }
 
 #group-stats-widget .member-count,
-#group-stats-widget .perm-stat-count {
+#group-stats-widget .perm-stat-count,
+#group-stats-widget .perm-stat-global {
 	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
 	font-weight: bold;
 	font-size: 18px;
