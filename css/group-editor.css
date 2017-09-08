@@ -412,6 +412,25 @@
 	background: url('../images/close_icons.png') no-repeat 0 -24px;
 }
 
+#group-permission-editor .perm-global-edit {
+	padding: 4px 15px;
+}
+
+#group-permission-editor .perm-global-edit > * {
+	display: inline-block;
+}
+
+#group-permission-editor .perm-global-edit .perm-global-edit-action {
+	padding-left: 10px;
+	position: inherit;
+	margin-top: auto;
+}
+
+#group-permission-editor .perm-global-edit .perm-global-edit-label {
+	margin-top: auto;
+	margin-bottom: auto;
+}
+
 /* Stats widget */
 
 #group-stats-widget .buse-widget-body {
