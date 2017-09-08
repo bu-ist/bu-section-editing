@@ -722,6 +722,10 @@ class BU_Groups_Admin {
 		if ( ! isset( $group_data['perms'] ) ) {
 			$group_data['perms'] = array();
 		}
+		if ( ! isset( $group_data['global_edit'] ) ) {
+			$group_data['global_edit'] = array();
+		}
+
 
 		// Require valid name
 		if ( ! isset( $group_data['name'] ) || empty( $group_data['name'] ) ) {
