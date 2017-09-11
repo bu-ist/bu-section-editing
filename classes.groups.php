@@ -459,9 +459,9 @@ class BU_Edit_Groups {
 				$result = false;
 			}
 
-			// Update group member meta
+			// Update meta data
 			update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
-
+			update_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 		}
 
 		return $result;
@@ -494,10 +494,8 @@ class BU_Edit_Groups {
 		// Add auto-generated ID
 		$group->id = $result;
 
-		// Add group member meta
+		// Add meta data
 		add_post_meta( $group->id, self::MEMBER_KEY, $group->users );
-
-		// Add global edit meta
 		add_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 
 		// Add group to internal groups store
@@ -542,10 +540,8 @@ class BU_Edit_Groups {
 		// Update modified time stamp
 		$group->modified = get_post_modified_time( 'U',false,$result );
 
-		// Update group member meta
+		// Update meta data
 		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
-
-		// Update global edit meta
 		update_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 
 		// Update internal groups store
@@ -640,7 +636,7 @@ class BU_Edit_Groups {
 			$data['created'] = strtotime( $post->post_date );
 			$data['modified'] = strtotime( $post->post_modified );
 
-			// Users are stored in post meta
+			// Users and global_edit setting are stored in post meta
 			$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
 			$data['users'] = $users ? $users : array();
 
