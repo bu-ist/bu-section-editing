@@ -67,19 +67,20 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$this->assertEquals( $data['name'], $group->name );
 		$this->assertEquals( $data['description'], $group->description );
 		$this->assertEquals( $data['users'], $group->users );
+		$this->assertEquals( $data['global_edit'], $group->global_edit );
 
 		// Time stamps
 		$this->assertNotNull( $group->created );
 		$this->assertNotNull( $group->modified );
 
 		// Permissions
-		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'post', 'fields' => 'ids' ) );
-		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'page', 'fields' => 'ids' ) );
+		$allowed_posts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'post', 'fields' => 'ids' ) );
+		$allowed_pages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'page', 'fields' => 'ids' ) );
 
 		$expected_allowed_posts = array_keys( $data['perms']['post'] );
 		$expected_allowed_pages = array_keys( $data['perms']['page'] );
-		$actual_allowed_posts = array_map( 'intval', $allowedposts );
-		$actual_allowed_pages = array_map( 'intval', $allowedpages );
+		$actual_allowed_posts = array_map( 'intval', $allowed_posts );
+		$actual_allowed_pages = array_map( 'intval', $allowed_pages );
 		$this->assertEquals( asort( $expected_allowed_posts ), asort( $actual_allowed_posts ) );
 		$this->assertEquals( asort( $expected_allowed_pages ), asort( $actual_allowed_pages ) );
 
@@ -108,19 +109,20 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$this->assertEquals( $updates['name'], $group->name );
 		$this->assertEquals( $updates['description'], $group->description );
 		$this->assertEquals( $updates['users'], $group->users );
+		$this->assertEquals( $updates['global_edit'], $group->global_edit );
 
 		// Time stamps
 		$this->assertEquals( $original->created, $group->created );
 		$this->assertNotEquals( $original->modified, $group->modified );
 
 		// Permissions
-		$allowedposts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'post', 'fields' => 'ids' ) );
-		$allowedpages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'page', 'fields' => 'ids' ) );
+		$allowed_posts = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'post', 'fields' => 'ids' ) );
+		$allowed_pages = BU_Group_Permissions::get_allowed_posts_for_group( $group->id, array( 'post_type' => 'page', 'fields' => 'ids' ) );
 
 		$expected_allowed_posts = array_keys( $updates['perms']['post'] );
 		$expected_allowed_pages = array_keys( $updates['perms']['page'] );
-		$actual_allowed_posts = array_map( 'intval', $allowedposts );
-		$actual_allowed_pages = array_map( 'intval', $allowedpages );
+		$actual_allowed_posts = array_map( 'intval', $allowed_posts );
+		$actual_allowed_pages = array_map( 'intval', $allowed_pages );
 		$this->assertEquals( asort( $expected_allowed_posts ), asort( $actual_allowed_posts ) );
 		$this->assertEquals( asort( $expected_allowed_pages ), asort( $actual_allowed_pages ) );
 
@@ -182,6 +184,7 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$this->assertEquals( $group->name, $group_after->name );
 		$this->assertEquals( $group->description, $group_after->description );
 		$this->assertEquals( $group->users, $group_after->users );
+		$this->assertEquals( $group->global_edit, $group_after->global_edit );
 
 	}
 
@@ -380,6 +383,24 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	}
 
+	/**
+	 * Test that post is globally editable
+	 */
+	public function test_post_is_globally_editable($value='')
+	{
+		$data = $this->_generate_group_data();
+
+		$gc = BU_Edit_Groups::get_instance();
+
+		$group = $gc->add_group( $data );
+
+		$posts = $this->factory->post->create_many( 2, array( 'post_type' => 'custom' ) );
+
+		$this->assertTrue( $gc->post_is_globally_editable_by_group( reset($posts), $group->id ) );
+		$this->assertTrue( $gc->post_is_globally_editable_by_group( next( $posts ), $group->id ) );
+		$this->assertTrue( $gc->post_is_globally_editable_by_group( 'custom', $group->id ) );
+	}
+
 	// ___ HELPERS ___
 	function _generate_group_data( $args = array() ) {
 
@@ -387,17 +408,18 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$users = $this->factory->user->create_many( 2,array( 'role' => 'section_editor' ) );
 		$posts = $this->factory->post->create_many( 2,array( 'post_type' => 'post' ) );
 		$pages = $this->factory->post->create_many( 2,array( 'post_type' => 'page' ) );
-		$allowedposts = array( 'allowed' => $posts );
-		$allowedpages = array( 'allowed' => $pages );
+		$allowed_posts = array( 'allowed' => $posts );
+		$allowed_pages = array( 'allowed' => $pages );
 
 		$defaults = array(
 			'name' => 'Test group',
 			'description' => 'Test description',
 			'users' => $users,
 			'perms' => array(
-				'post' => $allowedposts,
-				'page' => $allowedpages,
+				'post' => $allowed_posts,
+				'page' => $allowed_pages,
 				),
+			'global_edit' => array( 'custom' ),
 			);
 
 		$data = wp_parse_args( $args, $defaults );

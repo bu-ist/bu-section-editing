@@ -80,19 +80,27 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
 		$posts = $this->factory->post->create_many( 2, array( 'post_type' => 'post' ) );
 		$pages = $this->factory->post->create_many( 2, array( 'post_type' => 'page' ) );
+		$custom_posts = $this->factory->post->create_many( 2, array( 'post_type' => 'custom' ) );
 
 		$perms = array(
 			'post' => array( 'allowed' => array( $posts[0] ) ),
 			'page' => array( 'allowed' => array( $pages[1] ) ),
 			);
 
-		$group = $this->factory->group->create( array( 'name' => __FUNCTION__, 'perms' => $perms ) );
+		$group = $this->factory->group->create(
+			array(
+				'name' => __FUNCTION__,
+				'perms' => $perms,
+				'global_edit' => array('custom')
+			)
+		);
 
 		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, reset( $posts ) ) );
 		$this->assertFalse( BU_Group_Permissions::group_can_edit( $group->id, next( $posts ) ) );
 		$this->assertFalse( BU_Group_Permissions::group_can_edit( $group->id, reset( $pages ) ) );
 		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, next( $pages ) ) );
-
+		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, reset( $custom_posts ) ) );
+		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, next( $custom_posts ) ) );
 	}
 
 	/**
