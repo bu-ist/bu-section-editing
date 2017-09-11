@@ -627,6 +627,8 @@ jQuery(document).ready(function($){
 			}
 		});
 
+		$editor.data('loaded', true);
+
 		// Attach event handlers
 		attachFlatEditorHandlers( $editor );
 
@@ -1129,9 +1131,9 @@ jQuery(document).ready(function($){
 		$('.perm-editor').each(function () {
 			var $editor = jQuery(this);
 
-			if ($editor.hasClass('flat')) {
+			if ($editor.hasClass('flat') && $editor.data('loaded')) {
 				// Use "!!" to cast to boolean.
-				if (!!$editor.data('original-global-edit') != !!$editor.data('global-edit')) {
+				if (!!$editor.data('original-global-edit') !== !!$editor.data('global-edit')) {
 					hasEdits = true;
 				}
 			}
