@@ -1,5 +1,5 @@
 <div id="group-permission-editor">
-	<?php 
+	<?php
 		$content_types = BU_Group_Permissions::get_supported_post_types();
 		$group = BU_Edit_Groups::get_instance()->get( $group_id );
 	?>
@@ -21,10 +21,12 @@
 			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>">
 				<?php if ( ! $hierarchical && ! $is_post ) : ?>
 					<div class="perm-global-edit clearfix">
-						<input id="perm-global-edit-<?php echo $pt->name; ?>" class="perm-global-edit-action" type="checkbox" name="group[global_edit][]" value="<?php echo $pt->name; ?>" <?php echo $group->post_is_globally_editable( $pt->name ) ? 'checked' : ''; ?> >
-						<label class="perm-global-edit-label" for="perm-global-edit-<?php echo $pt->name ?>">
-							<?php esc_html_e( 'Allow to edit all posts of this type', BUSE_TEXTDOMAIN ); ?>
-						</label>
+						<div class="perm-global-edit-checkbox">
+							<input id="perm-global-edit-<?php echo $pt->name; ?>" class="perm-global-edit-action" type="checkbox" name="group[global_edit][]" value="<?php echo $pt->name; ?>" <?php echo $group->post_is_globally_editable( $pt->name ) ? 'checked' : ''; ?> >
+							<label class="perm-global-edit-label" for="perm-global-edit-<?php echo $pt->name ?>">
+								<?php esc_html_e( 'Allow to publish posts of this type', BUSE_TEXTDOMAIN ); ?>
+							</label>
+						</div>
 					</div>
 				<?php endif; ?>
 				<div id="perm-toolbar-<?php echo $pt->name; ?>-top" class="perm-toolbar top clearfix">

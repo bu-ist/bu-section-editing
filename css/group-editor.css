@@ -412,11 +412,21 @@
 	background: url('../images/close_icons.png') no-repeat 0 -24px;
 }
 
+/* Global edit */
+
+.perm-panel.global-edit > :not(.perm-global-edit) {
+	display: none;
+}
+
+.perm-panel .perm-global-edit .perm-global-edit-checkbox {
+	padding-left: 10px;
+}
+
 #group-permission-editor .perm-global-edit {
 	padding: 4px 15px;
 }
 
-#group-permission-editor .perm-global-edit > * {
+#group-permission-editor .perm-global-edit .perm-global-edit-checkbox > * {
 	display: inline-block;
 }
 

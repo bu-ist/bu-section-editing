@@ -605,25 +605,25 @@ jQuery(document).ready(function($){
 		var pt = $editor.data('post-type');
 
 		var global_edit = $editor.data('original-global-edit');
-		var $panel = jQuery('#perm-panel-' + pt).children().filter(':not(.perm-global-edit)');
+		var $panel = jQuery('#perm-panel-' + pt);
 		var $stats = jQuery('#' + pt + '-stats');
 
 		$editor.data('global-edit', global_edit);
 
 		if (global_edit) {
-			$panel.hide();
+			$panel.addClass('global-edit');
 		}
 
 		jQuery('#perm-global-edit-' + pt).change(function () {
 			if (this.checked) {
 				$editor.data('global-edit', true);
 				$stats.addClass('global-edit');
-				$panel.hide();
+				$panel.addClass('global-edit');
 			}
 			else {
 				$editor.data('global-edit', false);
 				$stats.removeClass('global-edit');
-				$panel.show();
+				$panel.removeClass('global-edit');
 			}
 		});
 
