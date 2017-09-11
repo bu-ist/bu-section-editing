@@ -883,7 +883,7 @@ class BU_Groups_Admin {
 			$count = 0;
 
 			if ( $group->id > 0 ) {
-				$global_edit = $group->post_is_globally_editable( $pt->name ) ? 'global-edit' : '';
+				$global_edit = $groups->post_is_globally_editable_by_group( $pt->name, $group->id ) ? 'global-edit' : '';
 				$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
 			}
 

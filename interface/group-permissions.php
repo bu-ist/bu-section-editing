@@ -1,8 +1,5 @@
 <div id="group-permission-editor">
-	<?php
-		$content_types = BU_Group_Permissions::get_supported_post_types();
-		$group = BU_Edit_Groups::get_instance()->get( $group_id );
-	?>
+	<?php $content_types = BU_Group_Permissions::get_supported_post_types(); ?>
 	<?php if ( ! empty( $content_types ) ) : ?>
 		<div id="perm-tab-container">
 			<?php foreach ( $content_types as $index => $pt ) :  ?>
@@ -22,7 +19,7 @@
 				<?php if ( ! $hierarchical && ! $is_post ) : ?>
 					<div class="perm-global-edit clearfix">
 						<div class="perm-global-edit-checkbox">
-							<input id="perm-global-edit-<?php echo $pt->name; ?>" class="perm-global-edit-action" type="checkbox" name="group[global_edit][]" value="<?php echo $pt->name; ?>" <?php echo $group->post_is_globally_editable( $pt->name ) ? 'checked' : ''; ?> >
+							<input id="perm-global-edit-<?php echo $pt->name; ?>" class="perm-global-edit-action" type="checkbox" name="group[global_edit][]" value="<?php echo $pt->name; ?>" <?php echo $groups->post_is_globally_editable_by_group( $pt->name, $group_id ) ? 'checked' : ''; ?> >
 							<label class="perm-global-edit-label" for="perm-global-edit-<?php echo $pt->name ?>">
 								<?php esc_html_e( 'Allow to publish posts of this type', BUSE_TEXTDOMAIN ); ?>
 							</label>
@@ -60,7 +57,7 @@
 				<?php endif; ?>
 				<div class="perm-scroll-area">
 					<input type="hidden" id="buse-edits-<?php echo $pt->name; ?>" class="buse-edits" name="group[perms][<?php echo $pt->name; ?>]" value="" />
-					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>" data-original-global-edit="<?php echo $group->post_is_globally_editable( $pt->name ) ? 'true' : ''; ?>"></div><!-- perm-editor-<?php echo $pt->name; ?> -->
+					<div id="perm-editor-<?php echo $pt->name; ?>" class="perm-editor <?php echo $hiearchical_class; ?>" data-post-type="<?php echo $pt->name; ?>" data-original-global-edit="<?php echo $groups->post_is_globally_editable_by_group( $pt->name, $group_id ) ? 'true' : ''; ?>"></div><!-- perm-editor-<?php echo $pt->name; ?> -->
 				</div>
 				<?php if ( ! $hierarchical ) :  // Flat post editors get pagination ?>
 				<div class="perm-toolbar bottom clearfix">

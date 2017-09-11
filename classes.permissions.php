@@ -174,7 +174,9 @@ class BU_Group_Permissions {
 	 */
 	public static function group_can_edit( $group_id, $post_id ) {
 
-		if ( BU_Edit_Groups::get_instance()->get( $group_id )->post_is_globally_editable( $post_id ) ) {
+		$groups = BU_Edit_Groups::get_instance();
+
+		if ( $groups->post_is_globally_editable_by_group( $post_id, $group_id ) ) {
 			return true;
 		}
 

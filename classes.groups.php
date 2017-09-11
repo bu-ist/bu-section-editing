@@ -649,6 +649,28 @@ class BU_Edit_Groups {
 			return $group;
 
 		}
+
+
+	/**
+	 * Checks if the post (or post type) is marked as globally editable in this group
+	 *
+	 * @param int|string $post Post ID (int) or post type name (string)
+	 * @param int $group_id Section editing group ID
+	 * @return Boolean
+	 */
+	public function post_is_globally_editable_by_group( $post, $group_id )
+	{
+		if ($post === intval( $post )) {
+			$post_type = get_post_type($post);
+		}
+		else {
+			$post_type = $post;
+		}
+
+		$global_edit = get_post_meta( $group_id, BU_Edit_Groups::GLOBAL_EDIT, true);
+
+		return is_array( $global_edit ) && in_array( $post_type, $global_edit );
+	}
 }
 
 /**
@@ -795,26 +817,6 @@ class BU_Edit_Group {
 			}
 		}
 
-	}
-
-	/**
-	 * Checks if the post (or post type) is marked as globally editable in this group
-	 *
-	 * @param int|string $post Post ID (int) or post type name (string)
-	 * @return Boolean
-	 */
-	public function post_is_globally_editable( $post )
-	{
-		if ($post === intval( $post )) {
-			$post_type = get_post_type($post);
-		}
-		else {
-			$post_type = $post;
-		}
-
-		$global_edit = get_post_meta( $this->id, BU_Edit_Groups::GLOBAL_EDIT, true);
-
-		return is_array( $global_edit ) && in_array( $post_type, $global_edit );
 	}
 
 	/**
