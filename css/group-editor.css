@@ -433,24 +433,24 @@
 
 /* Stats widget */
 
-#group-stats-widget .perm-stats.global-edit .perm-stat-global {
+.perm-stats.global-edit .perm-stat-global {
     display: inline;
 }
 
-#group-stats-widget .perm-stats .perm-stat-global {
+.perm-stats .perm-stat-global {
     display: none;
 }
 
-#group-stats-widget .perm-stats .perm-stat-count, #group-stats-widget .perm-stats .perm-stats-diff {
+.perm-stats .perm-stat-count, #group-stats-widget .perm-stats .perm-stats-diff {
     display: inline;
 }
 
-#group-stats-widget .perm-stats.global-edit .perm-stat-count, #group-stats-widget .perm-stats.global-edit .perm-stats-diff {
+.perm-stats.global-edit .perm-stat-count, #group-stats-widget .perm-stats.global-edit .perm-stats-diff {
     display: none;
 }
 
-#group-stats-widget .perm-stats.global-edit {
-    display: block;
+.perm-stats.global-edit {
+    display: inline;
 }
 
 #group-stats-widget .buse-widget-body {
