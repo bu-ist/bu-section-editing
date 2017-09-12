@@ -215,7 +215,8 @@ class BU_Groups_Admin {
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
 	 *
-	 * register_post_status API/admin UI functionality is limited as of 3.5
+	 * - Globally editable post types are excluded because having them will only confuse users
+	 * - register_post_status API/admin UI functionality is limited as of 3.5
 	 *
 	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
@@ -240,8 +241,23 @@ class BU_Groups_Admin {
 
 			$supported_post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
 
+			$gc = BU_Edit_Groups::get_instance();
+			$user = wp_get_current_user();
+			$groups = $gc->find_groups_for_user( $user->ID );
+
 			foreach ( $supported_post_types as $post_type ) {
-				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
+				// Exclude globally editable post types
+				$globally_editable = false;
+
+				foreach ($groups as $group) {
+					if ( $gc->post_is_globally_editable_by_group( $post_type, $group->id ) ) {
+						$globally_editable = true;
+					}
+				}
+
+				if ( ! $globally_editable ) {
+					add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
+				}
 			}
 		}
 
