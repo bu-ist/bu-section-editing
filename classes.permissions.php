@@ -172,12 +172,14 @@ class BU_Group_Permissions {
 	/**
 	 * Can this group edit a particular post
 	 */
-	public static function group_can_edit( $group_id, $post_id ) {
+	public static function group_can_edit( $group_id, $post_id, $ignore = '' ) {
 
-		$groups = BU_Edit_Groups::get_instance();
+		if ( 'ignore_global' !== $ignore ) {
+			$groups = BU_Edit_Groups::get_instance();
 
-		if ( $groups->post_is_globally_editable_by_group( $post_id, $group_id ) ) {
-			return true;
+			if ( $groups->post_is_globally_editable_by_group( $post_id, $group_id ) ) {
+				return true;
+			}
 		}
 
 		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
@@ -464,7 +466,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	 */
 	public function format_post( $post, $has_children = false ) {
 
-		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID );
+		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID, 'ignore_global' );
 		$perm = $editable ? 'allowed' : 'denied';
 
 		$post->post_title = empty( $post->post_title ) ? __( '(no title)', BUSE_TEXTDOMAIN ) : $post->post_title;
