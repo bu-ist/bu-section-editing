@@ -21,7 +21,7 @@
 						<div class="perm-global-edit-checkbox">
 							<input id="perm-global-edit-<?php echo $pt->name; ?>" class="perm-global-edit-action" type="checkbox" name="group[global_edit][]" value="<?php echo $pt->name; ?>" <?php echo $groups->post_is_globally_editable_by_group( $pt->name, $group_id ) ? 'checked' : ''; ?> >
 							<label class="perm-global-edit-label" for="perm-global-edit-<?php echo $pt->name ?>">
-								<?php esc_html_e( 'Allow to publish posts of this type', BUSE_TEXTDOMAIN ); ?>
+								<?php esc_html_e( 'Full access (edit/publish/delete) to all posts of this type', BUSE_TEXTDOMAIN ); ?>
 							</label>
 						</div>
 					</div>
