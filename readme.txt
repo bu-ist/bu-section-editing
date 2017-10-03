@@ -1,5 +1,5 @@
 === BU Section Editing ===
-Contributors: mgburns, gcorne, awbauer, inderpreet99
+Contributors: mgburns, gcorne, awbauer, inderpreet99, anton-kachurin
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 3.1
 Tested up to: 4.5.1
