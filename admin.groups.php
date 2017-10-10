@@ -903,9 +903,12 @@ class BU_Groups_Admin {
 				$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
 			}
 
-
-
-			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
+			if ( $global_edit ) {
+				$label = $pt->label;
+			}
+			else {
+				$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
+			}
 
 			$counts[] = sprintf( '<span id="%s-stats" class="perm-stats %s"><span class="perm-stat-global">%s</span><span class="perm-stat-count">%s</span> <span class="perm-label">%s</span></span>',
 				$pt->name,
