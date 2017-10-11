@@ -300,16 +300,16 @@ class BU_Edit_Groups {
 	}
 
 	/**
-	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 * Get allowed post ids, optionally filtered by user ID, group or post_type
 	 *
 	 * @todo implement caching with md5 of args
 	 * @todo possibly move to BU_Group_Permissions
 	 *
 	 * @param $args array optional args
 	 *
-	 * @return int allowed post count for the given post type, group or user
+	 * @return array post ids for the given post type, group or user
 	 */
-	public function get_allowed_post_count( $args = array() ) {
+	public function get_allowed_posts( $args = array() ) {
 		global $wpdb, $bu_navigation_plugin;
 
 		$defaults = array(
@@ -329,7 +329,7 @@ class BU_Edit_Groups {
 
 			if ( is_null( get_userdata( $user_id ) ) ) {
 				error_log( 'No user found for ID: ' . $user_id );
-				return false;
+				return array();
 			}
 
 			// Get groups for users
@@ -351,7 +351,7 @@ class BU_Edit_Groups {
 
 		// Bail if we don't have any valid groups by now
 		if ( empty( $group_ids ) ) {
-			return false;
+			return array();
 		}
 
 		// Generate query
@@ -402,9 +402,19 @@ class BU_Edit_Groups {
 		// Execute query
 		$ids = $wpdb->get_col( $count_query );
 
-		// Count and return results
-		return count( $ids );
+		return $ids;
+	}
 
+	/**
+	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 *
+	 * @param $args array optional args
+	 *
+	 * @return int allowed post count for the given post type, group or user
+	 */
+	public function get_allowed_post_count( $args = array() ) {
+		$ids = $this->get_allowed_posts( $args );
+		return count( $ids );
 	}
 
 	// ____________________PERSISTENCE________________________
