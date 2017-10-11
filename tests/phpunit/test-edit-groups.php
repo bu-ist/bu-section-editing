@@ -376,10 +376,10 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$this->assertEquals( 6, $count_all_draft_inc_g2 );
 
 		// Invalid args
-		$this->assertFalse( $invalid_count_one );
-		$this->assertFalse( $invalid_count_two );
-		$this->assertFalse( $invalid_count_three );
-		$this->assertFalse( $invalid_count_four );
+		$this->assertEquals( 0, $invalid_count_one );
+		$this->assertEquals( 0, $invalid_count_two );
+		$this->assertEquals( 0, $invalid_count_three );
+		$this->assertEquals( 0, $invalid_count_four );
 
 	}
 
