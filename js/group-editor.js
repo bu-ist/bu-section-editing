@@ -607,24 +607,29 @@ jQuery(document).ready(function($){
 		var global_edit = $editor.data('original-global-edit');
 		var $panel = jQuery('#perm-panel-' + pt);
 		var $stats = jQuery('#' + pt + '-stats');
+		var editable = [];
 
 		$editor.data('global-edit', global_edit);
 
 		if (global_edit) {
 			$panel.addClass('global-edit');
+			if ($panel.data('editable-original')) {
+				editable = ($panel.data('editable-original') + '').split(',');
+			}
 		}
+
+		$editor.data('editable-original', editable);
 
 		jQuery('#perm-global-edit-' + pt).change(function () {
 			if (this.checked) {
 				$editor.data('global-edit', true);
-				$stats.addClass('global-edit');
 				$panel.addClass('global-edit');
 			}
 			else {
 				$editor.data('global-edit', false);
-				$stats.removeClass('global-edit');
 				$panel.removeClass('global-edit');
 			}
+			updatePermStats(pt);
 		});
 
 		$editor.data('loaded', true);
@@ -1016,21 +1021,44 @@ jQuery(document).ready(function($){
 	 */
 	var updatePermStats = function( post_type ) {
 
+		var $editor = $('#perm-editor-'+post_type);
 		var $stats_el = $('#' + post_type + '-stats'),
 			$diff_el = $('.perm-stats-diff', $stats_el),
-			edits = $('#perm-editor-'+post_type).data('perm-edits');
+			edits = $editor.data('perm-edits') || {"allowed":[], "denied": []};
 
 		if ($diff_el.length === 0) {
 			$diff_el = $('<span class="perm-stats-diff"></span>');
 			$stats_el.append($diff_el);
 		}
 
-		var stats = [], perm, sign;
+		var stats = [];
 
-		for (perm in edits) {
-			if (edits[perm].length) {
-				sign = perm === 'allowed' ? '+' : '-';
-				stats.push('<span class="' + perm + '">' + sign + edits[perm].length + '</span>');
+		// Use "!!" to cast to boolean.
+		if (!!$editor.data('original-global-edit') !== !!$editor.data('global-edit')) {
+			if (!$editor.data('global-edit')) {
+				stats.push('<span class="denied">-' + buse_group_editor_settings.permGlobalLabel + '</span>');
+
+				// create a deep copy
+				edits = $.extend(true, {}, edits);
+				var editable = $editor.data('editable-original');
+				var filtered_editable = $(editable).not(edits.denied).get();
+				var filtered_denied = $(edits.denied).not(editable).get();
+				edits.denied = filtered_denied;
+				$.merge(edits.allowed, filtered_editable);
+			}
+			else {
+				stats.push('<span class="allowed">+' + buse_group_editor_settings.permGlobalLabel + '</span>');
+			}
+		}
+
+		var perm, sign;
+
+		if (!$editor.data('global-edit')) {
+			for (perm in edits) {
+				if (edits[perm].length) {
+					sign = perm === 'allowed' ? '+' : '-';
+					stats.push('<span class="' + perm + '">' + sign + edits[perm].length + '</span>');
+				}
 			}
 		}
 

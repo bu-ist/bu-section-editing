@@ -14,8 +14,9 @@
 			$hierarchical = $pt->hierarchical ? true : false;
 			$hiearchical_class = $hierarchical ? 'hierarchical' : 'flat';
 			$is_post = 'post' === $pt->name;
+			$editable = $groups->get_allowed_posts( array( 'group' => $group_id, 'post_type' => $pt->name ) );
 			?>
-			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>">
+			<div id="perm-panel-<?php echo $pt->name; ?>" class="perm-panel <?php echo $active; ?>" data-editable-original="<?php echo htmlspecialchars( implode( ',', $editable ) ); ?>">
 				<?php if ( ! $hierarchical && ! $is_post ) : ?>
 					<div class="perm-global-edit clearfix">
 						<div class="perm-global-edit-checkbox">

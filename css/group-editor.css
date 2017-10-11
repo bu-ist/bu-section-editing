@@ -455,7 +455,7 @@
     display: inline;
 }
 
-.perm-stats.global-edit .perm-stat-count, #group-stats-widget .perm-stats.global-edit .perm-stats-diff {
+.perm-stats.global-edit .perm-stat-count {
     display: none;
 }
 

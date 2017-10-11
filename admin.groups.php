@@ -467,6 +467,7 @@ class BU_Groups_Admin {
 			'permDenyLabel'             => __( 'Deny', BUSE_TEXTDOMAIN ),
 			'permEditableLabel'         => __( 'editable', BUSE_TEXTDOMAIN ),
 			'permNonEditableLabel'      => __( 'non-editable', BUSE_TEXTDOMAIN ),
+			'permGlobalLabel'           => __( 'All', BUSE_TEXTDOMAIN ),
 			'userWrongRoleNotice'       => sprintf(
 				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', BUSE_TEXTDOMAIN ),
 			$users_link ),
