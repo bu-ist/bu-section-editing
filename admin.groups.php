@@ -228,7 +228,7 @@ class BU_Groups_Admin {
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
 				'label' => __( 'Editable', BUSE_TEXTDOMAIN ),
-				'label_count' => true,
+				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>' ),
 				'public' => true,
 				'show_in_admin_all' => true,
 				'publicly_queryable' => true,
@@ -288,7 +288,7 @@ class BU_Groups_Admin {
 
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . "<span class=\"count\">($count)</span></a>";
+		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . " <span class=\"count\">($count)</span></a>";
 
 		return $views;
 

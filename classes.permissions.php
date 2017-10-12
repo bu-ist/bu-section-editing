@@ -24,7 +24,7 @@ class BU_Group_Permissions {
 						break;
 
 					case 'objects': default:
-							$supported_post_types[] = $post_type;
+						$supported_post_types[] = $post_type;
 						break;
 				}
 			}
