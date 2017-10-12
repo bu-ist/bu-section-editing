@@ -575,8 +575,21 @@ class BU_Edit_Groups {
 			$args['name'] = sanitize_text_field( stripslashes( $args['name'] ) );
 			$args['description'] = isset( $args['description'] ) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 			$args['users'] = isset( $args['users'] ) ? array_map( 'absint', $args['users'] ) : array();
-			// TODO: sanitize $args['global_edit']
-			//       must include only existing custom post types
+
+			if ( ! isset( $args['global_edit'] ) || ! is_array( $args['global_edit'] ) ) {
+				$args['global_edit'] = array();
+			}
+
+			$sanitized_global_edit_value = array();
+			foreach ($args['global_edit'] as $custom_type) {
+				if ( post_type_exists( $custom_type ) ) {
+					if ( ! is_post_type_hierarchical( $custom_type ) ) {
+						$sanitized_global_edit_value[] = $custom_type;
+					}
+				}
+			}
+
+			$args['global_edit'] = $sanitized_global_edit_value;
 
 			if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
 

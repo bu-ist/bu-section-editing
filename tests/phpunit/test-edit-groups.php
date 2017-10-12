@@ -14,10 +14,13 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 	function setUp() {
 		parent::setUp();
 		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
+		register_post_type( 'custom', array( 'hierarchical' => false ) );
 	}
 
 	function tearDown() {
 		parent::tearDown();
+
+		unregister_post_type( 'custom' );
 
 		// While the DB will rollback, the BU_Edit_Groups persists in memory
 		// and there for the groups remain cached in its internal array
@@ -25,7 +28,6 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		// happens automatically after each test case is run
 		$gc = BU_Edit_Groups::get_instance();
 		$gc->delete_groups();
-
 	}
 
 	/**

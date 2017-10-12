@@ -11,6 +11,13 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 	function setUp() {
 		parent::setUp();
 		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
+		register_post_type( 'custom', array( 'hierarchical' => false ) );
+	}
+
+	function tearDown() {
+		parent::tearDown();
+
+		unregister_post_type( 'custom' );
 	}
 
 	/**
