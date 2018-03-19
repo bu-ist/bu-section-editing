@@ -215,7 +215,8 @@ class BU_Groups_Admin {
 	/**
 	 * Add custom edit post bucket for editable posts to views for each supported post type
 	 *
-	 * register_post_status API/admin UI functionality is limited as of 3.5
+	 * - Globally editable post types are excluded because having them will only confuse users
+	 * - register_post_status API/admin UI functionality is limited as of 3.5
 	 *
 	 * @see http://core.trac.wordpress.org/ticket/12706
 	 */
@@ -227,7 +228,7 @@ class BU_Groups_Admin {
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
 				'label' => __( 'Editable', BUSE_TEXTDOMAIN ),
-				'label_count' => true,
+				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>' ),
 				'public' => true,
 				'show_in_admin_all' => true,
 				'publicly_queryable' => true,
@@ -240,8 +241,23 @@ class BU_Groups_Admin {
 
 			$supported_post_types = BU_Group_Permissions::get_supported_post_types( 'names' );
 
+			$gc = BU_Edit_Groups::get_instance();
+			$user = wp_get_current_user();
+			$groups = $gc->find_groups_for_user( $user->ID );
+
 			foreach ( $supported_post_types as $post_type ) {
-				add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
+				// Exclude globally editable post types
+				$globally_editable = false;
+
+				foreach ($groups as $group) {
+					if ( $gc->post_is_globally_editable_by_group( $post_type, $group->id ) ) {
+						$globally_editable = true;
+					}
+				}
+
+				if ( ! $globally_editable ) {
+					add_filter( 'views_edit-' . $post_type, array( __CLASS__, 'add_editable_view' ) );
+				}
 			}
 		}
 
@@ -272,7 +288,7 @@ class BU_Groups_Admin {
 
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . "<span class=\"count\">($count)</span></a>";
+		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . " <span class=\"count\">($count)</span></a>";
 
 		return $views;
 
@@ -451,6 +467,7 @@ class BU_Groups_Admin {
 			'permDenyLabel'             => __( 'Deny', BUSE_TEXTDOMAIN ),
 			'permEditableLabel'         => __( 'editable', BUSE_TEXTDOMAIN ),
 			'permNonEditableLabel'      => __( 'non-editable', BUSE_TEXTDOMAIN ),
+			'permGlobalLabel'           => __( 'All', BUSE_TEXTDOMAIN ),
 			'userWrongRoleNotice'       => sprintf(
 				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', BUSE_TEXTDOMAIN ),
 			$users_link ),
@@ -722,6 +739,10 @@ class BU_Groups_Admin {
 		if ( ! isset( $group_data['perms'] ) ) {
 			$group_data['perms'] = array();
 		}
+		if ( ! isset( $group_data['global_edit'] ) ) {
+			$group_data['global_edit'] = array();
+		}
+
 
 		// Require valid name
 		if ( ! isset( $group_data['name'] ) || empty( $group_data['name'] ) ) {
@@ -879,13 +900,21 @@ class BU_Groups_Admin {
 			$count = 0;
 
 			if ( $group->id > 0 ) {
+				$global_edit = $groups->post_is_globally_editable_by_group( $pt->name, $group->id ) ? 'global-edit' : '';
 				$count = $groups->get_allowed_post_count( array( 'group' => $group->id, 'post_type' => $pt->name ) );
 			}
 
-			$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
+			if ( $global_edit ) {
+				$label = $pt->label;
+			}
+			else {
+				$label = ( $count == 1 ) ? $pt->labels->singular_name : $pt->label;
+			}
 
-			$counts[] = sprintf( '<span id="%s-stats" class="perm-stats"><span class="perm-stat-count">%s</span> <span class="perm-label">%s</span></span>',
+			$counts[] = sprintf( '<span id="%s-stats" class="perm-stats %s"><span class="perm-stat-global">%s</span><span class="perm-stat-count">%s</span> <span class="perm-label">%s</span></span>',
 				$pt->name,
+				$global_edit,
+				__('All', BUSE_TEXTDOMAIN),
 				$count,
 				$label
 			);

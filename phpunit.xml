@@ -11,4 +11,22 @@
 			<directory prefix="test-" suffix=".php">./tests/phpunit/</directory>
 		</testsuite>
 	</testsuites>
+
+	<logging>
+		<log type="coverage-clover" target="build/logs/clover.xml"/>
+		<log type="coverage-html" target="build/logs/report" lowUpperBound="35"
+			 highLowerBound="70"/>
+	</logging>
+
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="true">
+			<file>bu-section-editing.php</file>
+			<file>admin.groups.php</file>
+			<file>admin-ajax.groups.php</file>
+			<file>classes.capabilities.php</file>
+			<file>classes.groups.php</file>
+			<file>classes.permissions.php</file>
+			<file>classes.upgrade.php</file>
+		</whitelist>
+	</filter>
 </phpunit>
