@@ -9,6 +9,7 @@ class BU_Edit_Groups {
 
 	const POST_TYPE_NAME = 'buse_group';
 	const MEMBER_KEY = '_bu_section_group_users';
+	const GLOBAL_EDIT = '_bu_section_group_global_edit';
 
 	public $groups = array();
 
@@ -299,16 +300,16 @@ class BU_Edit_Groups {
 	}
 
 	/**
-	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 * Get allowed post ids, optionally filtered by user ID, group or post_type
 	 *
 	 * @todo implement caching with md5 of args
 	 * @todo possibly move to BU_Group_Permissions
 	 *
 	 * @param $args array optional args
 	 *
-	 * @return int allowed post count for the given post type, group or user
+	 * @return array post ids for the given post type, group or user
 	 */
-	public function get_allowed_post_count( $args = array() ) {
+	public function get_allowed_posts( $args = array() ) {
 		global $wpdb, $bu_navigation_plugin;
 
 		$defaults = array(
@@ -328,7 +329,7 @@ class BU_Edit_Groups {
 
 			if ( is_null( get_userdata( $user_id ) ) ) {
 				error_log( 'No user found for ID: ' . $user_id );
-				return false;
+				return array();
 			}
 
 			// Get groups for users
@@ -350,7 +351,7 @@ class BU_Edit_Groups {
 
 		// Bail if we don't have any valid groups by now
 		if ( empty( $group_ids ) ) {
-			return false;
+			return array();
 		}
 
 		// Generate query
@@ -401,9 +402,19 @@ class BU_Edit_Groups {
 		// Execute query
 		$ids = $wpdb->get_col( $count_query );
 
-		// Count and return results
-		return count( $ids );
+		return $ids;
+	}
 
+	/**
+	 * Get allowed post count, optionally filtered by user ID, group or post_type
+	 *
+	 * @param $args array optional args
+	 *
+	 * @return int allowed post count for the given post type, group or user
+	 */
+	public function get_allowed_post_count( $args = array() ) {
+		$ids = $this->get_allowed_posts( $args );
+		return count( $ids );
 	}
 
 	// ____________________PERSISTENCE________________________
@@ -458,9 +469,9 @@ class BU_Edit_Groups {
 				$result = false;
 			}
 
-			// Update group member meta
+			// Update meta data
 			update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
-
+			update_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 		}
 
 		return $result;
@@ -493,8 +504,9 @@ class BU_Edit_Groups {
 		// Add auto-generated ID
 		$group->id = $result;
 
-		// Add group member meta
+		// Add meta data
 		add_post_meta( $group->id, self::MEMBER_KEY, $group->users );
+		add_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 
 		// Add group to internal groups store
 		$this->groups[] = $group;
@@ -538,8 +550,9 @@ class BU_Edit_Groups {
 		// Update modified time stamp
 		$group->modified = get_post_modified_time( 'U',false,$result );
 
-		// Update group member meta
+		// Update meta data
 		update_post_meta( $group->id, self::MEMBER_KEY, $group->users );
+		update_post_meta( $group->id, self::GLOBAL_EDIT, $group->global_edit );
 
 		// Update internal groups store
 		foreach ( $this->groups as $i => $g ) {
@@ -563,8 +576,22 @@ class BU_Edit_Groups {
 		$args['description'] = isset( $args['description'] ) ? sanitize_text_field( stripslashes( $args['description'] ) ) : '';
 		$args['users'] = isset( $args['users'] ) ? array_map( 'absint', $args['users'] ) : array();
 
-		if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
+		if ( ! isset( $args['global_edit'] ) || ! is_array( $args['global_edit'] ) ) {
+			$args['global_edit'] = array();
+		}
 
+		$sanitized_global_edit_value = array();
+		foreach ($args['global_edit'] as $custom_type) {
+			if ( post_type_exists( $custom_type ) ) {
+				if ( ! is_post_type_hierarchical( $custom_type ) ) {
+					$sanitized_global_edit_value[] = $custom_type;
+				}
+			}
+		}
+
+		$args['global_edit'] = $sanitized_global_edit_value;
+
+		if ( isset( $args['perms'] ) && is_array( $args['perms'] ) ) {
 			foreach ( $args['perms'] as $post_type => $ids_by_status ) {
 
 				if ( ! is_array( $ids_by_status ) ) {
@@ -631,15 +658,40 @@ class BU_Edit_Groups {
 		$data['created'] = strtotime( $post->post_date );
 		$data['modified'] = strtotime( $post->post_modified );
 
-		// Users are stored in post meta
+		// Users and global_edit setting are stored in post meta
 		$users = get_post_meta( $post->ID, self::MEMBER_KEY, true );
 		$data['users'] = $users ? $users : array();
+
+		$global_edit = get_post_meta( $post->ID, self::GLOBAL_EDIT, true);
+		$data['global_edit'] = $global_edit;
 
 		// Create a new group
 		$group = new BU_Edit_Group( $data );
 
 		return $group;
 
+		}
+
+
+	/**
+	 * Checks if the post (or post type) is marked as globally editable in this group
+	 *
+	 * @param int|string $post Post ID (int) or post type name (string)
+	 * @param int $group_id Section editing group ID
+	 * @return Boolean
+	 */
+	public function post_is_globally_editable_by_group( $post, $group_id )
+	{
+		if ($post === intval( $post )) {
+			$post_type = get_post_type($post);
+		}
+		else {
+			$post_type = $post;
+		}
+
+		$global_edit = get_post_meta( $group_id, BU_Edit_Groups::GLOBAL_EDIT, true);
+
+		return is_array( $global_edit ) && in_array( $post_type, $global_edit );
 	}
 }
 
@@ -685,6 +737,7 @@ class BU_Edit_Group {
 	private $name = null;
 	private $description = null;
 	private $users = array();
+	private $global_edit = array();
 	private $created = null;
 	private $modified = null;
 
@@ -721,6 +774,7 @@ class BU_Edit_Group {
 			'name' => '',
 			'description' => '',
 			'users' => array(),
+			'global_edit' => array(),
 			'created' => time(),
 			'modified' => time(),
 			);

@@ -28,4 +28,3 @@ require $_tests_dir . '/includes/bootstrap.php';
 
 // Custom section group factory
 require dirname( __FILE__ ) . '/includes/class-group-factory.php';
-

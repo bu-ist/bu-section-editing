@@ -412,7 +412,56 @@
 	background: url('../images/close_icons.png') no-repeat 0 -24px;
 }
 
+/* Global edit */
+
+.perm-panel.global-edit > :not(.perm-global-edit) {
+	display: none;
+}
+
+.perm-panel .perm-global-edit .perm-global-edit-checkbox {
+	padding-left: 10px;
+}
+
+#group-permission-editor .perm-global-edit {
+	padding: 4px 15px;
+}
+
+#group-permission-editor .perm-global-edit .perm-global-edit-checkbox > * {
+	display: inline-block;
+}
+
+#group-permission-editor .perm-global-edit .perm-global-edit-action {
+	padding-left: 10px;
+	position: inherit;
+	margin-top: auto;
+}
+
+#group-permission-editor .perm-global-edit .perm-global-edit-label {
+	margin-top: auto;
+	margin-bottom: auto;
+}
+
 /* Stats widget */
+
+.perm-stats.global-edit .perm-stat-global {
+    display: inline;
+}
+
+.perm-stats .perm-stat-global {
+    display: none;
+}
+
+.perm-stats .perm-stat-count, #group-stats-widget .perm-stats .perm-stats-diff {
+    display: inline;
+}
+
+.perm-stats.global-edit .perm-stat-count {
+    display: none;
+}
+
+.perm-stats.global-edit {
+    display: inline;
+}
 
 #group-stats-widget .buse-widget-body {
 	padding: 0;
@@ -437,7 +486,8 @@
 }
 
 #group-stats-widget .member-count,
-#group-stats-widget .perm-stat-count {
+#group-stats-widget .perm-stat-count,
+#group-stats-widget .perm-stat-global {
 	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
 	font-weight: bold;
 	font-size: 18px;
