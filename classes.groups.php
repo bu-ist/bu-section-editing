@@ -68,7 +68,7 @@ class BU_Edit_Groups {
 			'menu_icon'           => '',
 			'can_export'          => true,
 			'has_archive'         => false,
-			'exclude_from_search' => false,
+			'exclude_from_search' => true,
 			'publicly_queryable'  => false,
 			'rewrite'             => false,
 			'capability_type'     => 'post',
