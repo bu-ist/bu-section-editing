@@ -5,7 +5,7 @@ Plugin URI: http://developer.bu.edu/bu-section-editing/
 Author: Boston University (IS&T)
 Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
-Version: 0.9.9
+Version: 0.10.0
 Text Domain: bu-section-editing
 Domain Path: /languages
 */
