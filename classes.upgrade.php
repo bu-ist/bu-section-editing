@@ -88,8 +88,12 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array( '${1}:allowed', '${1}:denied' );
 
 		// Fetch existing values
-		$query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s"', $wpdb->postmeta, BU_Group_Permissions::META_KEY );
-		$posts = $wpdb->get_results( $query );
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
+				BU_Group_Permissions::META_KEY
+			)
+		);
 
 		// Loop through and update
 		foreach ( $posts as $post ) {
@@ -110,12 +114,13 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array( '${1}' );
 
 		// Fetch existing values
-		$allowed_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s  WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%:allowed"',
-			$wpdb->postmeta,
-			BU_Group_Permissions::META_KEY
+		$allowed_posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s",
+				BU_Group_Permissions::META_KEY,
+				'%:allowed'
+			)
 		);
-
-		$allowed_posts = $wpdb->get_results( $allowed_query );
 
 		foreach ( $allowed_posts as $post ) {
 			$new_meta_value = preg_replace( $patterns, $replacements, $post->meta_value );
@@ -123,11 +128,13 @@ class BU_Section_Editing_Upgrader {
 		}
 
 		// Fetch existing values
-		$denied_query = sprintf( 'SELECT `post_id`, `meta_value` FROM %s WHERE `meta_key` = "%s" AND `meta_value` LIKE "%%denied"',
-			$wpdb->postmeta,
-			BU_Group_Permissions::META_KEY
+		$denied_posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s",
+				BU_Group_Permissions::META_KEY,
+				'%denied'
+			)
 		);
-		$denied_posts = $wpdb->get_results( $denied_query );
 
 		// Loop through and update
 		foreach ( $denied_posts as $post ) {
@@ -177,8 +184,13 @@ class BU_Section_Editing_Upgrader {
 				$group = $gc->add_group( $groupdata );
 
 				// Grab all post IDS that have permissions set for this group
-				$post_meta_query = sprintf( "SELECT post_id FROM %s WHERE meta_key = '%s' AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, $old_id );
-				$posts_to_update = $wpdb->get_col( $post_meta_query );
+				$posts_to_update = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+						BU_Group_Permissions::META_KEY,
+						$old_id
+					)
+				);
 
 				// Update one by one
 				foreach ( $posts_to_update as $pid ) {
