@@ -56,8 +56,17 @@ function buse_bu_navigation_filter_posts( $posts ) {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys( $posts );
-			$query = sprintf( "SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value IN (%s)", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode( ',', $ids ), implode( ',', $section_groups ) );
-			$group_meta = $wpdb->get_results( $query, OBJECT_K ); // get results as objects in an array keyed on post_id
+
+			$group_meta = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN (%s) AND meta_value IN (%s)",
+					BU_Group_Permissions::META_KEY,
+					implode( ',', array_map( 'intval', $ids ) ),
+					implode( ',', array_map( 'intval', $section_groups ) )
+				)
+				, OBJECT_K
+			); // get results as objects in an array keyed on post_id
+
 			if ( ! is_array( $group_meta ) ) {
 				$group_meta = array();
 			}
