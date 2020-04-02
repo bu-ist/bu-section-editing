@@ -95,14 +95,14 @@ class BU_Group_Permissions {
 			if ( ! empty( $allowed_ids ) ) {
 
 				// Make sure we don't add allowed meta twice
-				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
-					$wpdb->postmeta,
-					implode( ',', $allowed_ids ),
-					self::META_KEY,
-					$group_id
-				);
-
-				$previously_allowed = $wpdb->get_col( $allowed_select );
+				$previously_allowed = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
+						implode( ',', $allowed_ids ),
+						self::META_KEY,
+						$group_id
+					)
+				 );
 				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
 
 				foreach ( $additions as $post_id ) {
@@ -117,22 +117,25 @@ class BU_Group_Permissions {
 			if ( ! empty( $denied_ids ) ) {
 
 				// Select meta_id's for removal based on incoming posts
-				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
-					$wpdb->postmeta,
-					implode( ',', $denied_ids ),
-					self::META_KEY,
-					$group_id
-				);
-
-				$denied_meta_ids = $wpdb->get_col( $denied_select );
+				$denied_meta_ids = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
+						implode( ',', array_map( 'intval', $denied_ids ) ),
+						self::META_KEY,
+						$group_id
+					)
+				 );
 
 				// Bulk deletion
 				if ( ! empty( $denied_meta_ids ) ) {
 
-					$delete_query = sprintf( "DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)", implode( ',', $denied_meta_ids ) );
-
 					// Remove allowed status in one query
-					$results = $wpdb->query( $delete_query );
+					$wpdb->query(
+						$wpdb->prepare(
+							"DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)",
+							implode( ',', array_map( 'intval', $denied_meta_ids ) )
+						)
+					);
 
 					// Purge cache
 					foreach ( $denied_ids as $post_id ) {
@@ -740,8 +743,17 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys( $posts );
-			$query = sprintf( "SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode( ',', $ids ), $this->group->id );
-			$group_meta = $wpdb->get_results( $query, OBJECT_K ); // get results as objects in an array keyed on post_id
+
+			$group_meta = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN (%s) AND meta_value = %s",
+					BU_Group_Permissions::META_KEY,
+					implode( ',', array_map( 'intval', $ids ) ),
+					$this->group->id
+				),
+				OBJECT_K
+			); // get results as objects in an array keyed on post_id
+
 			if ( ! is_array( $group_meta ) ) {
 				$group_meta = array();
 			}

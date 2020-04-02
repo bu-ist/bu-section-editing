@@ -693,7 +693,10 @@ class BU_Groups_Admin {
 
 		// Redirect if we have one
 		if ( $redirect_url ) {
-			wp_redirect( $redirect_url );
+
+			// Use safe redirect as the redirect URL built with manage_groups_url() begins
+			// with admin_url and the final URL should be local.
+			wp_safe_redirect( $redirect_url );
 			die();
 		}
 
