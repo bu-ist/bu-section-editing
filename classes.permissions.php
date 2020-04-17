@@ -122,7 +122,7 @@ class BU_Group_Permissions {
 				// Select meta_id's for removal based on incoming posts
 				$denied_meta_ids = $wpdb->get_col(
 					$wpdb->prepare(
-						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$ids}) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$denied_ids}) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						self::META_KEY,
 						$group_id
 					)
