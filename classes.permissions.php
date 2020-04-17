@@ -116,11 +116,13 @@ class BU_Group_Permissions {
 
 			if ( ! empty( $denied_ids ) ) {
 
+				// Sanitize the list of IDs for direct use in the query.
+				$denied_ids = implode( ',', array_map( 'intval', $denied_ids ) );
+
 				// Select meta_id's for removal based on incoming posts
 				$denied_meta_ids = $wpdb->get_col(
 					$wpdb->prepare(
-						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
-						implode( ',', array_map( 'intval', $denied_ids ) ),
+						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$denied_ids}) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						self::META_KEY,
 						$group_id
 					)
@@ -129,13 +131,11 @@ class BU_Group_Permissions {
 				// Bulk deletion
 				if ( ! empty( $denied_meta_ids ) ) {
 
+					// Sanitize the list of IDs for direct use in the query.
+					$denied_meta_ids = implode( ',', array_map( 'intval', $denied_meta_ids ) );
+
 					// Remove allowed status in one query
-					$wpdb->query(
-						$wpdb->prepare(
-							"DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)",
-							implode( ',', array_map( 'intval', $denied_meta_ids ) )
-						)
-					);
+					$wpdb->query( "DELETE FROM $wpdb->postmeta WHERE meta_id IN ({$denied_meta_ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 					// Purge cache
 					foreach ( $denied_ids as $post_id ) {
@@ -744,11 +744,13 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			/* Gather all group post meta in one shot */
 			$ids = array_keys( $posts );
 
+			// Sanitize the list of IDs for direct use in the query.
+			$ids = implode( ',', array_map( 'intval', $ids ) );
+
 			$group_meta = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN (%s) AND meta_value = %s",
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ({$ids}) AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					BU_Group_Permissions::META_KEY,
-					implode( ',', array_map( 'intval', $ids ) ),
 					$this->group->id
 				),
 				OBJECT_K
