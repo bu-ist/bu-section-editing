@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/bu-ist/bu-section-editing",
   "devDependencies": {
-    "grunt": "^1.0.2",
+    "grunt": "^1.5.2",
     "grunt-contrib-uglify": "^3.3.0",
     "grunt-contrib-watch": "^1.0.0",
     "matchdep": "^2.0.0"
