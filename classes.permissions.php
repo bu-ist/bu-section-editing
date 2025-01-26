@@ -95,14 +95,14 @@ class BU_Group_Permissions {
 			if ( ! empty( $allowed_ids ) ) {
 
 				// Make sure we don't add allowed meta twice
-				$previously_allowed = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
-						implode( ',', $allowed_ids ),
-						self::META_KEY,
-						$group_id
-					)
-				 );
+				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
+					$wpdb->postmeta,
+					implode( ',', $allowed_ids ),
+					self::META_KEY,
+					$group_id
+				);
+
+				$previously_allowed = $wpdb->get_col( $allowed_select );
 				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
 
 				foreach ( $additions as $post_id ) {
@@ -116,26 +116,23 @@ class BU_Group_Permissions {
 
 			if ( ! empty( $denied_ids ) ) {
 
-				// Sanitize the list of IDs for direct use in the query.
-				$denied_ids = implode( ',', array_map( 'intval', $denied_ids ) );
-
 				// Select meta_id's for removal based on incoming posts
-				$denied_meta_ids = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$denied_ids}) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-						self::META_KEY,
-						$group_id
-					)
-				 );
+				$denied_select = sprintf("SELECT meta_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
+					$wpdb->postmeta,
+					implode( ',', $denied_ids ),
+					self::META_KEY,
+					$group_id
+				);
+
+				$denied_meta_ids = $wpdb->get_col( $denied_select );
 
 				// Bulk deletion
 				if ( ! empty( $denied_meta_ids ) ) {
 
-					// Sanitize the list of IDs for direct use in the query.
-					$denied_meta_ids = implode( ',', array_map( 'intval', $denied_meta_ids ) );
+					$delete_query = sprintf( "DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)", implode( ',', $denied_meta_ids ) );
 
 					// Remove allowed status in one query
-					$wpdb->query( "DELETE FROM $wpdb->postmeta WHERE meta_id IN ({$denied_meta_ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$results = $wpdb->query( $delete_query );
 
 					// Purge cache
 					foreach ( $denied_ids as $post_id ) {
@@ -411,8 +408,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Publish information
 		$meta = '';
-		$published_label = __( 'Published on', BUSE_TEXTDOMAIN );
-		$draft_label = __( 'Draft', BUSE_TEXTDOMAIN );
+		$published_label = __( 'Published on', 'bu-section-editing' );
+		$draft_label = __( 'Draft', 'bu-section-editing' );
 
 		switch ( $p['metadata']['post_status'] ) {
 
@@ -434,7 +431,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 
 		// Perm actions button
 		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
-		$perm_label = $perm_state == 'allowed' ? __( 'Allow', BUSE_TEXTDOMAIN ) : __( 'Deny', BUSE_TEXTDOMAIN );
+		$perm_label = $perm_state == 'allowed' ? __( 'Allow', 'bu-section-editing' ) : __( 'Deny', 'bu-section-editing' );
 		$button = sprintf( '<button class="edit-perms %s">%s</button>', $perm_state, $perm_label );
 
 		// Anchor
@@ -472,7 +469,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID, 'ignore_global' );
 		$perm = $editable ? 'allowed' : 'denied';
 
-		$post->post_title = empty( $post->post_title ) ? __( '(no title)', BUSE_TEXTDOMAIN ) : $post->post_title;
+		$post->post_title = empty( $post->post_title ) ? __( '(no title)', 'bu-section-editing' ) : $post->post_title;
 
 		$p = array(
 			'attr' => array(
@@ -743,19 +740,8 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys( $posts );
-
-			// Sanitize the list of IDs for direct use in the query.
-			$ids = implode( ',', array_map( 'intval', $ids ) );
-
-			$group_meta = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ({$ids}) AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					BU_Group_Permissions::META_KEY,
-					$this->group->id
-				),
-				OBJECT_K
-			); // get results as objects in an array keyed on post_id
-
+			$query = sprintf( "SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode( ',', $ids ), $this->group->id );
+			$group_meta = $wpdb->get_results( $query, OBJECT_K ); // get results as objects in an array keyed on post_id
 			if ( ! is_array( $group_meta ) ) {
 				$group_meta = array();
 			}
