@@ -5,7 +5,7 @@ Plugin URI: http://developer.bu.edu/bu-section-editing/
 Author: Boston University (IS&T)
 Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
-Version: 0.10.0
+Version: 0.9.9
 Text Domain: bu-section-editing
 Domain Path: /languages
 */
@@ -73,7 +73,7 @@ class BU_Section_Editing_Plugin {
 
 	public static function l10n() {
 
-		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
+		load_plugin_textdomain( 'bu-section-editing', false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 
@@ -112,17 +112,17 @@ class BU_Section_Editing_Plugin {
 		$msg = '';
 
 		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
-			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', BUSE_TEXTDOMAIN ) );
-			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', 'bu-section-editing' ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', 'bu-section-editing' ),
 			$install_link ) . '</p>';
 		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
-			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __( 'upgrade your copy of BU Navigation', BUSE_TEXTDOMAIN ) );
-			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
-			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', BUSE_TEXTDOMAIN ) . '</p>';
+			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __( 'upgrade your copy of BU Navigation', 'bu-section-editing' ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
+			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please %s to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				__( 'Please %s to enable permissions for hierarchical post types.', 'bu-section-editing' ),
 			$upgrade_link ) . '</p>';
 		}
 
@@ -173,7 +173,7 @@ class BU_Section_Editing_Plugin {
 		}
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift( $links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', BUSE_TEXTDOMAIN ) . '</a>' );
+		array_unshift( $links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', 'bu-section-editing' ) . '</a>' );
 
 		return $links;
 	}

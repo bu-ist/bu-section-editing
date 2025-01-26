@@ -51,8 +51,8 @@ class BU_Edit_Groups {
 	static public function register_post_type() {
 
 		$labels = array(
-			'name'                => _x( 'Section Groups', 'Post Type General Name', BUSE_TEXTDOMAIN ),
-			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', BUSE_TEXTDOMAIN ),
+			'name'                => _x( 'Section Groups', 'Post Type General Name', 'bu-section-editing' ),
+			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', 'bu-section-editing' ),
 		);
 
 		$args = array(
@@ -68,7 +68,7 @@ class BU_Edit_Groups {
 			'menu_icon'           => '',
 			'can_export'          => true,
 			'has_archive'         => false,
-			'exclude_from_search' => true,
+			'exclude_from_search' => false,
 			'publicly_queryable'  => false,
 			'rewrite'             => false,
 			'capability_type'     => 'post',
@@ -360,15 +360,12 @@ class BU_Edit_Groups {
 		// Maybe filter by post type and status
 		if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			// Only a single post type is expected, so it should be prepared as a string.
-			$post_type_clause = $wpdb->prepare( "AND post_type = %s", $post_type );
+			$post_type_clause = "AND post_type = '$post_type' ";
 
 			if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
 				if ( $bu_navigation_plugin->supports( 'links' ) ) {
 					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
-
-					// Only a single post type string is passed, so it can be prepared as normal.
-					$post_type_clause = $wpdb->prepare( "AND post_type IN ('page', %s) ", $link_post_type );
+					$post_type_clause = sprintf( "AND post_type IN ('page','%s') ", $link_post_type );
 				}
 			}
 		}
@@ -383,7 +380,6 @@ class BU_Edit_Groups {
 
 				if ( $pto->hierarchical ) {
 
-					// The `$post_type_clause` statement is prepared above and can be considered safe here.
 					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
 
 				}
@@ -394,17 +390,17 @@ class BU_Edit_Groups {
 			}
 		}
 
-		// Prepare the first section of the SQL statement.
-		$count_query = $wpdb->prepare(
-			"SELECT ID FROM {$wpdb->posts} WHERE ( ID IN ( SELECT post_ID FROM {$wpdb->postmeta} WHERE meta_key = %s",
-			BU_Group_Permissions::META_KEY
+		$count_query = sprintf( "SELECT ID FROM %s WHERE ( ID IN ( SELECT post_ID from %s WHERE meta_key = '%s' AND meta_value IN (%s) ) %s) %s",
+			$wpdb->posts,
+			$wpdb->postmeta,
+			BU_Group_Permissions::META_KEY,
+			implode( ',', $group_ids ),
+			$post_type_clause,
+			$post_status_clause
 		);
 
-		// Build the remaining SQL from previously prepared statements. The `group_ids` array is forced to integer values for safety.
-		$count_query .= " AND meta_value IN (" . implode( ',', array_map( 'intval', $group_ids ) ) . ') ) ' . $post_type_clause . ') ' . $post_status_clause;
-
 		// Execute query
-		$ids = $wpdb->get_col( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$ids = $wpdb->get_col( $count_query );
 
 		return $ids;
 	}

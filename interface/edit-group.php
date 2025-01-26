@@ -1,11 +1,11 @@
 <div id="section-group-editor" class="wrap">
 	<div id="icon-section-group" class="icon32"></div>
-	<h2><?php echo $page_title; ?> <a href="<?php echo esc_attr( BU_Groups_Admin::manage_groups_url( 'add' ) );?>" class="button add-new-h2"><?php _e( 'Add New', BUSE_TEXTDOMAIN ); ?></a></h2>
+	<h2><?php echo $page_title; ?> <a href="<?php echo esc_attr( BU_Groups_Admin::manage_groups_url( 'add' ) );?>" class="button add-new-h2"><?php _e( 'Add New', 'bu-section-editing' ); ?></a></h2>
 	<div class="form-wrap">
 		<h3 class="nav-tab-wrapper">
-			<a id="nav-tab-properties" href="#group-properties-panel" class="nav-link nav-tab <?php if ( $tab == 'properties' ) { echo 'nav-tab-active'; } ?>" data-target="properties" ><?php _e( 'Properties', BUSE_TEXTDOMAIN ); ?></a>
-			<a id="nav-tab-members" href="#group-members-panel" class="nav-link nav-tab <?php if ( $tab == 'members' ) { echo 'nav-tab-active'; } ?>" data-target="members" ><?php _e( 'Members', BUSE_TEXTDOMAIN ); ?></a>
-			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-link nav-tab <?php if ( $tab == 'permissions' ) { echo 'nav-tab-active'; } ?>" data-target="permissions" ><?php _e( 'Permissions', BUSE_TEXTDOMAIN ); ?></a>
+			<a id="nav-tab-properties" href="#group-properties-panel" class="nav-link nav-tab <?php if ( $tab == 'properties' ) { echo 'nav-tab-active'; } ?>" data-target="properties" ><?php _e( 'Properties', 'bu-section-editing' ); ?></a>
+			<a id="nav-tab-members" href="#group-members-panel" class="nav-link nav-tab <?php if ( $tab == 'members' ) { echo 'nav-tab-active'; } ?>" data-target="members" ><?php _e( 'Members', 'bu-section-editing' ); ?></a>
+			<a id="nav-tab-permissions" href="#group-permissions-panel" class="nav-link nav-tab <?php if ( $tab == 'permissions' ) { echo 'nav-tab-active'; } ?>" data-target="permissions" ><?php _e( 'Permissions', 'bu-section-editing' ); ?></a>
 		</h3>
 		<form name="group-edit-form" id="group-edit-form" method="post">
 			<?php if ( -1 == $group_id ) :  ?>
