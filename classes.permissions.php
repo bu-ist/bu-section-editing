@@ -330,7 +330,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html':default:
-					echo $this->get_posts();
+					echo esc_html( $this->get_posts(), 'bu-section-editing' );
 				break;
 		}
 
@@ -590,7 +590,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html': default:
-					echo $this->get_posts( $this->child_of );
+					echo esc_html($this->get_posts( $this->child_of ), 'bu-section-editing');
 				break;
 
 		}

@@ -228,7 +228,7 @@ class BU_Groups_Admin {
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
 				'label' => __( 'Editable', 'bu-section-editing' ),
-				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>' ),
+				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>', 'bu-section-editing' ),
 				'public' => true,
 				'show_in_admin_all' => true,
 				'publicly_queryable' => true,
@@ -542,14 +542,14 @@ class BU_Groups_Admin {
 		// List errors first
 		if ( isset( $notices['error'] ) ) {
 			foreach ( $notices['error'] as $msg ) {
-				printf( '<div id="message" class="error">%s</div>', $msg );
+				printf( '<div id="message" class="error">%s</div>', esc_html( $msg ) );
 			}
 		}
 
 		// List notices second
 		if ( isset( $notices['update'] ) ) {
 			foreach ( $notices['update'] as $msg ) {
-				printf( '<div id="message" class="updated fade">%s</div>', $msg );
+				printf( '<div id="message" class="updated fade">%s</div>', esc_html( $msg ) );
 			}
 		}
 
@@ -703,7 +703,7 @@ class BU_Groups_Admin {
 			$group = $groups->get( $group_id );
 
 			if ( empty( $group ) ) {
-				wp_die( 'No section editing group exists with an ID of : ' . $group_id );
+				wp_die( 'No section editing group exists with an ID of : ' . esc_html( $group_id ) );
 			}
 		}
 
