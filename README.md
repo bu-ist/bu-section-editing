@@ -2,8 +2,8 @@
 **Contributors:** mgburns, gcorne, awbauer, inderpreet99, anton-kachurin  
 **Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu  
 **Requires at least:** 3.1  
-**Tested up to:** 4.5.3  
-**Stable tag:** 0.10.0  
+**Tested up to:** 6.7.2  
+**Stable tag:** 0.10.0
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -81,6 +81,10 @@ For more information on creating roles for use with section editing groups, see 
 
 
 ## Changelog
+
+### 0.10.0
+* Conform to WP Coding Standards
+* Tested for 6.7.2 compatibility
 
 ### 0.9.9
 * Allow to add/edit posts of custom types
