@@ -228,6 +228,7 @@ class BU_Groups_Admin {
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
 				'label' => __( 'Editable', 'bu-section-editing' ),
+				// translators: %s stands for number of labels.
 				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>', 'bu-section-editing' ),
 				'public' => true,
 				'show_in_admin_all' => true,
@@ -458,9 +459,11 @@ class BU_Groups_Admin {
 			'memberCountPluralLabel'    => __( 'members', 'bu-section-editing' ),
 			'nameRequiredNotice'        => __( 'Section editing groups require a name.', 'bu-section-editing' ),
 			'navDepAlertText'           => sprintf(
+				// translators: %s stands for the BU Navigation install link.
 				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s", 'bu-section-editing' ),
 			BUSE_NAV_INSTALL_LINK ),
 			'navDepEditorText'           => sprintf(
+				// translators: %s stands for an html anchor tag to the BU Navigation install link.
 				__( 'Please install the %s in order to set permissions for this post type.', 'bu-section-editing' ),
 			$nav_plugin_link ),
 			'permAllowLabel'            => __( 'Allow', 'bu-section-editing' ),
@@ -469,10 +472,12 @@ class BU_Groups_Admin {
 			'permNonEditableLabel'      => __( 'non-editable', 'bu-section-editing' ),
 			'permGlobalLabel'           => __( 'All', 'bu-section-editing' ),
 			'userWrongRoleNotice'       => sprintf(
+				// translators: %s stands for a link to the users page.
 				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', 'bu-section-editing' ),
 			$users_link ),
 			'userAlreadyMemberNotice'   => __( 'is already a member of this group.', 'bu-section-editing' ),
 			'userNotExistsNotice'       => sprintf(
+				// translators: %s stands for a link to the add users page.
 				__( 'is not a member of this site.  Please %s with the "Section Editor" role.', 'bu-section-editing' ),
 			$add_user_link ),
 			);
@@ -542,14 +547,14 @@ class BU_Groups_Admin {
 		// List errors first
 		if ( isset( $notices['error'] ) ) {
 			foreach ( $notices['error'] as $msg ) {
-				printf( '<div id="message" class="error">%s</div>', esc_html( $msg ) );
+				printf( '<div id="message" class="error">%s</div>', wp_kses_post( $msg ) );
 			}
 		}
 
 		// List notices second
 		if ( isset( $notices['update'] ) ) {
 			foreach ( $notices['update'] as $msg ) {
-				printf( '<div id="message" class="updated fade">%s</div>', esc_html( $msg ) );
+				printf( '<div id="message" class="updated fade">%s</div>', wp_kses_post( $msg ) );
 			}
 		}
 
@@ -601,8 +606,10 @@ class BU_Groups_Admin {
 		if ( $valid_user_count == 0 ) {
 
 			$manage_users_url = admin_url( 'users.php' );
+			// translators: %s stands for the manage users url.
 			$users_link = sprintf( '<a href="%s">%s</a>', $manage_users_url, __( 'users page', 'bu-section-editing' ) );
 			$no_users_warning = __( 'There are currently no users on your site that are capable of being assigned to section editing groups.', 'bu-section-editing' );
+			// translators: %s stands for the manage users url.
 			$role_notice = sprintf( __( 'To start using this plugin, visit the %s and change the role for any users you would like to add to a section editing group to "Section Editor".', 'bu-section-editing' ), $users_link );
 
 			$notices['error'][] = "<p>$no_users_warning</p><p>$role_notice</p>";

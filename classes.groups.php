@@ -390,17 +390,11 @@ class BU_Edit_Groups {
 			}
 		}
 
-		$count_query = sprintf( "SELECT ID FROM %s WHERE ( ID IN ( SELECT post_ID from %s WHERE meta_key = '%s' AND meta_value IN (%s) ) %s) %s",
-			$wpdb->posts,
-			$wpdb->postmeta,
-			BU_Group_Permissions::META_KEY,
-			implode( ',', $group_ids ),
-			$post_type_clause,
-			$post_status_clause
-		);
 
 		// Execute query
-		$ids = $wpdb->get_col( $count_query );
+		$ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT ID FROM {$wpdb->posts} WHERE ( ID IN ( SELECT post_ID FROM {$wpdb->postmeta} WHERE meta_key = %s",
+			BU_Group_Permissions::META_KEY) );
 
 		return $ids;
 	}

@@ -36,7 +36,8 @@
 					<?php else : ?>
 					<p class="alignleft">
 						<input id="perm-search-<?php echo esc_attr($pt->name, 'bu-section-editing'); ?>" type="text" name="perm-action[][search]" class="perm-search <?php echo esc_attr($hiearchical_class, 'bu-section-editing'); ?>" >
-						<button class="perm-search flat button-secondary"><?php esc_html( __( 'Search %s', 'bu-section-editing' ), $pt->label ); ?></button>
+						<?php // translators: %s stands for the name of the content type ?>
+						<button class="perm-search flat button-secondary"><?php printf( esc_html__( 'Search %s', 'bu-section-editing' ), esc_html( $pt->label ) ); ?></button>
 					</p>
 					<p class="alignright">
 						<a class="perm-editor-bulk-edit" href="#" title="<?php esc_attr_e( 'Enable bulk edit mode', 'bu-section-editing' ); ?>"><?php esc_html_e( 'Bulk Edit', 'bu-section-editing' ); ?></a>

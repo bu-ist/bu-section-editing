@@ -32,9 +32,9 @@
 			?>
 			<tr <?php echo esc_html( $li_class, 'bu-section-editing' ); ?>>
 				<td><a href="<?php echo esc_url( $edit_url, 'bu-section-editing' ) ?>"><?php echo esc_html( $group->name, 'bu-section-editing' ); ?></a></td>
-				<td><?php echo esc_html( $description, 'bu-section-editing' ); ?></td>
+				<td><?php echo wp_kses_post( $description, 'bu-section-editing' ); ?></td>
 				<td><?php echo count( $group->users ); ?></td>
-				<td><?php echo esc_html( BU_Groups_Admin::group_permissions_string( $group ), 'bu-section-editing' ); ?></td>
+				<td><?php echo wp_kses_post( BU_Groups_Admin::group_permissions_string( $group ), 'bu-section-editing' ); ?></td>
 				<td>
 					<a class="submitdelete" href="<?php echo esc_attr( BU_Groups_Admin::manage_groups_url( 'delete', array( 'id' => esc_attr($group->id, 'bu-section-editing') ) ), 'bu-section-editing' ); ?>">
 					<img src="<?php echo esc_url( plugins_url( BUSE_PLUGIN_PATH . '/images/group_remove.png' ), 'bu-section-editing' ); ?>" alt="<?php esc_attr_e( 'Delete', 'bu-section-editing' ); ?>"></a>

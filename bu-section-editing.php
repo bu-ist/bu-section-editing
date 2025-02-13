@@ -8,6 +8,8 @@ Description: Enhances WordPress content editing workflow by providing section ed
 Version: 0.9.9
 Text Domain: bu-section-editing
 Domain Path: /languages
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 /**
@@ -115,6 +117,7 @@ class BU_Section_Editing_Plugin {
 			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', 'bu-section-editing' ) );
 			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
+				// translators: %s stands for the BU Navigation install link.
 				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', 'bu-section-editing' ),
 			$install_link ) . '</p>';
 		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
@@ -122,6 +125,7 @@ class BU_Section_Editing_Plugin {
 			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
+				// translators: %s stands for the BU Navigation upgrade link.
 				__( 'Please %s to enable permissions for hierarchical post types.', 'bu-section-editing' ),
 			$upgrade_link ) . '</p>';
 		}
@@ -149,7 +153,7 @@ class BU_Section_Editing_Plugin {
 		$notice = get_transient( 'buse_nav_dep_nag' );
 
 		if ( $notice ) {
-			echo "<div class=\"error\">$notice</div>\n";
+			echo esc_html("<div class=\"error\">$notice</div>\n", 'bu-section-editing');
 			delete_transient( 'buse_nav_dep_nag' );
 		}
 
