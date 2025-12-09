@@ -309,95 +309,111 @@ class BU_Edit_Groups {
 	 *
 	 * @return array post ids for the given post type, group or user
 	 */
-	public function get_allowed_posts( $args = array() ) {
-		global $wpdb, $bu_navigation_plugin;
+	/**
+     * Get allowed post ids, optionally filtered by user ID, group or post_type
+     *
+     * @param $args array optional args
+     * @return array post ids for the given post type, group or user
+     */
+    public function get_allowed_posts( $args = array() ) {
+        global $wpdb, $bu_navigation_plugin;
 
-		$defaults = array(
-			'user_id' => null,
-			'group' => null,
-			'post_type' => null,
-			'include_unpublished' => false,
-			'include_links' => true,
-			);
+        $defaults = array(
+            'user_id' => null,
+            'group' => null,
+            'post_type' => null,
+            'include_unpublished' => false,
+            'include_links' => true,
+            );
 
-		extract( wp_parse_args( $args, $defaults ) );
+        extract( wp_parse_args( $args, $defaults ) );
 
-		$group_ids = array();
+        $group_ids = array();
 
-		// If user_id is passed, populate group ID's from their memberships
-		if ( $user_id ) {
+        // If user_id is passed, populate group ID's from their memberships
+        if ( $user_id ) {
 
-			if ( is_null( get_userdata( $user_id ) ) ) {
-				error_log( 'No user found for ID: ' . $user_id );
-				return array();
-			}
+            if ( is_null( get_userdata( $user_id ) ) ) {
+                error_log( 'No user found for ID: ' . $user_id );
+                return array();
+            }
 
-			// Get groups for users
-			$group_ids = $this->find_groups_for_user( $user_id, 'ids' );
+            // Get groups for users
+            $group_ids = $this->find_groups_for_user( $user_id, 'ids' );
 
-		}
+        }
 
-		// If no user ID is passed, but a group is, convert to array
-		if ( is_null( $user_id ) && $group ) {
+        // If no user ID is passed, but a group is, convert to array
+        if ( is_null( $user_id ) && $group ) {
 
-			if ( is_array( $group ) ) {
-				$group_ids = $group;
-			}
+            if ( is_array( $group ) ) {
+                $group_ids = $group;
+            }
 
-			if ( is_numeric( $group ) && $group > 0 ) {
-				$group_ids = array( $group );
-			}
-		}
+            if ( is_numeric( $group ) && $group > 0 ) {
+                $group_ids = array( $group );
+            }
+        }
 
-		// Bail if we don't have any valid groups by now
-		if ( empty( $group_ids ) ) {
-			return array();
-		}
+        // Bail if we don't have any valid groups by now
+        if ( empty( $group_ids ) ) {
+            return array();
+        }
 
-		// Generate query
-		$post_type_clause = $post_status_clause = '';
+        // Generate query
+        $post_type_clause = $post_status_clause = '';
 
-		// Maybe filter by post type and status
-		if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
+        // Maybe filter by post type and status
+        if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			$post_type_clause = "AND post_type = '$post_type' ";
+            $post_type_clause = "AND post_type = '" . esc_sql( $post_type ) . "' ";
 
-			if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
-				if ( $bu_navigation_plugin->supports( 'links' ) ) {
-					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
-					$post_type_clause = sprintf( "AND post_type IN ('page','%s') ", $link_post_type );
-				}
-			}
-		}
+            if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
+                if ( $bu_navigation_plugin->supports( 'links' ) ) {
+                    $link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
+                    $post_type_clause = "AND post_type IN ('page','" . esc_sql( $link_post_type ) . "') ";
+                }
+            }
+        }
 
-		// Include unpublished should only work for hierarchical post types
-		if ( $include_unpublished ) {
+        // Include unpublished should only work for hierarchical post types
+        if ( $include_unpublished ) {
 
-			// Flat post types are not allowed to include unpublished, as perms can be set for drafts
-			if ( $post_type ) {
+            // Flat post types are not allowed to include unpublished, as perms can be set for drafts
+            if ( $post_type ) {
 
-				$pto = get_post_type_object( $post_type );
+                $pto = get_post_type_object( $post_type );
 
-				if ( $pto->hierarchical ) {
+                if ( $pto->hierarchical ) {
 
-					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
+                    $post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
 
-				}
-			} else {
+                }
+            } else {
 
-				$post_status_clause = "OR post_status IN ('draft','pending')";
+                $post_status_clause = "OR post_status IN ('draft','pending')";
 
-			}
-		}
+            }
+        }
 
+        // Build group_id IN clause safely
+        $group_ids = array_map( 'intval', $group_ids );
+        $group_in = implode( ',', $group_ids );
 
-		// Execute query
-		$ids = $wpdb->get_col( $wpdb->prepare(
-			"SELECT ID FROM {$wpdb->posts} WHERE ( ID IN ( SELECT post_ID FROM {$wpdb->postmeta} WHERE meta_key = %s",
-			BU_Group_Permissions::META_KEY) );
+        // Final query: find posts whose ID appears in postmeta entries for our group IDs
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ({$group_in}) ) {$post_type_clause}";
 
-		return $ids;
-	}
+        if ( $post_status_clause ) {
+            $sql .= " {$post_status_clause} ";
+        }
+
+        // Use prepare for the meta_key substitution
+        $prepared = $wpdb->prepare( $sql, BU_Group_Permissions::META_KEY );
+
+        $ids = $wpdb->get_col( $prepared );
+
+        return $ids;
+    }
 
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type

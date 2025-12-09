@@ -70,93 +70,91 @@ class BU_Group_Permissions {
 	}
 
 	/**
-	 * Update permissions for a group
-	 *
-	 * @param int   $group_id ID of group to modify ACL for
-	 * @param array $permissions Permissions, as an associative array indexed by post type
-	 */
-	public static function update_group_permissions( $group_id, $permissions ) {
-		global $wpdb;
+     * Update permissions for a group
+     *
+     * @param int   $group_id ID of group to modify ACL for
+     * @param array $permissions Permissions, as an associative array indexed by post type
+     */
+    public static function update_group_permissions( $group_id, $permissions ) {
+        global $wpdb;
 
-		if ( ! is_array( $permissions ) ) {
-			return false;
-		}
+        if ( ! is_array( $permissions ) ) {
+            return false;
+        }
 
-		foreach ( $permissions as $post_type => $ids_by_status ) {
+        foreach ( $permissions as $post_type => $ids_by_status ) {
 
-			if ( ! is_array( $ids_by_status ) ) {
-				error_log( "Unexpected value found while updating permissions: $ids_by_status" );
-				continue;
-			}
+            if ( ! is_array( $ids_by_status ) ) {
+                error_log( "Unexpected value found while updating permissions: $ids_by_status" );
+                continue;
+            }
 
-			// Incoming allowed posts
-			$allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
+            //
+            // Handle allowed IDs
+            //
+            $allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
+            $allowed_ids = array_map( 'intval', (array) $allowed_ids );
 
-			if ( ! empty( $allowed_ids ) ) {
-				/*
-				// Make sure we don't add allowed meta twice
-				$allowed_select = sprintf("SELECT post_id FROM %s WHERE post_id IN (%s) AND meta_key = '%s' AND meta_value = '%s'",
-					$wpdb->postmeta,
-					implode( ',', $allowed_ids ),
-					self::META_KEY,
-					$group_id
-				);
+            if ( ! empty( $allowed_ids ) ) {
 
-				$previously_allowed = $wpdb->get_col( $allowed_select );
-				*/
-				$previously_allowed = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
-						implode( ',', $allowed_ids ),
-						self::META_KEY,
-						$group_id
-					)
-				 );
-				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
+                // Build safe IN list from ints
+                $in = implode( ',', $allowed_ids );
 
-				foreach ( $additions as $post_id ) {
+                // Find which of these are already present
+                $previously_allowed = $wpdb->get_col(
+                    "SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ({$in}) AND meta_key = '"
+                    . esc_sql( self::META_KEY ) . "' AND meta_value = '" . esc_sql( $group_id ) . "'"
+                );
 
-					add_post_meta( $post_id, self::META_KEY, $group_id );
-				}
-			}
+                $additions = array_diff( $allowed_ids, (array) $previously_allowed );
 
-			// Incoming restricted posts
-			$denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
+                foreach ( $additions as $post_id ) {
+                    add_post_meta( $post_id, self::META_KEY, $group_id );
+                    // Purge cache for this post's post_meta
+                    wp_cache_delete( $post_id, 'post_meta' );
+                }
+            }
 
-			if ( ! empty( $denied_ids ) ) {
+            //
+            // Handle denied IDs (remove meta rows)
+            //
+            $denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
+            $denied_ids = array_map( 'intval', (array) $denied_ids );
 
-				// Sanitize the list of IDs for direct use in the query.
-				$denied_ids = implode( ',', array_map( 'intval', $denied_ids ) );
-				// Select meta_id's for removal based on incoming posts
-				$denied_meta_ids = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$denied_ids}) AND meta_key = %s AND meta_value = %s",
-						self::META_KEY,
-						$group_id
-					)
-				 );
+            if ( ! empty( $denied_ids ) ) {
 
-				// Bulk deletion
-				if ( ! empty( $denied_meta_ids ) ) {
+                $in = implode( ',', $denied_ids );
 
-					// $delete_query = sprintf( "DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)", implode( ',', $denied_meta_ids ) );
+                // Get meta rows so we can delete them and purge relevant post caches
+                $rows = $wpdb->get_results(
+                    "SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ({$in}) AND meta_key = '"
+                    . esc_sql( self::META_KEY ) . "' AND meta_value = '" . esc_sql( $group_id ) . "'",
+                    OBJECT
+                );
 
+                if ( ! empty( $rows ) ) {
 
-					// Remove allowed status in one query
-					$denied_ids = $wpdb->prepare( 
-						"DELETE FROM $wpdb->postmeta WHERE meta_id IN (%s)",
-						implode( ',', $denied_meta_ids ),
-					);
+                    $meta_ids = array();
+                    $post_ids = array();
 
-					// Purge cache
-					foreach ( $denied_ids as $post_id ) {
-						wp_cache_delete( $post_id, 'post_meta' );
-					}
-				}
-			}
-		}
+                    foreach ( $rows as $r ) {
+                        $meta_ids[] = intval( $r->meta_id );
+                        $post_ids[] = intval( $r->post_id );
+                    }
 
-	}
+                    // Execute deletion of postmeta rows
+                    $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_id IN (" . implode( ',', $meta_ids ) . ")" );
+
+                    // Purge post_meta cache for affected posts
+                    foreach ( array_unique( $post_ids ) as $pid ) {
+                        wp_cache_delete( $pid, 'post_meta' );
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
 	public static function delete_group_permissions( $group_id ) {
 
@@ -748,41 +746,41 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 * Add custom section editable properties to the post objects returned by bu_navigation_get_pages()
 	 */
 	public function filter_posts( $posts ) {
-		global $wpdb;
+        global $wpdb;
 
-		if ( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
+        if ( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
-			/* Gather all group post meta in one shot */
-			$ids = array_keys( $posts );
-			/*
-			$query = sprintf( "SELECT post_id, meta_value FROM %s WHERE meta_key = '%s' AND post_id IN (%s) AND meta_value = '%s'", $wpdb->postmeta, BU_Group_Permissions::META_KEY, implode( ',', $ids ), $this->group->id );
-			
-			$group_meta = $wpdb->get_results( $query, OBJECT_K ); // get results as objects in an array keyed on post_id
-			*/
-			$group_meta = $wpdb->get_results($wpdb->prepare(
-				"SELECT post_id, meta_value FROM %s WHERE meta_key = %s AND post_id IN (%s) AND meta_value = %s",
-				$wpdb->postmeta, BU_Group_Permissions::META_KEY, implode( ',', $ids ), $this->group->id
-			), OBJECT_K);
-			if ( ! is_array( $group_meta ) ) {
-				$group_meta = array();
-			}
+            /* Gather all group post meta in one shot */
+            $ids = array_keys( $posts );
+            $ids = array_map( 'intval', $ids );
+            $in = implode( ',', $ids );
 
-			// Append permissions to post object
-			foreach ( $posts as $post ) {
+            $group_meta = $wpdb->get_results(
+                "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '"
+                . esc_sql( self::META_KEY ) . "' AND post_id IN ({$in}) AND meta_value = '"
+                . esc_sql( $this->group->id ) . "'",
+                OBJECT_K
+            );
 
-				$post->editable = false;
+            if ( ! is_array( $group_meta ) ) {
+                $group_meta = array();
+            }
 
-				if ( array_key_exists( $post->ID, $group_meta ) ) {
-					$perm = $group_meta[ $post->ID ];
+            // Append permissions to post object
+            foreach ( $posts as $post ) {
 
-					if ( $perm->meta_value === (string) $this->group->id ) {
-						$post->editable = true;
-					}
-				}
-			}
-		}
+                $post->editable = false;
 
-		return $posts;
+                if ( array_key_exists( $post->ID, $group_meta ) ) {
+                    $perm = $group_meta[ $post->ID ];
 
-	}
+                    if ( $perm->meta_value === (string) $this->group->id ) {
+                        $post->editable = true;
+                    }
+                }
+            }
+        }
+
+        return $posts;
+    }
 }
