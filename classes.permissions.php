@@ -757,7 +757,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
             $group_meta = $wpdb->get_results(
                 "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '"
-                . esc_sql( self::META_KEY ) . "' AND post_id IN ({$in}) AND meta_value = '"
+                . esc_sql( BU_Group_Permissions::META_KEY ) . "' AND post_id IN ({$in}) AND meta_value = '"
                 . esc_sql( $this->group->id ) . "'",
                 OBJECT_K
             );
