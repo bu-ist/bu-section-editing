@@ -1,9 +1,9 @@
 # BU Section Editing #
 **Contributors:** mgburns, gcorne, awbauer, inderpreet99, anton-kachurin  
-**Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu  
+**Tags:** permissions, section, access, acl, user management
 **Requires at least:** 3.1
-**Tested up to:** 6.7.2  
-**Stable tag:** 0.10.1
+**Tested up to:** 6.9
+**Stable tag:** 0.10.2
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -79,12 +79,21 @@ For more information on creating roles for use with section editing groups, see 
 ![Fully integrated with navigation management views presented by the BU Navigation plugin](https://ps.w.org/bu-section-editing/assets/screenshot-5.png)
 
 
-
 ## Changelog
 
-### 0.10.0
+### 0.10.2
 * Conform to WP Coding Standards
-* Tested for 6.7.2 compatibility
+* Tested for 6.9 compatibility
+* Fix jquery 3.x deprecations
+
+### 0.10.1
+* Update outdated node dependencies for gruntfile.
+
+### 0.10.0
+* Fix a handful of incorrectly prepared queries
+
+### 0.9.10
+* Address PHPCS errors for 5.x upgrade preparation
 
 ### 0.9.9
 * Allow to add/edit posts of custom types
@@ -93,7 +102,6 @@ For more information on creating roles for use with section editing groups, see 
 * Show revisions to section editors
 * Add unit tests
 * Conform to WP Coding Standards
-
 
 ### 0.9.7
 * Fix broken admin-side JS in WP 4.5

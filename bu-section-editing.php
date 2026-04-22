@@ -5,7 +5,7 @@ Plugin URI: http://developer.bu.edu/bu-section-editing/
 Author: Boston University (IS&T)
 Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
-Version: 0.10.0
+Version: 0.10.2
 Text Domain: bu-section-editing
 Domain Path: /languages
 License: GPLv2 or later
@@ -54,7 +54,7 @@ class BU_Section_Editing_Plugin {
 	public static $caps;
 	public static $upgrader;
 
-	const BUSE_VERSION = '0.9.9';
+	const BUSE_VERSION = '0.10.1';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	public static function register_hooks() {
@@ -218,6 +218,7 @@ class BU_Section_Editing_Plugin {
 	public static function repopulate_roles() {
 
 		// Look for any query params that signify updates
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- These read-only flags are set by WordPress core after activation/theme changes.
 		if ( array_key_exists( 'activated', $_GET ) || array_key_exists( 'activate', $_GET ) || array_key_exists( 'activate-multi', $_GET ) ) {
 
 			require_once( dirname( __FILE__ ) . '/classes.upgrade.php' );

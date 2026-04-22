@@ -82,12 +82,11 @@ class BU_Group_Permissions {
             return false;
         }
 
-        foreach ( $permissions as $post_type => $ids_by_status ) {
+		foreach ( $permissions as $post_type => $ids_by_status ) {
 
-            if ( ! is_array( $ids_by_status ) ) {
-                error_log( "Unexpected value found while updating permissions: $ids_by_status" );
-                continue;
-            }
+			if ( ! is_array( $ids_by_status ) ) {
+				continue;
+			}
 
             //
             // Handle allowed IDs
@@ -95,16 +94,20 @@ class BU_Group_Permissions {
             $allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
             $allowed_ids = array_map( 'intval', (array) $allowed_ids );
 
-            if ( ! empty( $allowed_ids ) ) {
+			if ( ! empty( $allowed_ids ) ) {
 
-                // Build safe IN list from ints
-                $in = implode( ',', $allowed_ids );
+				$allowed_placeholders = implode( ', ', array_fill( 0, count( $allowed_ids ), '%d' ) );
+				$allowed_query_args = array_merge( $allowed_ids, array( self::META_KEY, $group_id ) );
 
-                // Find which of these are already present
-                $previously_allowed = $wpdb->get_col(
-                    "SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ({$in}) AND meta_key = '"
-                    . esc_sql( self::META_KEY ) . "' AND meta_value = '" . esc_sql( $group_id ) . "'"
-                );
+				// Find which of these are already present
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
+				$previously_allowed = $wpdb->get_col(
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+					$wpdb->prepare(
+						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ($allowed_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						...$allowed_query_args
+					)
+				);
 
                 $additions = array_diff( $allowed_ids, (array) $previously_allowed );
 
@@ -121,16 +124,21 @@ class BU_Group_Permissions {
             $denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
             $denied_ids = array_map( 'intval', (array) $denied_ids );
 
-            if ( ! empty( $denied_ids ) ) {
+			if ( ! empty( $denied_ids ) ) {
 
-                $in = implode( ',', $denied_ids );
+				$denied_placeholders = implode( ', ', array_fill( 0, count( $denied_ids ), '%d' ) );
+				$denied_query_args = array_merge( $denied_ids, array( self::META_KEY, $group_id ) );
 
-                // Get meta rows so we can delete them and purge relevant post caches
-                $rows = $wpdb->get_results(
-                    "SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ({$in}) AND meta_key = '"
-                    . esc_sql( self::META_KEY ) . "' AND meta_value = '" . esc_sql( $group_id ) . "'",
-                    OBJECT
-                );
+				// Get meta rows so we can delete them and purge relevant post caches
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
+				$rows = $wpdb->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+					$wpdb->prepare(
+						"SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ($denied_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						...$denied_query_args
+					),
+					OBJECT
+				);
 
                 if ( ! empty( $rows ) ) {
 
@@ -142,8 +150,9 @@ class BU_Group_Permissions {
                         $post_ids[] = intval( $r->post_id );
                     }
 
-                    // Execute deletion of postmeta rows
-                    $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_id IN (" . implode( ',', $meta_ids ) . ")" );
+					foreach ( $meta_ids as $meta_id ) {
+						delete_metadata_by_mid( 'post', $meta_id );
+					}
 
                     // Purge post_meta cache for affected posts
                     foreach ( array_unique( $post_ids ) as $pid ) {
@@ -168,6 +177,7 @@ class BU_Group_Permissions {
 
 		$args = array(
 			'post_type' => $supported_post_types,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Group deletion must find posts by the group ACL meta key.
 			'meta_query' => array( $meta_query ),
 			'posts_per_page' => -1,
 			'fields' => 'ids',
@@ -212,7 +222,9 @@ class BU_Group_Permissions {
 
 		$defaults = array(
 			'post_type' => 'page',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- This helper exists to query ACL metadata.
 			'meta_key' => self::META_KEY,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- This helper exists to query ACL metadata.
 			'meta_value' => $group_id,
 			'posts_per_page' => -1,
 			);
@@ -265,7 +277,7 @@ abstract class BU_Permissions_Editor {
 
 		} else {
 
-			error_log( 'Not a valid group ID or object: ' . $group );
+			return;
 		}
 
 		$this->post_type = $post_type;
@@ -570,7 +582,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		// Make sure navigation plugin functions are available before querying
 		if ( ! function_exists( 'bu_navigation_get_pages' ) ) {
 			$this->posts = array();
-			error_log( 'BU Navigation Plugin must be activated in order for hierarchical permissions editors to work' );
 			return false;
 		}
 
@@ -750,17 +761,27 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
         if ( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
-            /* Gather all group post meta in one shot */
-            $ids = array_keys( $posts );
-            $ids = array_map( 'intval', $ids );
-            $in = implode( ',', $ids );
+			/* Gather all group post meta in one shot */
+			$ids = array_keys( $posts );
+			$ids = array_map( 'intval', $ids );
+			$ids = array_filter( $ids );
 
-            $group_meta = $wpdb->get_results(
-                "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '"
-                . esc_sql( BU_Group_Permissions::META_KEY ) . "' AND post_id IN ({$in}) AND meta_value = '"
-                . esc_sql( $this->group->id ) . "'",
-                OBJECT_K
-            );
+			if ( empty( $ids ) ) {
+				return $posts;
+			}
+
+			$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+			$query_args = array_merge( array( BU_Group_Permissions::META_KEY ), $ids, array( $this->group->id ) );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL metadata lookup for an already fetched tree.
+			$group_meta = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+				$wpdb->prepare(
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+					...$query_args
+				),
+				OBJECT_K
+			);
 
             if ( ! is_array( $group_meta ) ) {
                 $group_meta = array();

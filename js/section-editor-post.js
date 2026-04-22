@@ -9,6 +9,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_edit',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: parent_id
 		}
 
@@ -42,6 +43,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_move',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: post_id,
 			parent_id: parent_id
 		}
@@ -73,6 +75,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_edit',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: post_id
 		}
 
@@ -86,7 +89,6 @@ jQuery(function($) {
 				var edit = '#edit-' + response.post_id;
 				if(response.can_edit == true) {
 					if($(edit + ' [name="_status"] [value="publish"]').length == 0) {
-						console.log(buse_post);
 						$(edit + ' [name="_status"]').prepend('<option value="publish">' + buse_post.publishLabel + '</option>');
 					}
 				} else {

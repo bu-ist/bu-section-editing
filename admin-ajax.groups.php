@@ -8,6 +8,8 @@
  */
 class BU_Groups_Admin_Ajax {
 
+	const NONCE_ACTION = 'buse_admin_ajax';
+
 	static public function register_hooks() {
 
 		add_action( 'wp_ajax_buse_site_users_script', array( __CLASS__, 'site_users_script' ) );
@@ -53,8 +55,8 @@ class BU_Groups_Admin_Ajax {
 		}
 
 		header( 'Content-type: application/x-javascript' );
-		echo 'var buse_site_users = ' . json_encode( $return );
-		die();
+		echo 'var buse_site_users = ' . wp_json_encode( $return );
+		wp_die();
 
 	}
 
@@ -69,14 +71,15 @@ class BU_Groups_Admin_Ajax {
 
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
-			$group_id = intval( trim( $_REQUEST['group_id'] ) );
-			$post_type = trim( $_REQUEST['post_type'] );
-			$query_vars = isset( $_REQUEST['query'] ) ? $_REQUEST['query'] : array();
+			check_ajax_referer( self::NONCE_ACTION );
+
+			$group_id = isset( $_REQUEST['group_id'] ) ? absint( wp_unslash( $_REQUEST['group_id'] ) ) : 0;
+			$post_type = isset( $_REQUEST['post_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_type'] ) ) : '';
+			$query_vars = isset( $_REQUEST['query'] ) && is_array( $_REQUEST['query'] ) ? map_deep( wp_unslash( $_REQUEST['query'] ), 'sanitize_text_field' ) : array();
 			$post_type_obj = get_post_type_object( $post_type );
 
 			if ( is_null( $post_type_obj ) ) {
-				error_log( 'Bad post type: ' . $post_type );
-				die();
+				wp_send_json_error( array( 'message' => __( 'Invalid post type.', 'bu-section-editing' ) ), 400 );
 			}
 
 			$perm_editor = null;
@@ -95,7 +98,7 @@ class BU_Groups_Admin_Ajax {
 			$perm_editor->query( $query_vars );
 
 			$response = new stdClass();
-			$child_of = isset( $query_vars['child_of'] ) ? $query_vars['child_of'] : 0;
+			$child_of = isset( $query_vars['child_of'] ) ? absint( $query_vars['child_of'] ) : 0;
 
 			$response->posts = $perm_editor->get_posts( $child_of );
 			$response->page = $perm_editor->page;
@@ -103,9 +106,7 @@ class BU_Groups_Admin_Ajax {
 			$response->post_count = $perm_editor->post_count;
 			$response->max_num_pages = $perm_editor->max_num_pages;
 
-			header( 'Content-type: application/json' );
-			echo json_encode( $response );
-			die();
+			wp_send_json( $response );
 
 		}
 
@@ -120,34 +121,43 @@ class BU_Groups_Admin_Ajax {
 
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
-			$group_id = intval( trim( $_REQUEST['group_id'] ) );
-			$post_type = trim( $_REQUEST['post_type'] );
-			$search_term = trim( $_REQUEST['search'] ) ? $_REQUEST['search'] : '';
+			check_ajax_referer( self::NONCE_ACTION );
+
+			$group_id = isset( $_REQUEST['group_id'] ) ? absint( wp_unslash( $_REQUEST['group_id'] ) ) : 0;
+			$post_type = isset( $_REQUEST['post_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_type'] ) ) : '';
+			$search_term = isset( $_REQUEST['search'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search'] ) ) : '';
 
 			$post_type_obj = get_post_type_object( $post_type );
 
 			if ( is_null( $post_type_obj ) ) {
-				error_log( 'Bad post type: ' . $post_type );
-				die();
+				wp_send_json_error( array( 'message' => __( 'Invalid post type.', 'bu-section-editing' ) ), 400 );
 			}
 
-			die();
+			wp_die();
 
 		}
 
 	}
 
 	static public function can_move() {
-		$post_id = (int) trim( $_POST['post_id'] );
-		$parent_id = (int) trim( $_POST['parent_id'] );
+		check_ajax_referer( self::NONCE_ACTION );
 
-		if ( ! isset( $post_id ) || ! isset( $parent_id ) ) {
-			echo '-1';
-			die();
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$parent_id = isset( $_POST['parent_id'] ) ? intval( wp_unslash( $_POST['parent_id'] ) ) : 0;
+
+		if ( ! $post_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing post ID.', 'bu-section-editing' ) ), 400 );
 		}
 
 		$post = get_post( $post_id );
+		if ( ! $post ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'bu-section-editing' ) ), 404 );
+		}
+
 		$post_type_obj = get_post_type_object( $post->post_type );
+		if ( ! $post_type_obj ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid post type.', 'bu-section-editing' ) ), 400 );
+		}
 
 		if ( $parent_id == 0 && $post->post_parent == 0 ) {
 			$answer = current_user_can( $post_type_obj->cap->edit_post, $post_id );
@@ -163,22 +173,28 @@ class BU_Groups_Admin_Ajax {
 		$response->original_parent = $post->post_parent;
 		$response->status = $post->post_status;
 
-		header( 'Content-type: application/json' );
-		echo json_encode( $response );
-		die();
+		wp_send_json( $response );
 	}
 
 	static public function can_edit() {
 
-		$post_id = (int) trim( $_POST['post_id'] );
+		check_ajax_referer( self::NONCE_ACTION );
 
-		if ( ! isset( $post_id ) ) {
-			echo '-1';
-			die();
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+
+		if ( ! $post_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing post ID.', 'bu-section-editing' ) ), 400 );
 		}
 
 		$post = get_post( $post_id );
+		if ( ! $post ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'bu-section-editing' ) ), 404 );
+		}
+
 		$post_type_obj = get_post_type_object( $post->post_type );
+		if ( ! $post_type_obj ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid post type.', 'bu-section-editing' ) ), 400 );
+		}
 
 		if ( $post->post_status != 'publish' ) {
 			$answer = current_user_can( $post_type_obj->cap->edit_post, $post->post_parent );
@@ -193,8 +209,6 @@ class BU_Groups_Admin_Ajax {
 		$response->can_edit = $answer;
 		$response->status = $post->post_status;
 
-		header( 'Content-type: application/json' );
-		echo json_encode( $response );
-		die();
+		wp_send_json( $response );
 	}
 }

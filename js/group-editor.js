@@ -59,7 +59,7 @@ jQuery(document).ready(function($){
 	$('.member:not(.active)').appendTo('#inactive-members');
 
 	// Remove a member from the editor group list
-	$members_list.on( 'a.remove_member', 'click', function(e){
+	$members_list.on( 'click', 'a.remove_member', function(e){
 		e.preventDefault();
 
 		$(this).parent('.member').removeClass('active').slideUp( 'fast', function() {
@@ -266,7 +266,7 @@ jQuery(document).ready(function($){
 	var add_member = function( user ) {
 
 		// Add member
-		$('#member_' + user.id ).prop('checked',false)
+		$('#member_' + user.id ).prop('checked',true)
 			.parent('.member')
 			.addClass('active')
 			.appendTo($members_list)
@@ -323,7 +323,7 @@ jQuery(document).ready(function($){
 		loadToolbars( $panel, $editor );
 
 		// Handle permission actions
-		$editor.on('.edit-perms', 'click', function (e) {
+		$editor.on('click', '.edit-perms', function (e) {
 			var $button = $(e.currentTarget),
 				$post = $button.closest('li'),
 				classes = $button.attr('class'),
@@ -370,7 +370,7 @@ jQuery(document).ready(function($){
 	/**
 	 * Permissions editor loading on post type tab click
 	 */
-	$('#perm-tab-container').on( 'a', 'click', function(e) {
+	$('#perm-tab-container').on( 'click', 'a', function(e) {
 
 		var $panel = $($(this).attr('href'));
 
@@ -390,7 +390,7 @@ jQuery(document).ready(function($){
 	var loadToolbars = function( $panel, $editor ) {
 
 		// Search
-		$panel.on( 'button.perm-search', 'click', function(e){
+		$panel.on( 'click', 'button.perm-search', function(e){
 			e.preventDefault();
 
 			var post_type = $editor.data('post-type');
@@ -410,7 +410,7 @@ jQuery(document).ready(function($){
 		/* Pagination */
 
 		// Pagination using links
-		$panel.find('.pagination-links').on( 'a', 'click', function(e){
+		$panel.find('.pagination-links').on( 'click', 'a', function(e){
 			e.preventDefault();
 
 			if( $(this).hasClass('disabled') )
@@ -444,7 +444,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Manually advanced page using current page text input
-		$panel.on( 'input.current-page', 'keypress', function(e) {
+		$panel.on( 'keypress', 'input.current-page', function(e) {
 
 			if( e.keyCode == '13' ) {
 				e.preventDefault();
@@ -465,7 +465,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Search
-		$panel.on( 'input.perm-search', 'keypress', function(e) {
+		$panel.on( 'keypress', 'input.perm-search', function(e) {
 			if( e.keyCode == 13 ) {
 				e.preventDefault();
 				$(this).siblings('button').first().click();
@@ -475,7 +475,7 @@ jQuery(document).ready(function($){
 		/* Bulk editor */
 
 		// Toggle bulk edit mode
-		$panel.on( 'a.perm-editor-bulk-edit', 'click', function(e) {
+		$panel.on( 'click', 'a.perm-editor-bulk-edit', function(e) {
 			e.preventDefault();
 			var $a = $(this);
 
@@ -495,13 +495,13 @@ jQuery(document).ready(function($){
 		});
 
 		// Select all behavior toolbar checkbox
-		$panel.on('.bulk-edit-select-all', 'click', function(e) {
+		$panel.on('click', '.bulk-edit-select-all', function(e) {
 			var $allposts = $editor.find('li');
 			$allposts.children('input[type="checkbox"]').prop( 'checked', this.checked );
 		});
 
 		// Apply bulk actions
-		$panel.on('.bulk-edit-actions button', 'click', function(e) {
+		$panel.on('click', '.bulk-edit-actions button', function(e) {
 			e.preventDefault();
 
 			var $selector = $(this).siblings('select');
@@ -533,7 +533,7 @@ jQuery(document).ready(function($){
 		/* Hierarchical editor */
 
 		// Expand all
-		$panel.on('a.perm-tree-expand', 'click', function(e) {
+		$panel.on('click', 'a.perm-tree-expand', function(e) {
 			e.preventDefault();
 			if(typeof $.jstree !== 'undefined') {
 				$.jstree._reference($editor).open_all();
@@ -541,7 +541,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Collapse all
-		$panel.on('a.perm-tree-collapse', 'click', function(e) {
+		$panel.on('click', 'a.perm-tree-collapse', function(e) {
 			e.preventDefault();
 			if(typeof $.jstree !== 'undefined') {
 				$.jstree._reference($editor).close_all();
@@ -674,7 +674,7 @@ jQuery(document).ready(function($){
 	var attachFlatEditorHandlers = function( $editor ) {
 
 		// Post selection
-		$editor.on( 'a', 'click', function (e) {
+		$editor.on( 'click', 'a', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -749,6 +749,7 @@ jQuery(document).ready(function($){
 
 		var editorData = {
 			action : 'buse_render_post_list',
+			_ajax_nonce : buse_group_editor_settings.ajaxNonce,
 			group_id : $('#group_id').val() || -1,
 			query : {}
 		}

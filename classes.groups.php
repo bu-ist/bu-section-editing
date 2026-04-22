@@ -231,7 +231,6 @@ class BU_Edit_Groups {
 		$group = $this->delete( $id );
 
 		if ( ! $group ) {
-			error_log( 'Error deleting group: ' . $id );
 			return false;
 		}
 
@@ -333,10 +332,9 @@ class BU_Edit_Groups {
         // If user_id is passed, populate group ID's from their memberships
         if ( $user_id ) {
 
-            if ( is_null( get_userdata( $user_id ) ) ) {
-                error_log( 'No user found for ID: ' . $user_id );
-                return array();
-            }
+			if ( is_null( get_userdata( $user_id ) ) ) {
+				return array();
+			}
 
             // Get groups for users
             $group_ids = $this->find_groups_for_user( $user_id, 'ids' );
@@ -360,18 +358,21 @@ class BU_Edit_Groups {
             return array();
         }
 
-        // Generate query
+        // Generate query.
         $post_type_clause = $post_status_clause = '';
+        $post_type_values = array();
 
         // Maybe filter by post type and status
         if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-            $post_type_clause = "AND post_type = '" . esc_sql( $post_type ) . "' ";
+            $post_type_clause = 'AND post_type = %s ';
+            $post_type_values[] = $post_type;
 
             if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
                 if ( $bu_navigation_plugin->supports( 'links' ) ) {
                     $link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
-                    $post_type_clause = "AND post_type IN ('page','" . esc_sql( $link_post_type ) . "') ";
+                    $post_type_clause = 'AND post_type IN (%s, %s) ';
+                    $post_type_values = array( 'page', $link_post_type );
                 }
             }
         }
@@ -396,20 +397,28 @@ class BU_Edit_Groups {
             }
         }
 
-        // Build group_id IN clause safely
-        $group_ids = array_map( 'intval', $group_ids );
-        $group_in = implode( ',', $group_ids );
+        // Build group_id IN clause safely.
+        $group_ids = array_map( 'absint', $group_ids );
+        $group_ids = array_filter( $group_ids );
+        if ( empty( $group_ids ) ) {
+            return array();
+        }
+        $group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%d' ) );
+        $prepare_values = array_merge( array( BU_Group_Permissions::META_KEY ), $group_ids, $post_type_values );
 
-        // Final query: find posts whose ID appears in postmeta entries for our group IDs
-        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ({$group_in}) ) {$post_type_clause}";
+        // Final query: find posts whose ID appears in postmeta entries for our group IDs.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Dynamic fragments contain placeholders only; values are passed to prepare below.
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ($group_placeholders) ) {$post_type_clause}";
 
         if ( $post_status_clause ) {
             $sql .= " {$post_status_clause} ";
+            $prepare_values = array_merge( $prepare_values, $post_type_values );
         }
 
-        // Use prepare for the meta_key substitution
-        $prepared = $wpdb->prepare( $sql, BU_Group_Permissions::META_KEY );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL fragments contain only generated placeholders and the values are passed separately.
+        $prepared = $wpdb->prepare( $sql, $prepare_values );
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Query is prepared immediately above and bulk ACL lookups are not available through a core API.
         $ids = $wpdb->get_col( $prepared );
 
         return $ids;
@@ -475,7 +484,6 @@ class BU_Edit_Groups {
 			}
 
 			if ( is_wp_error( $result ) ) {
-				error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 				$result = false;
 			}
 
@@ -507,7 +515,6 @@ class BU_Edit_Groups {
 		$result = wp_insert_post( $postdata );
 
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Error adding group: %s', $result->get_error_message() ) );
 			return false;
 		}
 
@@ -553,7 +560,6 @@ class BU_Edit_Groups {
 		$result = wp_update_post( $postdata );
 
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 			return false;
 		}
 
@@ -606,7 +612,6 @@ class BU_Edit_Groups {
 
 				if ( ! is_array( $ids_by_status ) ) {
 
-					error_log( "Unepected value for permissions data: $ids_by_status" );
 					unset( $args['perms'][ $post_type ] );
 					continue;
 				}
@@ -621,7 +626,6 @@ class BU_Edit_Groups {
 				foreach ( $ids_by_status as $status => $post_ids ) {
 
 					if ( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log( "Unexpected status: $status" );
 						unset( $args['perms'][ $post_type ][ $status ] );
 					}
 				}

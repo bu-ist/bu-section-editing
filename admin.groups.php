@@ -275,7 +275,9 @@ class BU_Groups_Admin {
 		$user_id = get_current_user_id();
 
 		$class = '';
-		if ( isset( $_REQUEST['post_status'] ) && $_REQUEST['post_status'] == self::EDITABLE_POST_STATUS ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-table filter state.
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		if ( $post_status == self::EDITABLE_POST_STATUS ) {
 			$class = ' class="current"';
 		}
 
@@ -354,9 +356,12 @@ class BU_Groups_Admin {
 	public static function editable_where_clause( $where ) {
 		global $wpdb;
 
-		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
-		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
-		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-table filter state.
+		$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : 'post';
+		$where .= $wpdb->prepare(
+			" OR ( {$wpdb->posts}.post_status IN ('draft','pending') AND {$wpdb->posts}.post_type = %s)",
+			$post_type
+		);
 
 		return $where;
 
@@ -389,11 +394,11 @@ class BU_Groups_Admin {
 
 			// Dynamic js file that contains a variable with all users for the current site
 			// Used to keep the autocomplete & add member functionality client-side
-			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), $version, true );
 
 			// Group editor
-			wp_enqueue_script( 'group-editor', plugins_url( '/js/group-editor' . $suffix . '.js', __FILE__ ), array( 'jquery', 'jquery-ui-autocomplete' ), $version, true );
-			wp_localize_script( 'group-editor', 'buse_group_editor_settings', array_merge( array( 'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ) ), self::group_editor_i10n() ) );
+			wp_enqueue_script( 'group-editor', plugins_url( '/js/group-editor' . $suffix . '.js', __FILE__ ), array( 'jquery', 'jquery-ui-autocomplete', 'buse-site-users' ), $version, true );
+			wp_localize_script( 'group-editor', 'buse_group_editor_settings', array_merge( array( 'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ), 'ajaxNonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ) ), self::group_editor_i10n() ) );
 
 			// Hierarchical permissions editor script
 			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
@@ -409,7 +414,13 @@ class BU_Groups_Admin {
 					'showCounts' => false,
 					'showStatuses' => false,
 					'suppressUrls' => true,
-					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list' ),
+					'rpcUrl' => add_query_arg(
+						array(
+							'action' => 'buse_render_post_list',
+							'_ajax_nonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ),
+						),
+						admin_url( 'admin-ajax.php' )
+					),
 					'allowLabel' => __( 'Allow', 'bu-section-editing' ),
 					'denyLabel' => __( 'Deny', 'bu-section-editing' ),
 				);
@@ -430,6 +441,7 @@ class BU_Groups_Admin {
 				'cantEditParentNotice' => __( 'You are not able to edit the parent.', 'bu-section-editing' ),
 				'cantMovePostNotice' => __( 'You are not able to edit the parent, so you cannot place this page under the parent.', 'bu-section-editing' ),
 				'publishLabel' => __( 'Published', 'bu-section-editing' ),
+				'ajaxNonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ),
 				);
 			wp_enqueue_script( 'bu-section-editor-post', plugins_url( '/js/section-editor-post' . $suffix . '.js', __FILE__ ), array( 'jquery' ), $version, true );
 			wp_localize_script( 'bu-section-editor-post', 'buse_post', $strings );
@@ -572,12 +584,14 @@ class BU_Groups_Admin {
 
 		$notices = array();
 
-		if ( isset( $_GET['status'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect status.
+		$status = isset( $_GET['status'] ) ? absint( wp_unslash( $_GET['status'] ) ) : 0;
+		if ( $status ) {
 
 			$groups_url = admin_url( self::MANAGE_GROUPS_PAGE );
 			$view_txt = __( 'View all groups', 'bu-section-editing' );
 
-			switch ( $_GET['status'] ) {
+			switch ( $status ) {
 
 				case 1:
 					$notices['error'][] = '<p>' . __( 'There was an error saving the group.', 'bu-section-editing' ) . '</p>';
@@ -627,13 +641,16 @@ class BU_Groups_Admin {
 	static function load_manage_groups() {
 
 		$groups = BU_Edit_Groups::get_instance();
-		$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The ID is validated before any mutating action is performed.
+		$group_id = isset( $_REQUEST['id'] ) ? absint( wp_unslash( $_REQUEST['id'] ) ) : -1;
 		$redirect_url = '';
 
 		// Handle all $_GET actions
-		if ( isset( $_GET['action'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Action is checked only to decide whether to verify the nonce below.
+		$get_action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		if ( $get_action ) {
 
-			switch ( $_GET['action'] ) {
+			switch ( $get_action ) {
 
 				case 'delete':
 					if ( ! check_admin_referer( 'delete_section_editing_group' ) ) {
@@ -651,27 +668,31 @@ class BU_Groups_Admin {
 		}
 
 		// Handle all possible $_POST actions
-		if ( isset( $_POST['action'] ) && in_array( $_POST['action'], array( 'add', 'update' ) ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Action is checked only to decide whether to verify the nonce below.
+		$post_action = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
+		if ( in_array( $post_action, array( 'add', 'update' ) ) ) {
 
 			if ( ! check_admin_referer( 'save_section_editing_group' ) ) {
 				wp_die( 'Cheatin, uh?' );
 			}
 
 			// Maintain panel/tab state across submissions
-			$tab = isset( $_POST['tab'] ) ? $_POST['tab'] : 'properties';
-			$perm_panel = isset( $_POST['perm_panel'] ) ? $_POST['perm_panel'] : 'page';
+			$tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : 'properties';
+			$perm_panel = isset( $_POST['perm_panel'] ) ? sanitize_key( wp_unslash( $_POST['perm_panel'] ) ) : 'page';
 			$redirect_url = '';
 			$status = 0;
 
 			// Sanitize and validate group form data
-			$results = self::clean_group_form( $_POST['group'] );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- clean_group_form() sanitizes the full nested group payload.
+			$group_data = isset( $_POST['group'] ) && is_array( $_POST['group'] ) ? wp_unslash( $_POST['group'] ) : array();
+			$results = self::clean_group_form( $group_data );
 
 			// Commit group data on valid submission
 			if ( $results['valid'] ) {
 
 				$clean_data = $results['data'];
 
-				switch ( $_POST['action'] ) {
+				switch ( $post_action ) {
 
 					case 'add':
 						$group = $groups->add_group( $clean_data );
@@ -718,7 +739,9 @@ class BU_Groups_Admin {
 		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 
 		// Add screen option when adding or editing a group
-		if ( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page slug.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( self::NEW_GROUP_SLUG == $page || $group_id > 0 ) {
 
 			add_screen_option( 'per_page', array(
 				'label' => __( 'Posts per page', 'bu-section-editing' ),
@@ -784,13 +807,17 @@ class BU_Groups_Admin {
 
 		$groups = BU_Edit_Groups::get_instance();
 
-		$page = $_GET['page'] ? $_GET['page'] : self::MANAGE_GROUPS_SLUG;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page slug.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : self::MANAGE_GROUPS_SLUG;
 
-		$group_id = isset( $_GET['id'] ) ? (int) $_GET['id'] : -1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only group ID for screen selection.
+		$group_id = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : -1;
 		$group_list = array();
 
-		$tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'properties';
-		$perm_panel = isset( $_GET['perm_panel'] ) ? $_GET['perm_panel'] : 'page';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab state.
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'properties';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only permission panel state.
+		$perm_panel = isset( $_GET['perm_panel'] ) ? sanitize_key( wp_unslash( $_GET['perm_panel'] ) ) : 'page';
 
 		switch ( $page ) {
 
