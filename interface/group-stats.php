@@ -4,7 +4,7 @@
 		<?php $perm_str = BU_Groups_Admin::group_permissions_string( $group, array( 'sep' => "\n" ) ); ?>
 		<ul>
 			<li><span class="title"><?php esc_html_e( 'Name', 'bu-section-editing' ); ?>:</span> <span id="group-stats-name"><?php echo wp_kses_post($group->name, 'bu-section-editing'); ?></span></li>
-			<li><span class="title"><?php esc_html_e( 'Members', 'bu-section-editing' ); ?>:</span> <span class="member-count"><?php echo count( $group->users ); ?></span></li>
+			<li><span class="title"><?php esc_html_e( 'Members', 'bu-section-editing' ); ?>:</span> <span class="member-count"><?php echo esc_html( $member_count ); ?></span></li>
 			<li class="clearfix"><span id="group-stats-permissions"><?php echo wp_kses_post($perm_str, 'bu-section-editing'); ?></span> <span class="title"><?php esc_html_e( 'Permission to Edit', 'bu-section-editing' ); ?>:</span> </li>
 		</ul>
 		<div class="actions clearfix">

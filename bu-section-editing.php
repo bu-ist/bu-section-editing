@@ -257,6 +257,70 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
+	 * Return existing users currently saved on a group.
+	 *
+	 * Group membership can outlive a user's current section-editor role, so the
+	 * editor should render saved members from the group itself instead of only
+	 * relying on the addable-user query.
+	 *
+	 * @param BU_Edit_Group|int $group Group object or group ID.
+	 * @return array<int,WP_User> Existing group members keyed by user ID.
+	 */
+	public static function get_group_member_users( $group ) {
+
+		if ( is_numeric( $group ) ) {
+			$group = BU_Edit_Groups::get_instance()->get( absint( $group ) );
+		}
+
+		if ( ! $group instanceof BU_Edit_Group ) {
+			return array();
+		}
+
+		$group_members = array();
+		$user_ids = array_unique( array_map( 'absint', (array) $group->users ) );
+
+		foreach ( $user_ids as $user_id ) {
+			if ( $user_id < 1 ) {
+				continue;
+			}
+
+			$user = get_userdata( $user_id );
+
+			if ( $user instanceof WP_User ) {
+				$group_members[ $user->ID ] = $user;
+			}
+		}
+
+		return $group_members;
+
+	}
+
+	/**
+	 * Return addable users that are not already saved on the group.
+	 *
+	 * @param BU_Edit_Group|int $group Group object or group ID.
+	 * @param array             $group_members Optional preloaded group members keyed by user ID.
+	 * @return array<int,WP_User> Allowed non-members keyed by user ID.
+	 */
+	public static function get_group_available_users( $group, $group_members = null ) {
+
+		if ( ! is_array( $group_members ) ) {
+			$group_members = self::get_group_member_users( $group );
+		}
+
+		$available_users = array();
+
+		foreach ( self::get_allowed_users() as $user ) {
+			if ( ! isset( $group_members[ $user->ID ] ) ) {
+				$available_users[ $user->ID ] = $user;
+			}
+		}
+
+		return $available_users;
+
+	}
+
+	/**
 	 * Check if a user has the capability to be added to section groups
 	 */
 	public static function is_allowed_user( $user = null ) {
