@@ -51,8 +51,8 @@ class BU_Edit_Groups {
 	static public function register_post_type() {
 
 		$labels = array(
-			'name'                => _x( 'Section Groups', 'Post Type General Name', BUSE_TEXTDOMAIN ),
-			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', BUSE_TEXTDOMAIN ),
+			'name'                => _x( 'Section Groups', 'Post Type General Name', 'bu-section-editing' ),
+			'singular_name'       => _x( 'Section Group', 'Post Type Singular Name', 'bu-section-editing' ),
 		);
 
 		$args = array(
@@ -68,7 +68,7 @@ class BU_Edit_Groups {
 			'menu_icon'           => '',
 			'can_export'          => true,
 			'has_archive'         => false,
-			'exclude_from_search' => true,
+			'exclude_from_search' => false,
 			'publicly_queryable'  => false,
 			'rewrite'             => false,
 			'capability_type'     => 'post',
@@ -231,7 +231,6 @@ class BU_Edit_Groups {
 		$group = $this->delete( $id );
 
 		if ( ! $group ) {
-			error_log( 'Error deleting group: ' . $id );
 			return false;
 		}
 
@@ -309,105 +308,121 @@ class BU_Edit_Groups {
 	 *
 	 * @return array post ids for the given post type, group or user
 	 */
-	public function get_allowed_posts( $args = array() ) {
-		global $wpdb, $bu_navigation_plugin;
+	/**
+     * Get allowed post ids, optionally filtered by user ID, group or post_type
+     *
+     * @param $args array optional args
+     * @return array post ids for the given post type, group or user
+     */
+    public function get_allowed_posts( $args = array() ) {
+        global $wpdb, $bu_navigation_plugin;
 
-		$defaults = array(
-			'user_id' => null,
-			'group' => null,
-			'post_type' => null,
-			'include_unpublished' => false,
-			'include_links' => true,
-			);
+        $defaults = array(
+            'user_id' => null,
+            'group' => null,
+            'post_type' => null,
+            'include_unpublished' => false,
+            'include_links' => true,
+            );
 
-		extract( wp_parse_args( $args, $defaults ) );
+        extract( wp_parse_args( $args, $defaults ) );
 
-		$group_ids = array();
+        $group_ids = array();
 
-		// If user_id is passed, populate group ID's from their memberships
-		if ( $user_id ) {
+        // If user_id is passed, populate group ID's from their memberships
+        if ( $user_id ) {
 
 			if ( is_null( get_userdata( $user_id ) ) ) {
-				error_log( 'No user found for ID: ' . $user_id );
 				return array();
 			}
 
-			// Get groups for users
-			$group_ids = $this->find_groups_for_user( $user_id, 'ids' );
+            // Get groups for users
+            $group_ids = $this->find_groups_for_user( $user_id, 'ids' );
 
-		}
+        }
 
-		// If no user ID is passed, but a group is, convert to array
-		if ( is_null( $user_id ) && $group ) {
+        // If no user ID is passed, but a group is, convert to array
+        if ( is_null( $user_id ) && $group ) {
 
-			if ( is_array( $group ) ) {
-				$group_ids = $group;
-			}
+            if ( is_array( $group ) ) {
+                $group_ids = $group;
+            }
 
-			if ( is_numeric( $group ) && $group > 0 ) {
-				$group_ids = array( $group );
-			}
-		}
+            if ( is_numeric( $group ) && $group > 0 ) {
+                $group_ids = array( $group );
+            }
+        }
 
-		// Bail if we don't have any valid groups by now
-		if ( empty( $group_ids ) ) {
-			return array();
-		}
+        // Bail if we don't have any valid groups by now
+        if ( empty( $group_ids ) ) {
+            return array();
+        }
 
-		// Generate query
-		$post_type_clause = $post_status_clause = '';
+        // Generate query.
+        $post_type_clause = $post_status_clause = '';
+        $post_type_values = array();
 
-		// Maybe filter by post type and status
-		if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
+        // Maybe filter by post type and status
+        if ( ! is_null( $post_type ) && ! is_null( $pto = get_post_type_object( $post_type ) ) ) {
 
-			// Only a single post type is expected, so it should be prepared as a string.
-			$post_type_clause = $wpdb->prepare( "AND post_type = %s", $post_type );
+            $post_type_clause = 'AND post_type = %s ';
+            $post_type_values[] = $post_type;
 
-			if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
-				if ( $bu_navigation_plugin->supports( 'links' ) ) {
-					$link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
+            if ( $include_links && $post_type == 'page' && isset( $bu_navigation_plugin ) ) {
+                if ( $bu_navigation_plugin->supports( 'links' ) ) {
+                    $link_post_type = defined( 'BU_NAVIGATION_LINK_POST_TYPE' ) ? BU_NAVIGATION_LINK_POST_TYPE : 'bu_link';
+                    $post_type_clause = 'AND post_type IN (%s, %s) ';
+                    $post_type_values = array( 'page', $link_post_type );
+                }
+            }
+        }
 
-					// Only a single post type string is passed, so it can be prepared as normal.
-					$post_type_clause = $wpdb->prepare( "AND post_type IN ('page', %s) ", $link_post_type );
-				}
-			}
-		}
+        // Include unpublished should only work for hierarchical post types
+        if ( $include_unpublished ) {
 
-		// Include unpublished should only work for hierarchical post types
-		if ( $include_unpublished ) {
+            // Flat post types are not allowed to include unpublished, as perms can be set for drafts
+            if ( $post_type ) {
 
-			// Flat post types are not allowed to include unpublished, as perms can be set for drafts
-			if ( $post_type ) {
+                $pto = get_post_type_object( $post_type );
 
-				$pto = get_post_type_object( $post_type );
+                if ( $pto->hierarchical ) {
 
-				if ( $pto->hierarchical ) {
+                    $post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
 
-					// The `$post_type_clause` statement is prepared above and can be considered safe here.
-					$post_status_clause = "OR (post_status IN ('draft','pending') $post_type_clause)";
+                }
+            } else {
 
-				}
-			} else {
+                $post_status_clause = "OR post_status IN ('draft','pending')";
 
-				$post_status_clause = "OR post_status IN ('draft','pending')";
+            }
+        }
 
-			}
-		}
+        // Build group_id IN clause safely.
+        $group_ids = array_map( 'absint', $group_ids );
+        $group_ids = array_filter( $group_ids );
+        if ( empty( $group_ids ) ) {
+            return array();
+        }
+        $group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%d' ) );
+        $prepare_values = array_merge( array( BU_Group_Permissions::META_KEY ), $group_ids, $post_type_values );
 
-		// Prepare the first section of the SQL statement.
-		$count_query = $wpdb->prepare(
-			"SELECT ID FROM {$wpdb->posts} WHERE ( ID IN ( SELECT post_ID FROM {$wpdb->postmeta} WHERE meta_key = %s",
-			BU_Group_Permissions::META_KEY
-		);
+        // Final query: find posts whose ID appears in postmeta entries for our group IDs.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Dynamic fragments contain placeholders only; values are passed to prepare below.
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ($group_placeholders) ) {$post_type_clause}";
 
-		// Build the remaining SQL from previously prepared statements. The `group_ids` array is forced to integer values for safety.
-		$count_query .= " AND meta_value IN (" . implode( ',', array_map( 'intval', $group_ids ) ) . ') ) ' . $post_type_clause . ') ' . $post_status_clause;
+        if ( $post_status_clause ) {
+            $sql .= " {$post_status_clause} ";
+            $prepare_values = array_merge( $prepare_values, $post_type_values );
+        }
 
-		// Execute query
-		$ids = $wpdb->get_col( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL fragments contain only generated placeholders and the values are passed separately.
+        $prepared = $wpdb->prepare( $sql, $prepare_values );
 
-		return $ids;
-	}
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Query is prepared immediately above and bulk ACL lookups are not available through a core API.
+        $ids = $wpdb->get_col( $prepared );
+
+        return $ids;
+    }
 
 	/**
 	 * Get allowed post count, optionally filtered by user ID, group or post_type
@@ -469,7 +484,6 @@ class BU_Edit_Groups {
 			}
 
 			if ( is_wp_error( $result ) ) {
-				error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 				$result = false;
 			}
 
@@ -501,7 +515,6 @@ class BU_Edit_Groups {
 		$result = wp_insert_post( $postdata );
 
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Error adding group: %s', $result->get_error_message() ) );
 			return false;
 		}
 
@@ -547,7 +560,6 @@ class BU_Edit_Groups {
 		$result = wp_update_post( $postdata );
 
 		if ( is_wp_error( $result ) ) {
-			error_log( sprintf( 'Error updating group %s: %s', $group->id, $result->get_error_message() ) );
 			return false;
 		}
 
@@ -600,7 +612,6 @@ class BU_Edit_Groups {
 
 				if ( ! is_array( $ids_by_status ) ) {
 
-					error_log( "Unepected value for permissions data: $ids_by_status" );
 					unset( $args['perms'][ $post_type ] );
 					continue;
 				}
@@ -615,7 +626,6 @@ class BU_Edit_Groups {
 				foreach ( $ids_by_status as $status => $post_ids ) {
 
 					if ( ! in_array( $status, array( 'allowed', 'denied', '' ) ) ) {
-						error_log( "Unexpected status: $status" );
 						unset( $args['perms'][ $post_type ][ $status ] );
 					}
 				}

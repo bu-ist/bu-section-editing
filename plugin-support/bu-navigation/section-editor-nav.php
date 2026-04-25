@@ -55,18 +55,23 @@ function buse_bu_navigation_filter_posts( $posts ) {
 		if ( is_array( $section_groups ) && ! empty( $section_groups ) ) {
 
 			/* Gather all group post meta in one shot */
-			$ids = array_keys( $posts );
+			$ids = array_filter( array_map( 'absint', array_keys( $posts ) ) );
 
-			// Sanitize the list of IDs for direct use in a query.
-			$ids = implode( ',', array_map( 'intval', $ids ) );
+			$section_groups = array_filter( array_map( 'absint', $section_groups ) );
 
-			// Sanitize the list of groups for direct use in a query.
-			$section_groups_values = implode( ',', array_map( 'intval', $section_groups ) );
+			if ( empty( $ids ) || empty( $section_groups ) ) {
+				return $posts;
+			}
 
+			$id_placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+			$group_placeholders = implode( ', ', array_fill( 0, count( $section_groups ), '%d' ) );
+			$query_args = array_merge( array( BU_Group_Permissions::META_KEY ), $ids, $section_groups );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL metadata lookup for already fetched navigation posts.
 			$group_meta = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ({$ids}) AND meta_value IN ({$section_groups_values})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					BU_Group_Permissions::META_KEY
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($id_placeholders) AND meta_value IN ($group_placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+					...$query_args
 				)
 				, OBJECT_K
 			); // get results as objects in an array keyed on post_id

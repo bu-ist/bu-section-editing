@@ -1,7 +1,7 @@
 jQuery(function($) {
 
 	//bulk-edit
-	$('#bulk-edit #post_parent').bind('change', function(e) {
+	$('#bulk-edit #post_parent').on('change', function(e) {
 		var parent_id = $('#post_parent option:selected').val();
 		if(parent_id == -1) {
 			return;
@@ -9,6 +9,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_edit',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: parent_id
 		}
 
@@ -19,7 +20,7 @@ jQuery(function($) {
 			success: function(response) {
 				if(response.can_edit == false) {
 					alert(buse_post.cantEditParentNotice);
-					$('#bulk-edit #post_parent [value="-1"]').attr('selected', 'selected');
+					$('#bulk-edit #post_parent [value="-1"]').prop('selected', true);
 				}
 			},
 			error: function(response) {
@@ -28,7 +29,7 @@ jQuery(function($) {
 	});
 
 	//inline-edit
-	$('#inline-edit #post_parent').bind('change', function(e) {
+	$('#inline-edit #post_parent').on('change', function(e) {
 		var parent_id = $('#post_parent option:selected').val();
 		var id = $(this).closest('tr').attr('id');
 		var parts = id.split('-');
@@ -42,6 +43,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_move',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: post_id,
 			parent_id: parent_id
 		}
@@ -53,7 +55,7 @@ jQuery(function($) {
 			success: function(response) {
 				if(response.can_edit == false) {
 					alert(buse_post.cantMovePostNotice);
-					$('#post_parent [value="' + response.original_parent + '"]').attr('selected', 'selected');
+					$('#post_parent [value="' + response.original_parent + '"]').prop('selected', true);
 				}
 			},
 			error: function(response) {
@@ -73,6 +75,7 @@ jQuery(function($) {
 
 		var data = {
 			action: 'buse_can_edit',
+			_ajax_nonce: buse_post.ajaxNonce,
 			post_id: post_id
 		}
 
@@ -86,13 +89,12 @@ jQuery(function($) {
 				var edit = '#edit-' + response.post_id;
 				if(response.can_edit == true) {
 					if($(edit + ' [name="_status"] [value="publish"]').length == 0) {
-						console.log(buse_post);
 						$(edit + ' [name="_status"]').prepend('<option value="publish">' + buse_post.publishLabel + '</option>');
 					}
 				} else {
 					$(edit + ' [name="_status"] [value="publish"]').remove();
 				}
-				$(edit + ' [name="_status"] [value="' + response.status + '"]').attr('selected', 'selected');
+				$(edit + ' [name="_status"] [value="' + response.status + '"]').prop('selected', true);
 			},
 			error: function(response) {
 			}

@@ -99,7 +99,7 @@
 
 			node.each(function () {
 				$li = $(this);
-				$li.find("li").andSelf().each(function () {
+				$li.find("li").addBack().each(function () {
 					action_class = $(this).data('editable') ? 'denied' : 'allowed';
 
 					if (action_class == 'allowed') {
@@ -116,11 +116,11 @@
 		};
 
 		// Add perm actions button to each node as needed
-		$tree.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", function (e, data) {
+		$tree.on("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", function (e, data) {
 			_prepare_perm_actions(data.rslt.obj);
 		});
 
-		$tree.bind("loaded.jstree", function (e) {
+		$tree.on("loaded.jstree", function (e) {
 			_prepare_perm_actions();
 		});
 

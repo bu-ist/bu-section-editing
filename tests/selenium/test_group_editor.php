@@ -328,7 +328,7 @@ class BUSE_GroupsPage {
 		$page_title = $this->webdriver->title();
 
 		if( strpos( $this->webdriver->title(), 'Section Group' ) === false )
-			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . $request_url );
+			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . esc_html($request_url, 'bu-section-editing') );
 	}
 
 }
@@ -389,7 +389,7 @@ class BUSE_EditGroupPage {
 		$page_title = $this->webdriver->title();
 
 		if( strpos( $page_title, 'Section Group' ) === false )
-			throw new Exception('Edit Group Page failed to load -- Unable to load URL: ' . $request_url );
+			throw new Exception('Edit Group Page failed to load -- Unable to load URL: ' . esc_html($request_url, 'bu-section-editing') );
 
 		$this->group_form = new SeleniumFormHelper( $this->webdriver, self::GROUP_EDIT_FORM );
 

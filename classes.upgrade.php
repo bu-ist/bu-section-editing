@@ -88,6 +88,7 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array( '${1}:allowed', '${1}:denied' );
 
 		// Fetch existing values
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Upgrade routine intentionally scans legacy ACL metadata once.
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
@@ -114,13 +115,14 @@ class BU_Section_Editing_Upgrader {
 		$replacements = array( '${1}' );
 
 		// Fetch existing values
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Upgrade routine intentionally scans legacy ACL metadata once.
 		$allowed_posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s",
 				BU_Group_Permissions::META_KEY,
 				'%:allowed'
 			)
-		);
+			);
 
 		foreach ( $allowed_posts as $post ) {
 			$new_meta_value = preg_replace( $patterns, $replacements, $post->meta_value );
@@ -128,13 +130,13 @@ class BU_Section_Editing_Upgrader {
 		}
 
 		// Fetch existing values
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Upgrade routine intentionally scans legacy ACL metadata once.
 		$denied_posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s",
 				BU_Group_Permissions::META_KEY,
 				'%denied'
-			)
-		);
+			));
 
 		// Loop through and update
 		foreach ( $denied_posts as $post ) {
@@ -183,7 +185,7 @@ class BU_Section_Editing_Upgrader {
 				// Convert to new structure
 				$group = $gc->add_group( $groupdata );
 
-				// Grab all post IDS that have permissions set for this group
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Upgrade routine intentionally maps legacy group IDs in bulk.
 				$posts_to_update = $wpdb->get_col(
 					$wpdb->prepare(
 						"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",

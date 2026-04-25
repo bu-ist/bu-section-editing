@@ -59,7 +59,7 @@ class BU_Groups_Admin {
 	 */
 	public static function add_manage_users_column( $columns ) {
 
-		$columns[ self::MANAGE_USERS_COLUMN ] = __( 'Section Groups', BUSE_TEXTDOMAIN );
+		$columns[ self::MANAGE_USERS_COLUMN ] = __( 'Section Groups', 'bu-section-editing' );
 		return $columns;
 
 	}
@@ -77,7 +77,7 @@ class BU_Groups_Admin {
 
 			if ( empty( $groups ) ) {
 
-				$content = __( 'None', BUSE_TEXTDOMAIN );
+				$content = __( 'None', 'bu-section-editing' );
 
 			} else {
 
@@ -106,10 +106,10 @@ class BU_Groups_Admin {
 
 				if ( $truncated_count > 0 ) {
 					$content .= sprintf( ' %s <a href="%s"> %s %s</a>',
-						__( 'and', BUSE_TEXTDOMAIN ),
+						__( 'and', 'bu-section-editing' ),
 						admin_url( self::MANAGE_GROUPS_PAGE ),
 						$truncated_count,
-						_n( 'other', 'others', $truncated_count, BUSE_TEXTDOMAIN )
+						_n( 'other', 'others', $truncated_count, 'bu-section-editing' )
 					);
 				}
 			}
@@ -227,8 +227,9 @@ class BU_Groups_Admin {
 			// Most of these options don't do anything at this time, but we should keep an eye
 			// on the ticket mentioned above as this could change in future releases
 			$args = array(
-				'label' => __( 'Editable', BUSE_TEXTDOMAIN ),
-				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>' ),
+				'label' => __( 'Editable', 'bu-section-editing' ),
+				// translators: %s stands for number of labels.
+				'label_count' => _n_noop( 'Editable <span class="count">(%s)</span>', 'Editable <span class="count">(%s)</span>', 'bu-section-editing' ),
 				'public' => true,
 				'show_in_admin_all' => true,
 				'publicly_queryable' => true,
@@ -274,7 +275,9 @@ class BU_Groups_Admin {
 		$user_id = get_current_user_id();
 
 		$class = '';
-		if ( isset( $_REQUEST['post_status'] ) && $_REQUEST['post_status'] == self::EDITABLE_POST_STATUS ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-table filter state.
+		$post_status = isset( $_REQUEST['post_status'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_status'] ) ) : '';
+		if ( $post_status == self::EDITABLE_POST_STATUS ) {
 			$class = ' class="current"';
 		}
 
@@ -288,7 +291,7 @@ class BU_Groups_Admin {
 
 		$count = $groups->get_allowed_post_count( $args );
 
-		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', BUSE_TEXTDOMAIN ) . " <span class=\"count\">($count)</span></a>";
+		$views[ self::EDITABLE_POST_STATUS ] = "<a href=\"$edit_link\" $class>" . __( 'Editable', 'bu-section-editing' ) . " <span class=\"count\">($count)</span></a>";
 
 		return $views;
 
@@ -353,9 +356,12 @@ class BU_Groups_Admin {
 	public static function editable_where_clause( $where ) {
 		global $wpdb;
 
-		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : 'post';
-		$where .= " OR ( {$wpdb->posts}.post_status IN ('draft','pending')";
-		$where .= " AND {$wpdb->posts}.post_type = '$post_type')";
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-table filter state.
+		$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : 'post';
+		$where .= $wpdb->prepare(
+			" OR ( {$wpdb->posts}.post_status IN ('draft','pending') AND {$wpdb->posts}.post_type = %s)",
+			$post_type
+		);
 
 		return $where;
 
@@ -388,11 +394,11 @@ class BU_Groups_Admin {
 
 			// Dynamic js file that contains a variable with all users for the current site
 			// Used to keep the autocomplete & add member functionality client-side
-			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), null );
+			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), $version, true );
 
 			// Group editor
-			wp_enqueue_script( 'group-editor', plugins_url( '/js/group-editor' . $suffix . '.js', __FILE__ ), array( 'jquery', 'jquery-ui-autocomplete' ), $version, true );
-			wp_localize_script( 'group-editor', 'buse_group_editor_settings', array_merge( array( 'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ) ), self::group_editor_i10n() ) );
+			wp_enqueue_script( 'group-editor', plugins_url( '/js/group-editor' . $suffix . '.js', __FILE__ ), array( 'jquery', 'jquery-ui-autocomplete', 'buse-site-users' ), $version, true );
+			wp_localize_script( 'group-editor', 'buse_group_editor_settings', array_merge( array( 'pluginUrl' => plugins_url( BUSE_PLUGIN_PATH ), 'ajaxNonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ) ), self::group_editor_i10n() ) );
 
 			// Hierarchical permissions editor script
 			// Hierarchical permission editor depends on the BU Navigation plugin's BU_Navigation_Tree_View class
@@ -408,9 +414,15 @@ class BU_Groups_Admin {
 					'showCounts' => false,
 					'showStatuses' => false,
 					'suppressUrls' => true,
-					'rpcUrl' => admin_url( 'admin-ajax.php?action=buse_render_post_list' ),
-					'allowLabel' => __( 'Allow', BUSE_TEXTDOMAIN ),
-					'denyLabel' => __( 'Deny', BUSE_TEXTDOMAIN ),
+					'rpcUrl' => add_query_arg(
+						array(
+							'action' => 'buse_render_post_list',
+							'_ajax_nonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ),
+						),
+						admin_url( 'admin-ajax.php' )
+					),
+					'allowLabel' => __( 'Allow', 'bu-section-editing' ),
+					'denyLabel' => __( 'Deny', 'bu-section-editing' ),
 				);
 
 				// Let the tree view class handle enqueing
@@ -426,9 +438,10 @@ class BU_Groups_Admin {
 		// Enforce section editor restrictions for inline/bulk edit actions
 		if ( 'edit.php' == $hook ) {
 			$strings = array(
-				'cantEditParentNotice' => __( 'You are not able to edit the parent.', BUSE_TEXTDOMAIN ),
-				'cantMovePostNotice' => __( 'You are not able to edit the parent, so you cannot place this page under the parent.', BUSE_TEXTDOMAIN ),
-				'publishLabel' => __( 'Published', BUSE_TEXTDOMAIN ),
+				'cantEditParentNotice' => __( 'You are not able to edit the parent.', 'bu-section-editing' ),
+				'cantMovePostNotice' => __( 'You are not able to edit the parent, so you cannot place this page under the parent.', 'bu-section-editing' ),
+				'publishLabel' => __( 'Published', 'bu-section-editing' ),
+				'ajaxNonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ),
 				);
 			wp_enqueue_script( 'bu-section-editor-post', plugins_url( '/js/section-editor-post' . $suffix . '.js', __FILE__ ), array( 'jquery' ), $version, true );
 			wp_localize_script( 'bu-section-editor-post', 'buse_post', $strings );
@@ -441,39 +454,43 @@ class BU_Groups_Admin {
 	 */
 	public static function group_editor_i10n() {
 
-		$users_link = sprintf( '<a href="%s">%s</a>', admin_url( 'users.php' ), __( 'users page', BUSE_TEXTDOMAIN ) );
-		$add_user_link = sprintf( '<a href="%s">%s</a>', admin_url( 'user-new.php' ), __( 'add them to your site', BUSE_TEXTDOMAIN ) );
-		$nav_plugin_link = sprintf( '<a href="%s" target="_blank">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', BUSE_TEXTDOMAIN ) );
+		$users_link = sprintf( '<a href="%s">%s</a>', admin_url( 'users.php' ), __( 'users page', 'bu-section-editing' ) );
+		$add_user_link = sprintf( '<a href="%s">%s</a>', admin_url( 'user-new.php' ), __( 'add them to your site', 'bu-section-editing' ) );
+		$nav_plugin_link = sprintf( '<a href="%s" target="_blank">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', 'bu-section-editing' ) );
 
 		return array(
-			'bulkEditOpenText'          => __( 'Bulk Edit', BUSE_TEXTDOMAIN ),
-			'bulkEditCloseText'         => __( 'Close Bulk Edit', BUSE_TEXTDOMAIN ),
-			'bulkEditOpenTitle'         => __( 'Enable bulk edit mode', BUSE_TEXTDOMAIN ),
-			'bulkEditCloseTitle'        => __( 'Disable bulk edit mode', BUSE_TEXTDOMAIN ),
-			'confirmActionNotice'       => __( 'Are you sure you want to do this?', BUSE_TEXTDOMAIN ),
-			'deleteGroupNotice'         => __( 'You are about to permanently delete this section editing group.  This action is irreversible.', BUSE_TEXTDOMAIN ),
-			'dirtyLeaverNotice'         => __( 'Your group has pending edits.  If you leave now, your changes will be lost.', BUSE_TEXTDOMAIN ),
-			'loadingText'               => __( 'Loading...', BUSE_TEXTDOMAIN ),
-			'memberCountSingularLabel'  => __( 'member', BUSE_TEXTDOMAIN ),
-			'memberCountPluralLabel'    => __( 'members', BUSE_TEXTDOMAIN ),
-			'nameRequiredNotice'        => __( 'Section editing groups require a name.', BUSE_TEXTDOMAIN ),
+			'bulkEditOpenText'          => __( 'Bulk Edit', 'bu-section-editing' ),
+			'bulkEditCloseText'         => __( 'Close Bulk Edit', 'bu-section-editing' ),
+			'bulkEditOpenTitle'         => __( 'Enable bulk edit mode', 'bu-section-editing' ),
+			'bulkEditCloseTitle'        => __( 'Disable bulk edit mode', 'bu-section-editing' ),
+			'confirmActionNotice'       => __( 'Are you sure you want to do this?', 'bu-section-editing' ),
+			'deleteGroupNotice'         => __( 'You are about to permanently delete this section editing group.  This action is irreversible.', 'bu-section-editing' ),
+			'dirtyLeaverNotice'         => __( 'Your group has pending edits.  If you leave now, your changes will be lost.', 'bu-section-editing' ),
+			'loadingText'               => __( 'Loading...', 'bu-section-editing' ),
+			'memberCountSingularLabel'  => __( 'member', 'bu-section-editing' ),
+			'memberCountPluralLabel'    => __( 'members', 'bu-section-editing' ),
+			'nameRequiredNotice'        => __( 'Section editing groups require a name.', 'bu-section-editing' ),
 			'navDepAlertText'           => sprintf(
-				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s", BUSE_TEXTDOMAIN ),
+				// translators: %s stands for the BU Navigation install link.
+				__( "In order to set permissions for hierarchical post types, the BU Navigation plugin must be activated.\n\nPlease install BU Navigation:\n%s", 'bu-section-editing' ),
 			BUSE_NAV_INSTALL_LINK ),
 			'navDepEditorText'           => sprintf(
-				__( 'Please install the %s in order to set permissions for this post type.', BUSE_TEXTDOMAIN ),
+				// translators: %s stands for an html anchor tag to the BU Navigation install link.
+				__( 'Please install the %s in order to set permissions for this post type.', 'bu-section-editing' ),
 			$nav_plugin_link ),
-			'permAllowLabel'            => __( 'Allow', BUSE_TEXTDOMAIN ),
-			'permDenyLabel'             => __( 'Deny', BUSE_TEXTDOMAIN ),
-			'permEditableLabel'         => __( 'editable', BUSE_TEXTDOMAIN ),
-			'permNonEditableLabel'      => __( 'non-editable', BUSE_TEXTDOMAIN ),
-			'permGlobalLabel'           => __( 'All', BUSE_TEXTDOMAIN ),
+			'permAllowLabel'            => __( 'Allow', 'bu-section-editing' ),
+			'permDenyLabel'             => __( 'Deny', 'bu-section-editing' ),
+			'permEditableLabel'         => __( 'editable', 'bu-section-editing' ),
+			'permNonEditableLabel'      => __( 'non-editable', 'bu-section-editing' ),
+			'permGlobalLabel'           => __( 'All', 'bu-section-editing' ),
 			'userWrongRoleNotice'       => sprintf(
-				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', BUSE_TEXTDOMAIN ),
+				// translators: %s stands for a link to the users page.
+				__( 'is not a section editor.  Before you can assign them to a group, you must change their role to "Section Editor" on the %s.', 'bu-section-editing' ),
 			$users_link ),
-			'userAlreadyMemberNotice'   => __( 'is already a member of this group.', BUSE_TEXTDOMAIN ),
+			'userAlreadyMemberNotice'   => __( 'is already a member of this group.', 'bu-section-editing' ),
 			'userNotExistsNotice'       => sprintf(
-				__( 'is not a member of this site.  Please %s with the "Section Editor" role.', BUSE_TEXTDOMAIN ),
+				// translators: %s stands for a link to the add users page.
+				__( 'is not a member of this site.  Please %s with the "Section Editor" role.', 'bu-section-editing' ),
 			$add_user_link ),
 			);
 	}
@@ -492,8 +509,8 @@ class BU_Groups_Admin {
 		}
 
 		$groups_manage = add_menu_page(
-			__( 'Section Groups', BUSE_TEXTDOMAIN ),
-			__( 'Section Groups', BUSE_TEXTDOMAIN ),
+			__( 'Section Groups', 'bu-section-editing' ),
+			__( 'Section Groups', 'bu-section-editing' ),
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' ),
@@ -503,8 +520,8 @@ class BU_Groups_Admin {
 
 		add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
-			__( 'Section Groups', BUSE_TEXTDOMAIN ),
-			__( 'All Groups', BUSE_TEXTDOMAIN ),
+			__( 'Section Groups', 'bu-section-editing' ),
+			__( 'All Groups', 'bu-section-editing' ),
 			'promote_users',
 			self::MANAGE_GROUPS_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' )
@@ -512,8 +529,8 @@ class BU_Groups_Admin {
 
 		$groups_edit = add_submenu_page(
 			self::MANAGE_GROUPS_SLUG,
-			__( 'Edit Section Group', BUSE_TEXTDOMAIN ),
-			__( 'Add New', BUSE_TEXTDOMAIN ),
+			__( 'Edit Section Group', 'bu-section-editing' ),
+			__( 'Add New', 'bu-section-editing' ),
 			'promote_users',
 			self::NEW_GROUP_SLUG,
 			array( 'BU_Groups_Admin', 'manage_groups_screen' )
@@ -542,14 +559,14 @@ class BU_Groups_Admin {
 		// List errors first
 		if ( isset( $notices['error'] ) ) {
 			foreach ( $notices['error'] as $msg ) {
-				printf( '<div id="message" class="error">%s</div>', $msg );
+				printf( '<div id="message" class="error">%s</div>', wp_kses_post( $msg ) );
 			}
 		}
 
 		// List notices second
 		if ( isset( $notices['update'] ) ) {
 			foreach ( $notices['update'] as $msg ) {
-				printf( '<div id="message" class="updated fade">%s</div>', $msg );
+				printf( '<div id="message" class="updated fade">%s</div>', wp_kses_post( $msg ) );
 			}
 		}
 
@@ -567,27 +584,29 @@ class BU_Groups_Admin {
 
 		$notices = array();
 
-		if ( isset( $_GET['status'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only redirect status.
+		$status = isset( $_GET['status'] ) ? absint( wp_unslash( $_GET['status'] ) ) : 0;
+		if ( $status ) {
 
 			$groups_url = admin_url( self::MANAGE_GROUPS_PAGE );
-			$view_txt = __( 'View all groups', BUSE_TEXTDOMAIN );
+			$view_txt = __( 'View all groups', 'bu-section-editing' );
 
-			switch ( $_GET['status'] ) {
+			switch ( $status ) {
 
 				case 1:
-					$notices['error'][] = '<p>' . __( 'There was an error saving the group.', BUSE_TEXTDOMAIN ) . '</p>';
+					$notices['error'][] = '<p>' . __( 'There was an error saving the group.', 'bu-section-editing' ) . '</p>';
 					break;
 
 				case 2:
-					$notices['update'][] = '<p>' . __( 'Group added.', BUSE_TEXTDOMAIN ) . " <a href=\"$groups_url\">$view_txt</a></p>";
+					$notices['update'][] = '<p>' . __( 'Group added.', 'bu-section-editing' ) . " <a href=\"$groups_url\">$view_txt</a></p>";
 					break;
 
 				case 3:
-					$notices['update'][] = '<p>' . __( 'Group updated.', BUSE_TEXTDOMAIN ) . " <a href=\"$groups_url\">$view_txt</a></p>";
+					$notices['update'][] = '<p>' . __( 'Group updated.', 'bu-section-editing' ) . " <a href=\"$groups_url\">$view_txt</a></p>";
 					break;
 
 				case 4:
-					$notices['update'][] = '<p>' . __( 'Group deleted.', BUSE_TEXTDOMAIN ) . '</p>';
+					$notices['update'][] = '<p>' . __( 'Group deleted.', 'bu-section-editing' ) . '</p>';
 					break;
 
 				default:
@@ -601,9 +620,11 @@ class BU_Groups_Admin {
 		if ( $valid_user_count == 0 ) {
 
 			$manage_users_url = admin_url( 'users.php' );
-			$users_link = sprintf( '<a href="%s">%s</a>', $manage_users_url, __( 'users page', BUSE_TEXTDOMAIN ) );
-			$no_users_warning = __( 'There are currently no users on your site that are capable of being assigned to section editing groups.', BUSE_TEXTDOMAIN );
-			$role_notice = sprintf( __( 'To start using this plugin, visit the %s and change the role for any users you would like to add to a section editing group to "Section Editor".', BUSE_TEXTDOMAIN ), $users_link );
+			// translators: %s stands for the manage users url.
+			$users_link = sprintf( '<a href="%s">%s</a>', $manage_users_url, __( 'users page', 'bu-section-editing' ) );
+			$no_users_warning = __( 'There are currently no users on your site that are capable of being assigned to section editing groups.', 'bu-section-editing' );
+			// translators: %s stands for the manage users url.
+			$role_notice = sprintf( __( 'To start using this plugin, visit the %s and change the role for any users you would like to add to a section editing group to "Section Editor".', 'bu-section-editing' ), $users_link );
 
 			$notices['error'][] = "<p>$no_users_warning</p><p>$role_notice</p>";
 		}
@@ -620,13 +641,16 @@ class BU_Groups_Admin {
 	static function load_manage_groups() {
 
 		$groups = BU_Edit_Groups::get_instance();
-		$group_id = isset( $_REQUEST['id'] ) ? $_REQUEST['id'] : -1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The ID is validated before any mutating action is performed.
+		$group_id = isset( $_REQUEST['id'] ) ? absint( wp_unslash( $_REQUEST['id'] ) ) : -1;
 		$redirect_url = '';
 
 		// Handle all $_GET actions
-		if ( isset( $_GET['action'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Action is checked only to decide whether to verify the nonce below.
+		$get_action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		if ( $get_action ) {
 
-			switch ( $_GET['action'] ) {
+			switch ( $get_action ) {
 
 				case 'delete':
 					if ( ! check_admin_referer( 'delete_section_editing_group' ) ) {
@@ -644,27 +668,31 @@ class BU_Groups_Admin {
 		}
 
 		// Handle all possible $_POST actions
-		if ( isset( $_POST['action'] ) && in_array( $_POST['action'], array( 'add', 'update' ) ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Action is checked only to decide whether to verify the nonce below.
+		$post_action = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
+		if ( in_array( $post_action, array( 'add', 'update' ) ) ) {
 
 			if ( ! check_admin_referer( 'save_section_editing_group' ) ) {
 				wp_die( 'Cheatin, uh?' );
 			}
 
 			// Maintain panel/tab state across submissions
-			$tab = isset( $_POST['tab'] ) ? $_POST['tab'] : 'properties';
-			$perm_panel = isset( $_POST['perm_panel'] ) ? $_POST['perm_panel'] : 'page';
+			$tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : 'properties';
+			$perm_panel = isset( $_POST['perm_panel'] ) ? sanitize_key( wp_unslash( $_POST['perm_panel'] ) ) : 'page';
 			$redirect_url = '';
 			$status = 0;
 
 			// Sanitize and validate group form data
-			$results = self::clean_group_form( $_POST['group'] );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- clean_group_form() sanitizes the full nested group payload.
+			$group_data = isset( $_POST['group'] ) && is_array( $_POST['group'] ) ? wp_unslash( $_POST['group'] ) : array();
+			$results = self::clean_group_form( $group_data );
 
 			// Commit group data on valid submission
 			if ( $results['valid'] ) {
 
 				$clean_data = $results['data'];
 
-				switch ( $_POST['action'] ) {
+				switch ( $post_action ) {
 
 					case 'add':
 						$group = $groups->add_group( $clean_data );
@@ -693,10 +721,7 @@ class BU_Groups_Admin {
 
 		// Redirect if we have one
 		if ( $redirect_url ) {
-
-			// Use safe redirect as the redirect URL built with manage_groups_url() begins
-			// with admin_url and the final URL should be local.
-			wp_safe_redirect( $redirect_url );
+			wp_redirect( $redirect_url );
 			die();
 		}
 
@@ -706,7 +731,7 @@ class BU_Groups_Admin {
 			$group = $groups->get( $group_id );
 
 			if ( empty( $group ) ) {
-				wp_die( 'No section editing group exists with an ID of : ' . $group_id );
+				wp_die( 'No section editing group exists with an ID of : ' . esc_html( $group_id ) );
 			}
 		}
 
@@ -714,10 +739,12 @@ class BU_Groups_Admin {
 		add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 
 		// Add screen option when adding or editing a group
-		if ( self::NEW_GROUP_SLUG == $_GET['page'] || $group_id > 0 ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page slug.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( self::NEW_GROUP_SLUG == $page || $group_id > 0 ) {
 
 			add_screen_option( 'per_page', array(
-				'label' => __( 'Posts per page', BUSE_TEXTDOMAIN ),
+				'label' => __( 'Posts per page', 'bu-section-editing' ),
 				'default' => 10,
 				'option' => self::POSTS_PER_PAGE_OPTION,
 				)
@@ -780,13 +807,17 @@ class BU_Groups_Admin {
 
 		$groups = BU_Edit_Groups::get_instance();
 
-		$page = $_GET['page'] ? $_GET['page'] : self::MANAGE_GROUPS_SLUG;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page slug.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : self::MANAGE_GROUPS_SLUG;
 
-		$group_id = isset( $_GET['id'] ) ? (int) $_GET['id'] : -1;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only group ID for screen selection.
+		$group_id = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : -1;
 		$group_list = array();
 
-		$tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'properties';
-		$perm_panel = isset( $_GET['perm_panel'] ) ? $_GET['perm_panel'] : 'page';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab state.
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'properties';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only permission panel state.
+		$perm_panel = isset( $_GET['perm_panel'] ) ? sanitize_key( wp_unslash( $_GET['perm_panel'] ) ) : 'page';
 
 		switch ( $page ) {
 
@@ -796,7 +827,7 @@ class BU_Groups_Admin {
 				if ( $group_id > 0 ) {
 
 					$group = $groups->get( $group_id );
-					$page_title = __( 'Edit Section Group', BUSE_TEXTDOMAIN );
+					$page_title = __( 'Edit Section Group', 'bu-section-editing' );
 					$template_path = 'interface/edit-group.php';
 
 				} else {
@@ -810,7 +841,7 @@ class BU_Groups_Admin {
 			// New group page
 			case self::NEW_GROUP_SLUG:
 				$group = new BU_Edit_Group();
-				$page_title = __( 'Add Section Group', BUSE_TEXTDOMAIN );
+				$page_title = __( 'Add Section Group', 'bu-section-editing' );
 				$template_path = 'interface/edit-group.php';
 				break;
 		}
@@ -917,7 +948,7 @@ class BU_Groups_Admin {
 			$counts[] = sprintf( '<span id="%s-stats" class="perm-stats %s"><span class="perm-stat-global">%s</span><span class="perm-stat-count">%s</span> <span class="perm-label">%s</span></span>',
 				$pt->name,
 				$global_edit,
-				__('All', BUSE_TEXTDOMAIN),
+				__('All', 'bu-section-editing'),
 				$count,
 				$label
 			);
