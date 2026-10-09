@@ -332,7 +332,7 @@ class BUSE_GroupsPage {
 		$page_title = $this->webdriver->title();
 
 		if( strpos( $this->webdriver->title(), 'Section Group' ) === false )
-			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . esc_html($request_url, 'bu-section-editing') );
+			throw new Exception('Section Groups page failed to load -- unable to load URL: ' . esc_html( self::MANAGE_GROUPS_URL ) );
 	}
 
 }

@@ -58,7 +58,7 @@ class BU_Section_Editing_Plugin {
 	public static $caps;
 	public static $upgrader;
 
-	const BUSE_VERSION = '0.10.1';
+	const BUSE_VERSION = '0.10.2';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	public static function register_hooks() {
