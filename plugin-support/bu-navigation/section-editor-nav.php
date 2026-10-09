@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // Only add filters for section editors
 if ( BU_Section_Editing_Plugin::is_allowed_user( get_current_user_id() ) ) {
 

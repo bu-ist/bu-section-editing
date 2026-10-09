@@ -68,7 +68,7 @@ class BU_Edit_Groups {
 			'menu_icon'           => '',
 			'can_export'          => true,
 			'has_archive'         => false,
-			'exclude_from_search' => false,
+			'exclude_from_search' => true,
 			'publicly_queryable'  => false,
 			'rewrite'             => false,
 			'capability_type'     => 'post',
@@ -406,20 +406,19 @@ class BU_Edit_Groups {
         $group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%d' ) );
         $prepare_values = array_merge( array( BU_Group_Permissions::META_KEY ), $group_ids, $post_type_values );
 
-        // Final query: find posts whose ID appears in postmeta entries for our group IDs.
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Dynamic fragments contain placeholders only; values are passed to prepare below.
-        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ($group_placeholders) ) {$post_type_clause}";
-
         if ( $post_status_clause ) {
-            $sql .= " {$post_status_clause} ";
             $prepare_values = array_merge( $prepare_values, $post_type_values );
         }
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL fragments contain only generated placeholders and the values are passed separately.
-        $prepared = $wpdb->prepare( $sql, $prepare_values );
+        // Final query: find posts whose ID appears in postmeta entries for our group IDs.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Dynamic fragments contain placeholders only; values are passed to prepare below.
+        $sql = "SELECT ID FROM {$wpdb->posts} WHERE ID IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ($group_placeholders) ) {$post_type_clause} {$post_status_clause}";
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Query is prepared immediately above and bulk ACL lookups are not available through a core API.
-        $ids = $wpdb->get_col( $prepared );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Values use generated placeholders and are prepared immediately below; the scanner cannot trace the dynamic placeholder list.
+        $ids = $wpdb->get_col(
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL fragments contain only generated placeholders and the values are passed separately.
+            $wpdb->prepare( $sql, $prepare_values )
+        );
 
         return $ids;
     }

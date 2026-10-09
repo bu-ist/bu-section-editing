@@ -12,6 +12,10 @@ License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
 Copyright 2012 by Boston University
 
@@ -75,7 +79,7 @@ class BU_Section_Editing_Plugin {
 
 	public static function l10n() {
 
-		load_plugin_textdomain( 'bu-section-editing', false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
+		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 
@@ -153,7 +157,7 @@ class BU_Section_Editing_Plugin {
 		$notice = get_transient( 'buse_nav_dep_nag' );
 
 		if ( $notice ) {
-			echo esc_html("<div class=\"error\">$notice</div>\n", 'bu-section-editing');
+			echo '<div class="error">' . wp_kses_post( $notice ) . "</div>\n";
 			delete_transient( 'buse_nav_dep_nag' );
 		}
 
@@ -199,7 +203,7 @@ class BU_Section_Editing_Plugin {
 
 			require_once( dirname( __FILE__ ) . '/classes.upgrade.php' );
 
-			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader = new BUSE_Section_Editing_Upgrader();
 			self::$upgrader->upgrade( $version );
 
 			// Store new version
@@ -223,7 +227,7 @@ class BU_Section_Editing_Plugin {
 
 			require_once( dirname( __FILE__ ) . '/classes.upgrade.php' );
 
-			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader = new BUSE_Section_Editing_Upgrader();
 			self::$upgrader->populate_roles();
 
 		}

@@ -1,3 +1,8 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+?>
 <fieldset>
 	<div class="form-field">
 		<label for="edit-group-name"><?php esc_html_e( 'Name', 'bu-section-editing' ); ?></label>

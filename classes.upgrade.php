@@ -1,6 +1,10 @@
 <?php
 
-class BU_Section_Editing_Upgrader {
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class BUSE_Section_Editing_Upgrader {
 
 	/**
 	 * Perform any data modifications as needed based on version diff
@@ -229,4 +233,9 @@ class BU_Section_Editing_Upgrader {
 		}
 
 	}
+}
+
+// Preserve the original public class name for integrations upgrading from older releases.
+if ( ! class_exists( 'BU_Section_Editing_Upgrader', false ) ) {
+	class_alias( 'BUSE_Section_Editing_Upgrader', 'BU_Section_Editing_Upgrader' );
 }

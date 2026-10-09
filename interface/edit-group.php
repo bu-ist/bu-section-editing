@@ -1,11 +1,16 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+?>
 <div id="section-group-editor" class="wrap">
 	<?php
-	$group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
-	$available_group_users = BU_Section_Editing_Plugin::get_group_available_users( $group, $group_members );
-	$member_count = count( $group_members );
+	$buse_group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
+	$buse_available_group_users = BU_Section_Editing_Plugin::get_group_available_users( $group, $buse_group_members );
+	$buse_member_count = count( $buse_group_members );
 	?>
 	<div id="icon-section-group" class="icon32"></div>
-	<h2><?php echo esc_html($page_title, 'bu-section-editing'); ?> <a href="<?php echo esc_attr( BU_Groups_Admin::manage_groups_url( 'add' ), 'bu-section-editing' );?>" class="button add-new-h2"><?php esc_html_e( 'Add New', 'bu-section-editing' ); ?></a></h2>
+	<h2><?php echo esc_html($page_title, 'bu-section-editing'); ?> <a href="<?php echo esc_url( BU_Groups_Admin::manage_groups_url( 'add' ) );?>" class="button add-new-h2"><?php esc_html_e( 'Add New', 'bu-section-editing' ); ?></a></h2>
 	<div class="form-wrap">
 		<h3 class="nav-tab-wrapper">
 			<a id="nav-tab-properties" href="#group-properties-panel" class="nav-link nav-tab <?php if ( $tab == 'properties' ) { echo 'nav-tab-active'; } ?>" data-target="properties" ><?php esc_html_e( 'Properties', 'bu-section-editing' ); ?></a>

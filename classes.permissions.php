@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 require_once( dirname( __FILE__ ) . '/admin.groups.php' );
 
 class BU_Group_Permissions {
@@ -354,7 +358,8 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html':default:
-					echo esc_html( $this->get_posts(), 'bu-section-editing' );
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped during assembly.
+					echo $this->get_posts();
 				break;
 		}
 
@@ -412,7 +417,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			}
 		} else {
 					$labels = get_post_type_object( $this->post_type )->labels;
-					$posts = sprintf( '<ul class="perm-list flat"><li><p>%s</p></li></ul>', $labels->not_found );
+					$posts = sprintf( '<ul class="perm-list flat"><li><p>%s</p></li></ul>', esc_html( $labels->not_found ) );
 		}
 
 		return $posts;
@@ -428,17 +433,17 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	public function get_post_markup( $p ) {
 
 		// Permission status
-		$icon = "<ins class=\"{$p['data']['icon']}\"> </ins>\n";
+		$icon = sprintf( "<ins class=\"%s\"> </ins>\n", esc_attr( $p['data']['icon'] ) );
 
 		// Publish information
 		$meta = '';
-		$published_label = __( 'Published on', 'bu-section-editing' );
-		$draft_label = __( 'Draft', 'bu-section-editing' );
+		$published_label = esc_html__( 'Published on', 'bu-section-editing' );
+		$draft_label = esc_html__( 'Draft', 'bu-section-editing' );
 
 		switch ( $p['metadata']['post_status'] ) {
 
 			case 'publish':
-				$meta = " &mdash; $published_label {$p['metadata']['post_date']}";
+				$meta = sprintf( ' &mdash; %1$s %2$s', $published_label, esc_html( $p['metadata']['post_date'] ) );
 				break;
 
 			case 'draft':
@@ -448,30 +453,30 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		}
 
 		// Bulk Edit Checkbox
-		$checkbox = sprintf('<input type="checkbox" name="bulk-edit[%s][%s]" value="1">',
-			$this->post_type,
-			$p['metadata']['post_id']
+		$checkbox = sprintf( '<input type="checkbox" name="bulk-edit[%s][%s]" value="1">',
+			esc_attr( $this->post_type ),
+			esc_attr( $p['metadata']['post_id'] )
 		);
 
 		// Perm actions button
 		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
 		$perm_label = $perm_state == 'allowed' ? __( 'Allow', 'bu-section-editing' ) : __( 'Deny', 'bu-section-editing' );
-		$button = sprintf( '<button class="edit-perms %s">%s</button>', $perm_state, $perm_label );
+		$button = sprintf( '<button class="edit-perms %s">%s</button>', esc_attr( $perm_state ), esc_html( $perm_label ) );
 
 		// Anchor
 		$a = sprintf( '<a href="#"><span class="title">%s</span>%s%s</a>',
-			$p['data']['title'],
+			esc_html( $p['data']['title'] ),
 			$meta,
 			$button
 		);
 
 		// Post list item
 		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s%s</li>\n",
-			$p['attr']['id'],
-			$p['attr']['class'],
-			$p['attr']['rel'],
-			json_encode( $p['metadata']['editable'] ),
-			json_encode( $p['metadata']['editable-original'] ),
+			esc_attr( $p['attr']['id'] ),
+			esc_attr( $p['attr']['class'] ),
+			esc_attr( $p['attr']['rel'] ),
+			esc_attr( json_encode( $p['metadata']['editable'] ) ),
+			esc_attr( json_encode( $p['metadata']['editable-original'] ) ),
 			$icon,
 			$checkbox,
 			$a
@@ -613,7 +618,8 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html': default:
-					echo esc_html($this->get_posts( $this->child_of ), 'bu-section-editing');
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped during assembly.
+					echo $this->get_posts( $this->child_of );
 				break;
 
 		}
@@ -683,7 +689,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 					break;
 
 				case 'html': default:
-						$output .= get_post_markup( $p );
+						$output .= $this->get_post_markup( $p );
 					break;
 
 			}
@@ -701,16 +707,16 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 */
 	protected function get_post_markup( $p ) {
 
-		$a = sprintf( '<a href="#">%s</a>', $p['data'] );
+		$a = sprintf( '<a href="#">%s</a>', esc_html( $p['data']['title'] ) );
 
 		$descendents = ! empty( $p['children'] ) ? sprintf( "<ul>%s</ul>\n", $p['children'] ) : '';
 
 		$markup = sprintf("<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s %s</li>\n",
-			$p['attr']['id'],
-			$p['attr']['class'],
-			$p['attr']['rel'],
-			$p['metadata']['editable'],
-			$p['metadata']['editable-original'],
+			esc_attr( $p['attr']['id'] ),
+			esc_attr( $p['attr']['class'] ),
+			esc_attr( $p['attr']['rel'] ),
+			esc_attr( $p['metadata']['editable'] ),
+			esc_attr( $p['metadata']['editable-original'] ),
 			$a,
 			$descendents
 		);

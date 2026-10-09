@@ -721,8 +721,8 @@ class BU_Groups_Admin {
 
 		// Redirect if we have one
 		if ( $redirect_url ) {
-			wp_redirect( $redirect_url );
-			die();
+			wp_safe_redirect( $redirect_url );
+			exit;
 		}
 
 		// Stop attempts to edit non-existant groups

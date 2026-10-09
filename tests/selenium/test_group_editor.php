@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 require_once dirname( __FILE__ ) . '/../tests/includes/classes.group-factory.php';
 
 /**
@@ -12,7 +16,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 		parent::setUp();
 
 		// Get a group factory
-		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
+		$this->factory->group = new BUSE_UnitTest_Factory_For_Group( $this->factory );
 
 		// Create global state programmatically
 		$this->factory->user->create(array('role'=>'section_editor'));
@@ -292,7 +296,7 @@ class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
 		if( isset( $edit_link ) ) {
 			$url = $edit_link->attribute('href');
-			$parts = parse_url( $url );
+			$parts = wp_parse_url( $url );
 			$args = wp_parse_args( $parts['query'] );
 			$group_id = $args['id'];
 
