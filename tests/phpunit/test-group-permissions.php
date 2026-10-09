@@ -10,14 +10,18 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
 	function setUp() {
 		parent::setUp();
-		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
+		$this->factory->group = new BUSE_UnitTest_Factory_For_Group( $this->factory );
 		register_post_type( 'custom', array( 'hierarchical' => false ) );
 	}
 
 	function tearDown() {
 		parent::tearDown();
 
-		unregister_post_type( 'custom' );
+		if ( function_exists( 'unregister_post_type' ) ) {
+			unregister_post_type( 'custom' );
+		} else {
+			_unregister_post_type( 'custom' );
+		}
 	}
 
 	/**
@@ -108,6 +112,62 @@ class Test_BU_Group_Permissions extends WP_UnitTestCase {
 		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, next( $pages ) ) );
 		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, reset( $custom_posts ) ) );
 		$this->assertTrue( BU_Group_Permissions::group_can_edit( $group->id, next( $custom_posts ) ) );
+	}
+
+	/**
+	 * The flat permissions editor emits markup while escaping post data.
+	 */
+	function test_flat_permissions_editor_displays_safe_markup() {
+		$group = $this->factory->group->create( array( 'name' => __FUNCTION__ ) );
+		$post = $this->factory->post->create(
+			array(
+				'post_type' => 'custom',
+				'post_status' => 'publish',
+				'post_title' => 'Rock & Roll',
+			)
+		);
+
+		$editor = new BU_Flat_Permissions_Editor( $group, 'custom' );
+		$editor->query(
+			array(
+				'post__in' => array( $post ),
+				'posts_per_page' => 1,
+			)
+		);
+
+		ob_start();
+		$editor->display();
+		$output = ob_get_clean();
+
+		$this->assertNotFalse( strpos( $output, '<ul class="perm-list flat">' ) );
+		$this->assertNotFalse( strpos( $output, '<li ' ) );
+		$this->assertNotFalse( strpos( $output, '<button class="edit-perms ' ) );
+		$this->assertFalse( strpos( $output, '&lt;ul' ) );
+		$this->assertNotFalse( strpos( $output, 'Rock &amp; Roll' ) );
+
+		$unsafe_markup = $editor->get_post_markup(
+			array(
+				'attr' => array(
+					'id' => 'post"><script>',
+					'class' => 'alternate"><script>',
+					'rel' => 'allowed"><script>',
+				),
+				'data' => array(
+					'title' => '<script>alert("xss")</script> & title',
+					'icon' => 'icon"><script>',
+				),
+				'metadata' => array(
+					'post_id' => '1"><script>',
+					'post_date' => '<script>alert("date")</script>',
+					'post_status' => 'publish',
+					'editable' => true,
+					'editable-original' => true,
+				),
+			)
+		);
+
+		$this->assertFalse( strpos( $unsafe_markup, '<script>' ) );
+		$this->assertNotFalse( strpos( $unsafe_markup, '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; title' ) );
 	}
 
 	/**

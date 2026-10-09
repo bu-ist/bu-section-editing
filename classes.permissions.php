@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 require_once( dirname( __FILE__ ) . '/admin.groups.php' );
 
 class BU_Group_Permissions {
@@ -70,82 +74,100 @@ class BU_Group_Permissions {
 	}
 
 	/**
-	 * Update permissions for a group
-	 *
-	 * @param int   $group_id ID of group to modify ACL for
-	 * @param array $permissions Permissions, as an associative array indexed by post type
-	 */
-	public static function update_group_permissions( $group_id, $permissions ) {
-		global $wpdb;
+     * Update permissions for a group
+     *
+     * @param int   $group_id ID of group to modify ACL for
+     * @param array $permissions Permissions, as an associative array indexed by post type
+     */
+    public static function update_group_permissions( $group_id, $permissions ) {
+        global $wpdb;
 
-		if ( ! is_array( $permissions ) ) {
-			return false;
-		}
+        if ( ! is_array( $permissions ) ) {
+            return false;
+        }
 
 		foreach ( $permissions as $post_type => $ids_by_status ) {
 
 			if ( ! is_array( $ids_by_status ) ) {
-				error_log( "Unexpected value found while updating permissions: $ids_by_status" );
 				continue;
 			}
 
-			// Incoming allowed posts
-			$allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
+            //
+            // Handle allowed IDs
+            //
+            $allowed_ids = isset( $ids_by_status['allowed'] ) ? $ids_by_status['allowed'] : array();
+            $allowed_ids = array_map( 'intval', (array) $allowed_ids );
 
 			if ( ! empty( $allowed_ids ) ) {
 
-				// Make sure we don't add allowed meta twice
+				$allowed_placeholders = implode( ', ', array_fill( 0, count( $allowed_ids ), '%d' ) );
+				$allowed_query_args = array_merge( $allowed_ids, array( self::META_KEY, $group_id ) );
+
+				// Find which of these are already present
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
 				$previously_allowed = $wpdb->get_col(
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
 					$wpdb->prepare(
-						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN (%s) AND meta_key = %s AND meta_value = %s",
-						implode( ',', $allowed_ids ),
-						self::META_KEY,
-						$group_id
+						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ($allowed_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						...$allowed_query_args
 					)
-				 );
-				$additions = array_merge( array_diff( $allowed_ids, $previously_allowed ) );
+				);
 
-				foreach ( $additions as $post_id ) {
+                $additions = array_diff( $allowed_ids, (array) $previously_allowed );
 
-					add_post_meta( $post_id, self::META_KEY, $group_id );
-				}
-			}
+                foreach ( $additions as $post_id ) {
+                    add_post_meta( $post_id, self::META_KEY, $group_id );
+                    // Purge cache for this post's post_meta
+                    wp_cache_delete( $post_id, 'post_meta' );
+                }
+            }
 
-			// Incoming restricted posts
-			$denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
+            //
+            // Handle denied IDs (remove meta rows)
+            //
+            $denied_ids = isset( $ids_by_status['denied'] ) ? $ids_by_status['denied'] : array();
+            $denied_ids = array_map( 'intval', (array) $denied_ids );
 
 			if ( ! empty( $denied_ids ) ) {
 
-				// Sanitize the list of IDs for direct use in the query.
-				$denied_ids = implode( ',', array_map( 'intval', $denied_ids ) );
+				$denied_placeholders = implode( ', ', array_fill( 0, count( $denied_ids ), '%d' ) );
+				$denied_query_args = array_merge( $denied_ids, array( self::META_KEY, $group_id ) );
 
-				// Select meta_id's for removal based on incoming posts
-				$denied_meta_ids = $wpdb->get_col(
+				// Get meta rows so we can delete them and purge relevant post caches
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
+				$rows = $wpdb->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
 					$wpdb->prepare(
-						"SELECT meta_id FROM {$wpdb->postmeta} WHERE post_id IN ({$denied_ids}) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-						self::META_KEY,
-						$group_id
-					)
-				 );
+						"SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ($denied_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						...$denied_query_args
+					),
+					OBJECT
+				);
 
-				// Bulk deletion
-				if ( ! empty( $denied_meta_ids ) ) {
+                if ( ! empty( $rows ) ) {
 
-					// Sanitize the list of IDs for direct use in the query.
-					$denied_meta_ids = implode( ',', array_map( 'intval', $denied_meta_ids ) );
+                    $meta_ids = array();
+                    $post_ids = array();
 
-					// Remove allowed status in one query
-					$wpdb->query( "DELETE FROM $wpdb->postmeta WHERE meta_id IN ({$denied_meta_ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                    foreach ( $rows as $r ) {
+                        $meta_ids[] = intval( $r->meta_id );
+                        $post_ids[] = intval( $r->post_id );
+                    }
 
-					// Purge cache
-					foreach ( $denied_ids as $post_id ) {
-						wp_cache_delete( $post_id, 'post_meta' );
+					foreach ( $meta_ids as $meta_id ) {
+						delete_metadata_by_mid( 'post', $meta_id );
 					}
-				}
-			}
-		}
 
-	}
+                    // Purge post_meta cache for affected posts
+                    foreach ( array_unique( $post_ids ) as $pid ) {
+                        wp_cache_delete( $pid, 'post_meta' );
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
 	public static function delete_group_permissions( $group_id ) {
 
@@ -159,6 +181,7 @@ class BU_Group_Permissions {
 
 		$args = array(
 			'post_type' => $supported_post_types,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Group deletion must find posts by the group ACL meta key.
 			'meta_query' => array( $meta_query ),
 			'posts_per_page' => -1,
 			'fields' => 'ids',
@@ -203,7 +226,9 @@ class BU_Group_Permissions {
 
 		$defaults = array(
 			'post_type' => 'page',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- This helper exists to query ACL metadata.
 			'meta_key' => self::META_KEY,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- This helper exists to query ACL metadata.
 			'meta_value' => $group_id,
 			'posts_per_page' => -1,
 			);
@@ -256,7 +281,7 @@ abstract class BU_Permissions_Editor {
 
 		} else {
 
-			error_log( 'Not a valid group ID or object: ' . $group );
+			return;
 		}
 
 		$this->post_type = $post_type;
@@ -333,6 +358,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html':default:
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped during assembly.
 					echo $this->get_posts();
 				break;
 		}
@@ -391,7 +417,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			}
 		} else {
 					$labels = get_post_type_object( $this->post_type )->labels;
-					$posts = sprintf( '<ul class="perm-list flat"><li><p>%s</p></li></ul>', $labels->not_found );
+					$posts = sprintf( '<ul class="perm-list flat"><li><p>%s</p></li></ul>', esc_html( $labels->not_found ) );
 		}
 
 		return $posts;
@@ -407,17 +433,17 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 	public function get_post_markup( $p ) {
 
 		// Permission status
-		$icon = "<ins class=\"{$p['data']['icon']}\"> </ins>\n";
+		$icon = sprintf( "<ins class=\"%s\"> </ins>\n", esc_attr( $p['data']['icon'] ) );
 
 		// Publish information
 		$meta = '';
-		$published_label = __( 'Published on', BUSE_TEXTDOMAIN );
-		$draft_label = __( 'Draft', BUSE_TEXTDOMAIN );
+		$published_label = esc_html__( 'Published on', 'bu-section-editing' );
+		$draft_label = esc_html__( 'Draft', 'bu-section-editing' );
 
 		switch ( $p['metadata']['post_status'] ) {
 
 			case 'publish':
-				$meta = " &mdash; $published_label {$p['metadata']['post_date']}";
+				$meta = sprintf( ' &mdash; %1$s %2$s', $published_label, esc_html( $p['metadata']['post_date'] ) );
 				break;
 
 			case 'draft':
@@ -427,30 +453,30 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		}
 
 		// Bulk Edit Checkbox
-		$checkbox = sprintf('<input type="checkbox" name="bulk-edit[%s][%s]" value="1">',
-			$this->post_type,
-			$p['metadata']['post_id']
+		$checkbox = sprintf( '<input type="checkbox" name="bulk-edit[%s][%s]" value="1">',
+			esc_attr( $this->post_type ),
+			esc_attr( $p['metadata']['post_id'] )
 		);
 
 		// Perm actions button
 		$perm_state = $p['metadata']['editable'] ? 'denied' : 'allowed';
-		$perm_label = $perm_state == 'allowed' ? __( 'Allow', BUSE_TEXTDOMAIN ) : __( 'Deny', BUSE_TEXTDOMAIN );
-		$button = sprintf( '<button class="edit-perms %s">%s</button>', $perm_state, $perm_label );
+		$perm_label = $perm_state == 'allowed' ? __( 'Allow', 'bu-section-editing' ) : __( 'Deny', 'bu-section-editing' );
+		$button = sprintf( '<button class="edit-perms %s">%s</button>', esc_attr( $perm_state ), esc_html( $perm_label ) );
 
 		// Anchor
 		$a = sprintf( '<a href="#"><span class="title">%s</span>%s%s</a>',
-			$p['data']['title'],
+			esc_html( $p['data']['title'] ),
 			$meta,
 			$button
 		);
 
 		// Post list item
 		$li = sprintf( "<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s%s%s</li>\n",
-			$p['attr']['id'],
-			$p['attr']['class'],
-			$p['attr']['rel'],
-			json_encode( $p['metadata']['editable'] ),
-			json_encode( $p['metadata']['editable-original'] ),
+			esc_attr( $p['attr']['id'] ),
+			esc_attr( $p['attr']['class'] ),
+			esc_attr( $p['attr']['rel'] ),
+			esc_attr( json_encode( $p['metadata']['editable'] ) ),
+			esc_attr( json_encode( $p['metadata']['editable-original'] ) ),
 			$icon,
 			$checkbox,
 			$a
@@ -472,7 +498,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 		$editable = BU_Group_Permissions::group_can_edit( $this->group->id, $post->ID, 'ignore_global' );
 		$perm = $editable ? 'allowed' : 'denied';
 
-		$post->post_title = empty( $post->post_title ) ? __( '(no title)', BUSE_TEXTDOMAIN ) : $post->post_title;
+		$post->post_title = empty( $post->post_title ) ? __( '(no title)', 'bu-section-editing' ) : $post->post_title;
 
 		$p = array(
 			'attr' => array(
@@ -486,7 +512,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			),
 			'metadata' => array(
 				'post_id' => $post->ID,
-				'post_date' => date( get_option( 'date_format' ), strtotime( $post->post_date ) ),
+				'post_date' => gmdate( get_option( 'date_format' ), strtotime( $post->post_date ) ),
 				'post_status' => $post->post_status,
 				'editable' => $editable,
 				'editable-original' => $editable,
@@ -561,7 +587,6 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 		// Make sure navigation plugin functions are available before querying
 		if ( ! function_exists( 'bu_navigation_get_pages' ) ) {
 			$this->posts = array();
-			error_log( 'BU Navigation Plugin must be activated in order for hierarchical permissions editors to work' );
 			return false;
 		}
 
@@ -593,6 +618,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 				break;
 
 			case 'html': default:
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped during assembly.
 					echo $this->get_posts( $this->child_of );
 				break;
 
@@ -663,7 +689,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 					break;
 
 				case 'html': default:
-						$output .= get_post_markup( $p );
+						$output .= $this->get_post_markup( $p );
 					break;
 
 			}
@@ -681,16 +707,16 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 */
 	protected function get_post_markup( $p ) {
 
-		$a = sprintf( '<a href="#">%s</a>', $p['data'] );
+		$a = sprintf( '<a href="#">%s</a>', esc_html( $p['data']['title'] ) );
 
 		$descendents = ! empty( $p['children'] ) ? sprintf( "<ul>%s</ul>\n", $p['children'] ) : '';
 
 		$markup = sprintf("<li id=\"%s\" class=\"%s\" rel=\"%s\" data-editable=\"%s\" data-editable-original=\"%s\">%s %s</li>\n",
-			$p['attr']['id'],
-			$p['attr']['class'],
-			$p['attr']['rel'],
-			$p['metadata']['editable'],
-			$p['metadata']['editable-original'],
+			esc_attr( $p['attr']['id'] ),
+			esc_attr( $p['attr']['class'] ),
+			esc_attr( $p['attr']['rel'] ),
+			esc_attr( $p['metadata']['editable'] ),
+			esc_attr( $p['metadata']['editable-original'] ),
 			$a,
 			$descendents
 		);
@@ -737,45 +763,51 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 	 * Add custom section editable properties to the post objects returned by bu_navigation_get_pages()
 	 */
 	public function filter_posts( $posts ) {
-		global $wpdb;
+        global $wpdb;
 
-		if ( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
+        if ( ( is_array( $posts ) ) && ( count( $posts ) > 0 ) ) {
 
 			/* Gather all group post meta in one shot */
 			$ids = array_keys( $posts );
+			$ids = array_map( 'intval', $ids );
+			$ids = array_filter( $ids );
 
-			// Sanitize the list of IDs for direct use in the query.
-			$ids = implode( ',', array_map( 'intval', $ids ) );
+			if ( empty( $ids ) ) {
+				return $posts;
+			}
 
+			$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+			$query_args = array_merge( array( BU_Group_Permissions::META_KEY ), $ids, array( $this->group->id ) );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL metadata lookup for an already fetched tree.
 			$group_meta = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
 				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ({$ids}) AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					BU_Group_Permissions::META_KEY,
-					$this->group->id
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+					...$query_args
 				),
 				OBJECT_K
-			); // get results as objects in an array keyed on post_id
+			);
 
-			if ( ! is_array( $group_meta ) ) {
-				$group_meta = array();
-			}
+            if ( ! is_array( $group_meta ) ) {
+                $group_meta = array();
+            }
 
-			// Append permissions to post object
-			foreach ( $posts as $post ) {
+            // Append permissions to post object
+            foreach ( $posts as $post ) {
 
-				$post->editable = false;
+                $post->editable = false;
 
-				if ( array_key_exists( $post->ID, $group_meta ) ) {
-					$perm = $group_meta[ $post->ID ];
+                if ( array_key_exists( $post->ID, $group_meta ) ) {
+                    $perm = $group_meta[ $post->ID ];
 
-					if ( $perm->meta_value === (string) $this->group->id ) {
-						$post->editable = true;
-					}
-				}
-			}
-		}
+                    if ( $perm->meta_value === (string) $this->group->id ) {
+                        $post->editable = true;
+                    }
+                }
+            }
+        }
 
-		return $posts;
-
-	}
+        return $posts;
+    }
 }

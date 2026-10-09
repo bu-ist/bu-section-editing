@@ -13,14 +13,18 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 	function setUp() {
 		parent::setUp();
-		$this->factory->group = new WP_UnitTest_Factory_For_Group( $this->factory );
+		$this->factory->group = new BUSE_UnitTest_Factory_For_Group( $this->factory );
 		register_post_type( 'custom', array( 'hierarchical' => false ) );
 	}
 
 	function tearDown() {
 		parent::tearDown();
 
-		unregister_post_type( 'custom' );
+		if ( function_exists( 'unregister_post_type' ) ) {
+			unregister_post_type( 'custom' );
+		} else {
+			_unregister_post_type( 'custom' );
+		}
 
 		// While the DB will rollback, the BU_Edit_Groups persists in memory
 		// and there for the groups remain cached in its internal array
@@ -266,6 +270,52 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 
 		$this->assertTrue( $gc->has_user( array( $group->id ), $user_in ) );
 		$this->assertFalse( $gc->has_user( array( $group->id ), $user_not_in ) );
+
+	}
+
+	/**
+	 * Saved group members should still be rendered even if they no longer qualify
+	 * for the addable-users query.
+	 */
+	function test_get_group_member_users_keeps_saved_non_section_editors() {
+
+		$active_member = $this->factory->user->create( array( 'role' => 'section_editor' ) );
+		$inactive_member = $this->factory->user->create( array( 'role' => 'author' ) );
+		$available_user = $this->factory->user->create( array( 'role' => 'section_editor' ) );
+		$group = $this->factory->group->create(
+			array(
+				'users' => array( $active_member, $inactive_member ),
+			)
+		);
+
+		$group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
+		$available_users = BU_Section_Editing_Plugin::get_group_available_users( $group, $group_members );
+
+		$this->assertSame( array( $active_member, $inactive_member ), array_keys( $group_members ) );
+		$this->assertArrayHasKey( $active_member, $group_members );
+		$this->assertArrayHasKey( $inactive_member, $group_members );
+		$this->assertArrayNotHasKey( $active_member, $available_users );
+		$this->assertArrayNotHasKey( $inactive_member, $available_users );
+		$this->assertArrayHasKey( $available_user, $available_users );
+
+	}
+
+	/**
+	 * Missing users should not inflate the rendered member count or list.
+	 */
+	function test_get_group_member_users_skips_missing_users() {
+
+		$existing_member = $this->factory->user->create( array( 'role' => 'section_editor' ) );
+		$group = $this->factory->group->create(
+			array(
+				'users' => array( $existing_member, 999999 ),
+			)
+		);
+
+		$group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
+
+		$this->assertSame( array( $existing_member ), array_keys( $group_members ) );
+		$this->assertCount( 1, $group_members );
 
 	}
 
