@@ -3,7 +3,7 @@ Contributors: mgburns, gcorne, awbauer, inderpreet99, antonkachurin
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 4.4
 Tested up to: 7.1
-Stable tag: 0.10.2
+Stable tag: 0.10.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,7 +63,7 @@ For more information on creating roles for use with section editing groups, see 
 
 == Changelog ==
 
-= 0.10.2 =
+= 0.10.3 =
 * Conform to WP Coding Standards
 * Tested for 6.9 compatibility
 * Fix jquery 3.x deprecations
