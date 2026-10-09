@@ -5,10 +5,16 @@ Plugin URI: http://developer.bu.edu/bu-section-editing/
 Author: Boston University (IS&T)
 Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
-Version: 0.10.0
+Version: 0.10.2
 Text Domain: bu-section-editing
 Domain Path: /languages
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
 Copyright 2012 by Boston University
@@ -52,7 +58,7 @@ class BU_Section_Editing_Plugin {
 	public static $caps;
 	public static $upgrader;
 
-	const BUSE_VERSION = '0.9.9';
+	const BUSE_VERSION = '0.10.2';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	public static function register_hooks() {
@@ -112,17 +118,19 @@ class BU_Section_Editing_Plugin {
 		$msg = '';
 
 		if ( ! class_exists( 'BU_Navigation_Plugin' ) ) {
-			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', BUSE_TEXTDOMAIN ) );
-			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
+			$install_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_INSTALL_LINK, __( 'BU Navigation plugin', 'bu-section-editing' ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				// translators: %s stands for the BU Navigation install link.
+				__( 'Please install and activate the %s in order to set permissions for hierarchical post types.', 'bu-section-editing' ),
 			$install_link ) . '</p>';
 		} else if ( version_compare( BU_Navigation_Plugin::VERSION, '1.1', '<' ) ) {
-			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __( 'upgrade your copy of BU Navigation', BUSE_TEXTDOMAIN ) );
-			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', BUSE_TEXTDOMAIN ) . '</p>';
-			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', BUSE_TEXTDOMAIN ) . '</p>';
+			$upgrade_link = sprintf( '<a href="%s">%s</a>', BUSE_NAV_UPGRADE_LINK, __( 'upgrade your copy of BU Navigation', 'bu-section-editing' ) );
+			$msg = '<p>' . __( 'The BU Section Editing plugin relies on the BU Navigation plugin for displaying hierarchical permission editors.', 'bu-section-editing' ) . '</p>';
+			$msg .= '<p>' .  __( 'This version of BU Section Editing requires at least version 1.1 of BU Navigation.', 'bu-section-editing' ) . '</p>';
 			$msg .= '<p>' . sprintf(
-				__( 'Please %s to enable permissions for hierarchical post types.', BUSE_TEXTDOMAIN ),
+				// translators: %s stands for the BU Navigation upgrade link.
+				__( 'Please %s to enable permissions for hierarchical post types.', 'bu-section-editing' ),
 			$upgrade_link ) . '</p>';
 		}
 
@@ -149,7 +157,7 @@ class BU_Section_Editing_Plugin {
 		$notice = get_transient( 'buse_nav_dep_nag' );
 
 		if ( $notice ) {
-			echo "<div class=\"error\">$notice</div>\n";
+			echo '<div class="error">' . wp_kses_post( $notice ) . "</div>\n";
 			delete_transient( 'buse_nav_dep_nag' );
 		}
 
@@ -173,7 +181,7 @@ class BU_Section_Editing_Plugin {
 		}
 
 		$groups_url = admin_url( BU_Groups_Admin::MANAGE_GROUPS_PAGE );
-		array_unshift( $links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', BUSE_TEXTDOMAIN ) . '</a>' );
+		array_unshift( $links, "<a href=\"$groups_url\" title=\"Manage Section Editing Groups\" class=\"edit\">" . __( 'Manage Groups', 'bu-section-editing' ) . '</a>' );
 
 		return $links;
 	}
@@ -195,7 +203,7 @@ class BU_Section_Editing_Plugin {
 
 			require_once( dirname( __FILE__ ) . '/classes.upgrade.php' );
 
-			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader = new BUSE_Section_Editing_Upgrader();
 			self::$upgrader->upgrade( $version );
 
 			// Store new version
@@ -214,11 +222,12 @@ class BU_Section_Editing_Plugin {
 	public static function repopulate_roles() {
 
 		// Look for any query params that signify updates
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- These read-only flags are set by WordPress core after activation/theme changes.
 		if ( array_key_exists( 'activated', $_GET ) || array_key_exists( 'activate', $_GET ) || array_key_exists( 'activate-multi', $_GET ) ) {
 
 			require_once( dirname( __FILE__ ) . '/classes.upgrade.php' );
 
-			self::$upgrader = new BU_Section_Editing_Upgrader();
+			self::$upgrader = new BUSE_Section_Editing_Upgrader();
 			self::$upgrader->populate_roles();
 
 		}
@@ -248,6 +257,70 @@ class BU_Section_Editing_Plugin {
 		}
 
 		return $allowed_users;
+
+	}
+
+	/**
+	 * Return existing users currently saved on a group.
+	 *
+	 * Group membership can outlive a user's current section-editor role, so the
+	 * editor should render saved members from the group itself instead of only
+	 * relying on the addable-user query.
+	 *
+	 * @param BU_Edit_Group|int $group Group object or group ID.
+	 * @return array<int,WP_User> Existing group members keyed by user ID.
+	 */
+	public static function get_group_member_users( $group ) {
+
+		if ( is_numeric( $group ) ) {
+			$group = BU_Edit_Groups::get_instance()->get( absint( $group ) );
+		}
+
+		if ( ! $group instanceof BU_Edit_Group ) {
+			return array();
+		}
+
+		$group_members = array();
+		$user_ids = array_unique( array_map( 'absint', (array) $group->users ) );
+
+		foreach ( $user_ids as $user_id ) {
+			if ( $user_id < 1 ) {
+				continue;
+			}
+
+			$user = get_userdata( $user_id );
+
+			if ( $user instanceof WP_User ) {
+				$group_members[ $user->ID ] = $user;
+			}
+		}
+
+		return $group_members;
+
+	}
+
+	/**
+	 * Return addable users that are not already saved on the group.
+	 *
+	 * @param BU_Edit_Group|int $group Group object or group ID.
+	 * @param array             $group_members Optional preloaded group members keyed by user ID.
+	 * @return array<int,WP_User> Allowed non-members keyed by user ID.
+	 */
+	public static function get_group_available_users( $group, $group_members = null ) {
+
+		if ( ! is_array( $group_members ) ) {
+			$group_members = self::get_group_member_users( $group );
+		}
+
+		$available_users = array();
+
+		foreach ( self::get_allowed_users() as $user ) {
+			if ( ! isset( $group_members[ $user->ID ] ) ) {
+				$available_users[ $user->ID ] = $user;
+			}
+		}
+
+		return $available_users;
 
 	}
 
