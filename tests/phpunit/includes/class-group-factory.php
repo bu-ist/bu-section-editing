@@ -1,7 +1,7 @@
 <?php
 
 // @todo decide if we need to / how to handle permissions
-class WP_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
+class BUSE_UnitTest_Factory_For_Group extends WP_UnitTest_Factory_For_Thing {
 
 	function __construct( $factory = null ) {
 		parent::__construct( $factory );

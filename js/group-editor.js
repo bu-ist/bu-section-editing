@@ -59,7 +59,7 @@ jQuery(document).ready(function($){
 	$('.member:not(.active)').appendTo('#inactive-members');
 
 	// Remove a member from the editor group list
-	$members_list.delegate( 'a.remove_member', 'click', function(e){
+	$members_list.on( 'click', 'a.remove_member', function(e){
 		e.preventDefault();
 
 		$(this).parent('.member').removeClass('active').slideUp( 'fast', function() {
@@ -67,7 +67,7 @@ jQuery(document).ready(function($){
 			// Move to #inactive-members bucket
 			$(this)
 				.appendTo('#inactive-members')
-				.find('input[type="checkbox"]').removeAttr('checked');
+				.find('input[type="checkbox"]').prop('checked', false);
 
 			// Update member count
 			updateMemberCount();
@@ -183,7 +183,7 @@ jQuery(document).ready(function($){
 
 	/* Add Members */
 
-	$('#add_member').bind( 'click', function(e){
+	$('#add_member').on( 'click', function(e){
 
 		e.preventDefault();
 		handle_member_add();
@@ -266,7 +266,7 @@ jQuery(document).ready(function($){
 	var add_member = function( user ) {
 
 		// Add member
-		$('#member_' + user.id ).attr('checked','checked')
+		$('#member_' + user.id ).prop('checked',true)
 			.parent('.member')
 			.addClass('active')
 			.appendTo($members_list)
@@ -323,7 +323,7 @@ jQuery(document).ready(function($){
 		loadToolbars( $panel, $editor );
 
 		// Handle permission actions
-		$editor.delegate('.edit-perms', 'click', function (e) {
+		$editor.on('click', '.edit-perms', function (e) {
 			var $button = $(e.currentTarget),
 				$post = $button.closest('li'),
 				classes = $button.attr('class'),
@@ -348,7 +348,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Deselect all on click outside active perm panel
-		$(document).bind('click', function (e) {
+		$(document).on('click', function (e) {
 
 			var $active_perm_panel = $('.perm-panel.active');
 			var $editor = $('.perm-editor', $active_perm_panel);
@@ -370,7 +370,7 @@ jQuery(document).ready(function($){
 	/**
 	 * Permissions editor loading on post type tab click
 	 */
-	$('#perm-tab-container').delegate( 'a', 'click', function(e) {
+	$('#perm-tab-container').on( 'click', 'a', function(e) {
 
 		var $panel = $($(this).attr('href'));
 
@@ -390,7 +390,7 @@ jQuery(document).ready(function($){
 	var loadToolbars = function( $panel, $editor ) {
 
 		// Search
-		$panel.delegate( 'button.perm-search', 'click', function(e){
+		$panel.on( 'click', 'button.perm-search', function(e){
 			e.preventDefault();
 
 			var post_type = $editor.data('post-type');
@@ -410,7 +410,7 @@ jQuery(document).ready(function($){
 		/* Pagination */
 
 		// Pagination using links
-		$panel.find('.pagination-links').delegate( 'a', 'click', function(e){
+		$panel.find('.pagination-links').on( 'click', 'a', function(e){
 			e.preventDefault();
 
 			if( $(this).hasClass('disabled') )
@@ -444,7 +444,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Manually advanced page using current page text input
-		$panel.delegate( 'input.current-page', 'keypress', function(e) {
+		$panel.on( 'keypress', 'input.current-page', function(e) {
 
 			if( e.keyCode == '13' ) {
 				e.preventDefault();
@@ -465,7 +465,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Search
-		$panel.delegate( 'input.perm-search', 'keypress', function(e) {
+		$panel.on( 'keypress', 'input.perm-search', function(e) {
 			if( e.keyCode == 13 ) {
 				e.preventDefault();
 				$(this).siblings('button').first().click();
@@ -475,7 +475,7 @@ jQuery(document).ready(function($){
 		/* Bulk editor */
 
 		// Toggle bulk edit mode
-		$panel.delegate( 'a.perm-editor-bulk-edit', 'click', function(e) {
+		$panel.on( 'click', 'a.perm-editor-bulk-edit', function(e) {
 			e.preventDefault();
 			var $a = $(this);
 
@@ -489,19 +489,19 @@ jQuery(document).ready(function($){
 
 			// Reset selections & bulk editor state
 			$editor.find('.perm-item-selected').removeClass('perm-item-selected');
-			$panel.find('input[type="checkbox"]').attr('checked', false);
+			$panel.find('input[type="checkbox"]').prop('checked', false);
 			$('.bulk-edit-actions select').val('none');
 
 		});
 
 		// Select all behavior toolbar checkbox
-		$panel.delegate('.bulk-edit-select-all', 'click', function(e) {
+		$panel.on('click', '.bulk-edit-select-all', function(e) {
 			var $allposts = $editor.find('li');
-			$allposts.children('input[type="checkbox"]').attr( 'checked', this.checked );
+			$allposts.children('input[type="checkbox"]').prop( 'checked', this.checked );
 		});
 
 		// Apply bulk actions
-		$panel.delegate('.bulk-edit-actions button', 'click', function(e) {
+		$panel.on('click', '.bulk-edit-actions button', function(e) {
 			e.preventDefault();
 
 			var $selector = $(this).siblings('select');
@@ -524,16 +524,16 @@ jQuery(document).ready(function($){
 
 
 			// Reset bulk actions to default state
-			$panel.find('.bulk-edit-select-all').attr('checked', false);
+			$panel.find('.bulk-edit-select-all').prop('checked', false);
 			$selector.val('none');
-			selections.attr('checked', false);
+			selections.prop('checked', false);
 
 		});
 
 		/* Hierarchical editor */
 
 		// Expand all
-		$panel.delegate('a.perm-tree-expand', 'click', function(e) {
+		$panel.on('click', 'a.perm-tree-expand', function(e) {
 			e.preventDefault();
 			if(typeof $.jstree !== 'undefined') {
 				$.jstree._reference($editor).open_all();
@@ -541,7 +541,7 @@ jQuery(document).ready(function($){
 		});
 
 		// Collapse all
-		$panel.delegate('a.perm-tree-collapse', 'click', function(e) {
+		$panel.on('click', 'a.perm-tree-collapse', function(e) {
 			e.preventDefault();
 			if(typeof $.jstree !== 'undefined') {
 				$.jstree._reference($editor).close_all();
@@ -572,7 +572,7 @@ jQuery(document).ready(function($){
 			args['query']['s'] = term;
 
 		// Reset bulk edit toolbar
-		$panel.find('.bulk-edit-select-all').attr('checked',false );
+		$panel.find('.bulk-edit-select-all').prop('checked',false );
 		$panel.find('.bulk-edit-actions select').val('none');
 
 		// Render post list
@@ -639,7 +639,7 @@ jQuery(document).ready(function($){
 
 		// Event binding
 		$editor
-			.bind('posts_loaded.buse', function (e, data) {
+			.on('posts_loaded.buse', function (e, data) {
 
 				// Merge incoming server state with pending edits
 				var edits = $editor.data('perm-edits') || {"allowed":[], "denied": []},
@@ -674,7 +674,7 @@ jQuery(document).ready(function($){
 	var attachFlatEditorHandlers = function( $editor ) {
 
 		// Post selection
-		$editor.delegate( 'a', 'click', function (e) {
+		$editor.on( 'click', 'a', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -690,7 +690,7 @@ jQuery(document).ready(function($){
 
 		});
 
-		$editor.bind('perm_updated', function (e, data ) {
+		$editor.on('perm_updated', function (e, data ) {
 
 			// Deselect
 			data.post.removeClass('perm-item-selected');
@@ -718,7 +718,7 @@ jQuery(document).ready(function($){
 
 		// Attach handlers and instantiate
 		$editor
-			.bind('load_node.jstree', function( event, data ) {
+			.on('load_node.jstree', function( event, data ) {
 
 				// Correct state post-load for all non-root nodes
 				if( data.rslt.obj != -1 ) {
@@ -726,7 +726,7 @@ jQuery(document).ready(function($){
 				}
 
 			})
-			.bind('perm_updated', function (e, data) {
+			.on('perm_updated', function (e, data) {
 				var $post = data.post;
 
 				if ($post.hasClass('jstree-closed')) {
@@ -749,6 +749,7 @@ jQuery(document).ready(function($){
 
 		var editorData = {
 			action : 'buse_render_post_list',
+			_ajax_nonce : buse_group_editor_settings.ajaxNonce,
 			group_id : $('#group_id').val() || -1,
 			query : {}
 		}
