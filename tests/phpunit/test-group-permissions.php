@@ -8,13 +8,13 @@
  **/
 class Test_BU_Group_Permissions extends WP_UnitTestCase {
 
-	function setUp() {
+	function setUp(): void {
 		parent::setUp();
 		$this->factory->group = new BUSE_UnitTest_Factory_For_Group( $this->factory );
 		register_post_type( 'custom', array( 'hierarchical' => false ) );
 	}
 
-	function tearDown() {
+	function tearDown(): void {
 		parent::tearDown();
 
 		if ( function_exists( 'unregister_post_type' ) ) {

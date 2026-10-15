@@ -1,7 +1,7 @@
 {
     "name": "bu-ist/bu-section-editing",
     "description": "Enhances WordPress content editing workflow by providing section editing groups and permissions",
-    "license": "GPLv2",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Mike Burns",
@@ -18,6 +18,6 @@
     ],
     "require": {},
     "require-dev": {
-        "phpunit/phpunit": "^8.5"
+        "phpunit/phpunit": "^8.5.52"
     }
 }

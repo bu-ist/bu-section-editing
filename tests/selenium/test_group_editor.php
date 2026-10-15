@@ -11,7 +11,7 @@ require_once dirname( __FILE__ ) . '/../tests/includes/classes.group-factory.php
  */
 class BUSE_GroupEditorTests extends WP_SeleniumTestCase {
 
-	public function setUp() {
+	public function setUp(): void {
 
 		parent::setUp();
 
