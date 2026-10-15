@@ -75,7 +75,7 @@ function buse_bu_navigation_filter_posts( $posts ) {
 			$group_meta = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($id_placeholders) AND meta_value IN ($group_placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
-					...$query_args
+					$query_args
 				)
 				, OBJECT_K
 			); // get results as objects in an array keyed on post_id

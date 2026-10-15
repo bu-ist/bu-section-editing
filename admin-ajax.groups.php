@@ -26,6 +26,9 @@ class BU_Groups_Admin_Ajax {
 	 * The variable is used for autocompletion (find user tool) and while adding members
 	 */
 	static public function site_users_script() {
+		if ( ! current_user_can( 'promote_users' ) ) {
+			wp_die( -1, 403 );
+		}
 
 		$return = array();
 
@@ -72,8 +75,11 @@ class BU_Groups_Admin_Ajax {
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
 
 			check_ajax_referer( self::NONCE_ACTION );
+			if ( ! current_user_can( 'promote_users' ) ) {
+				wp_die( -1, 403 );
+			}
 
-			$group_id = isset( $_REQUEST['group_id'] ) ? absint( wp_unslash( $_REQUEST['group_id'] ) ) : 0;
+			$group_id = isset( $_REQUEST['group_id'] ) ? absint( wp_unslash( $_REQUEST['group_id'] ) ) : -1;
 			$post_type = isset( $_REQUEST['post_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_type'] ) ) : '';
 			$query_vars = isset( $_REQUEST['query'] ) && is_array( $_REQUEST['query'] ) ? map_deep( wp_unslash( $_REQUEST['query'] ), 'sanitize_text_field' ) : array();
 			$post_type_obj = get_post_type_object( $post_type );

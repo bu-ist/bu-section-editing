@@ -106,10 +106,10 @@ class BU_Group_Permissions {
 				// Find which of these are already present
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
 				$previously_allowed = $wpdb->get_col(
-					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 					$wpdb->prepare(
 						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ($allowed_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
-						...$allowed_query_args
+						$allowed_query_args
 					)
 				);
 
@@ -136,10 +136,10 @@ class BU_Group_Permissions {
 				// Get meta rows so we can delete them and purge relevant post caches
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL lookups are not available through a core API.
 				$rows = $wpdb->get_results(
-					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 					$wpdb->prepare(
 						"SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ($denied_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
-						...$denied_query_args
+						$denied_query_args
 					),
 					OBJECT
 				);
@@ -781,10 +781,10 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL metadata lookup for an already fetched tree.
 			$group_meta = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and supplied via variadic args below.
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 				$wpdb->prepare(
 					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
-					...$query_args
+					$query_args
 				),
 				OBJECT_K
 			);
