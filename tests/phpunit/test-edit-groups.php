@@ -279,6 +279,10 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 	 */
 	function test_get_group_member_users_keeps_saved_non_section_editors() {
 
+		require_once __DIR__ . '/../../classes.upgrade.php';
+		$upgrader = new BUSE_Section_Editing_Upgrader();
+		$upgrader->populate_roles();
+
 		$active_member = $this->factory->user->create( array( 'role' => 'section_editor' ) );
 		$inactive_member = $this->factory->user->create( array( 'role' => 'author' ) );
 		$available_user = $this->factory->user->create( array( 'role' => 'section_editor' ) );

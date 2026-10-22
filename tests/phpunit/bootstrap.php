@@ -20,6 +20,10 @@ if ( ! $buse_tests_dir ) {
 	$buse_tests_dir = '/tmp/wordpress-tests-lib';
 }
 
+if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
+	define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__, 2 ) . '/vendor/yoast/phpunit-polyfills' );
+}
+
 // Load plugin files from this directory manually (as mu-plugin)
 require_once $buse_tests_dir . '/includes/functions.php';
 

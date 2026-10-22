@@ -3,19 +3,21 @@ sudo: false
 language: php
 
 php:
-    - 5.6
-    - 7.0
-    - 7.1
+    - 7.2
+    - 7.3
+    - 7.4
 
 env:
-    - WP_VERSION=latest WP_MULTISITE=0
-    - WP_VERSION=latest WP_MULTISITE=1
-    - WP_VERSION=4.6 WP_MULTISITE=0
-    - WP_VERSION=4.6 WP_MULTISITE=1
+    # WordPress 5.9-6.9 support PHPUnit 8; WordPress 7.0+ requires PHPUnit 9.
+    - WP_VERSION=6.9 WP_MULTISITE=0
+    - WP_VERSION=6.9 WP_MULTISITE=1
+    - WP_VERSION=5.9 WP_MULTISITE=0
+    - WP_VERSION=5.9 WP_MULTISITE=1
+
+install:
+    - composer install --no-interaction --prefer-dist
 
 before_script:
-    - export PATH="$HOME/.composer/vendor/bin:$PATH"
-    - composer global require "phpunit/phpunit=5.7.*"
     - bash bin/install-wp-tests.sh wordpress_test root '' localhost $WP_VERSION
 
-script: phpunit
+script: ./vendor/bin/phpunit
