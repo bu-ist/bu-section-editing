@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			$buse_is_post = 'post' === $buse_post_type->name;
 			$buse_editable = $groups->get_allowed_posts( array( 'group' => $group_id, 'post_type' => $buse_post_type->name ) );
 			?>
-			<div id="perm-panel-<?php echo esc_attr($buse_post_type->name, 'bu-section-editing'); ?>" class="perm-panel <?php echo esc_attr($buse_active, 'bu-section-editing'); ?>" data-editable-original="<?php echo esc_attr(htmlspecialchars( implode( ',', $buse_editable ) ), 'bu-section-editing'); ?>">
+			<div id="perm-panel-<?php echo esc_attr($buse_post_type->name, 'bu-section-editing'); ?>" class="perm-panel <?php echo esc_attr($buse_active, 'bu-section-editing'); ?>" data-editable-original="<?php echo esc_attr( implode( ',', $buse_editable ) ); ?>">
 				<?php if ( ! $buse_hierarchical && ! $buse_is_post ) : ?>
 					<div class="perm-global-edit clearfix">
 						<div class="perm-global-edit-checkbox">
