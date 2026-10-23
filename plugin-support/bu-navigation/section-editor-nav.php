@@ -66,9 +66,10 @@ function buse_bu_navigation_filter_posts( $posts ) {
 			if ( empty( $ids ) || empty( $section_groups ) ) {
 				return $posts;
 			}
+			$section_groups = array_map( 'strval', $section_groups );
 
 			$id_placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
-			$group_placeholders = implode( ', ', array_fill( 0, count( $section_groups ), '%d' ) );
+			$group_placeholders = implode( ', ', array_fill( 0, count( $section_groups ), '%s' ) );
 			$query_args = array_merge( array( BU_Group_Permissions::META_KEY ), $ids, $section_groups );
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk ACL metadata lookup for already fetched navigation posts.
@@ -93,7 +94,7 @@ function buse_bu_navigation_filter_posts( $posts ) {
 				if ( array_key_exists( $post->ID, $group_meta ) ) {
 					$perm = $group_meta[ $post->ID ];
 
-					if ( in_array( $perm->meta_value, $section_groups ) ) {
+					if ( in_array( $perm->meta_value, $section_groups, true ) ) {
 						$post->can_edit = true;
 						$post->can_remove = true;
 					}

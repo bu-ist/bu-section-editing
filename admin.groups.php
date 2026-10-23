@@ -91,7 +91,7 @@ class BU_Groups_Admin {
 					// Allow at least one group
 					if ( 0 == $visible_count || ( 0 == $truncated_count && ! $toolong ) ) {
 
-						$group_names[] = sprintf( '<a href="%s">%s</a>', self::manage_groups_url( 'edit', array( 'id' => $group->id ) ), $group->name );
+						$group_names[] = sprintf( '<a href="%s">%s</a>', esc_url( self::manage_groups_url( 'edit', array( 'id' => $group->id ) ) ), esc_html( $group->name ) );
 						$current_length += strlen( $group->name );
 						$visible_count++;
 
@@ -159,9 +159,10 @@ class BU_Groups_Admin {
 				$parent_groups = get_post_meta( $parent->ID, BU_Group_Permissions::META_KEY );
 
 				foreach ( $groups as $group ) {
+					$group_id = (string) absint( $group->id );
 
 					// Add newly valid groups
-					if ( in_array( $group->id, $parent_groups ) && ! in_array( $group->id, $existing_groups ) ) {
+					if ( in_array( $group_id, $parent_groups, true ) && ! in_array( $group_id, $existing_groups, true ) ) {
 						add_post_meta( $post->ID, BU_Group_Permissions::META_KEY, $group->id );
 					}
 				}
@@ -394,7 +395,14 @@ class BU_Groups_Admin {
 
 			// Dynamic js file that contains a variable with all users for the current site
 			// Used to keep the autocomplete & add member functionality client-side
-			wp_enqueue_script( 'buse-site-users', admin_url( 'admin-ajax.php?action=buse_site_users_script' ), array(), $version, true );
+			$site_users_url = add_query_arg(
+				array(
+					'action' => 'buse_site_users_script',
+					'_ajax_nonce' => wp_create_nonce( BU_Groups_Admin_Ajax::NONCE_ACTION ),
+				),
+				admin_url( 'admin-ajax.php' )
+			);
+			wp_enqueue_script( 'buse-site-users', $site_users_url, array(), $version, true );
 
 			// Group editor
 			wp_enqueue_script( 'group-editor', plugins_url( '/js/group-editor' . $suffix . '.js', __FILE__ ), array( 'jquery', 'jquery-ui-autocomplete', 'buse-site-users' ), $version, true );
@@ -683,8 +691,8 @@ class BU_Groups_Admin {
 			$status = 0;
 
 			// Sanitize and validate group form data
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- clean_group_form() sanitizes the full nested group payload.
-			$group_data = isset( $_POST['group'] ) && is_array( $_POST['group'] ) ? wp_unslash( $_POST['group'] ) : array();
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Downstream field-specific handling removes request slashes and sanitizes values in clean_group_form(), _clean_group_data(), and update_group_permissions().
+			$group_data = isset( $_POST['group'] ) && is_array( $_POST['group'] ) ? $_POST['group'] : array();
 			$results = self::clean_group_form( $group_data );
 
 			// Commit group data on valid submission
@@ -932,6 +940,7 @@ class BU_Groups_Admin {
 		foreach ( $content_types as $pt ) {
 
 			$count = 0;
+			$global_edit = '';
 
 			if ( $group->id > 0 ) {
 				$global_edit = $groups->post_is_globally_editable_by_group( $pt->name, $group->id ) ? 'global-edit' : '';

@@ -4,9 +4,11 @@
  *
  * To run these tests:
  * 	1. Install Composer (https://getcomposer.org/)
- *  2. Install plugin development dependencies (`composer install`)
- *  3. Install WordPress unit tests library (`bin/install-wp-tests.sh`)
- *  4. Run `./vendor/bin/phpunit` from the root directory of this plugin
+ *  2. Install the development dependencies for the selected test lane
+ *  3. Install a WordPress 5.8.17-6.9 unit test library (`bin/install-wp-tests.sh` defaults to 6.9)
+ *  4. Run PHPUnit 7.5 for WordPress 5.8 or PHPUnit 8 for WordPress 5.9-6.9
+ *
+ * See CONTRIBUTING.md for the modern and minimum-version test lanes.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -274,10 +274,10 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Saved group members should still be rendered even if they no longer qualify
-	 * for the addable-users query.
+	 * Saved group members who no longer qualify should be omitted so the next
+	 * save removes their membership.
 	 */
-	function test_get_group_member_users_keeps_saved_non_section_editors() {
+	function test_get_group_member_users_excludes_saved_non_section_editors() {
 
 		require_once __DIR__ . '/../../classes.upgrade.php';
 		$upgrader = new BUSE_Section_Editing_Upgrader();
@@ -295,9 +295,9 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 		$group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
 		$available_users = BU_Section_Editing_Plugin::get_group_available_users( $group, $group_members );
 
-		$this->assertSame( array( $active_member, $inactive_member ), array_keys( $group_members ) );
+		$this->assertSame( array( $active_member ), array_keys( $group_members ) );
 		$this->assertArrayHasKey( $active_member, $group_members );
-		$this->assertArrayHasKey( $inactive_member, $group_members );
+		$this->assertArrayNotHasKey( $inactive_member, $group_members );
 		$this->assertArrayNotHasKey( $active_member, $available_users );
 		$this->assertArrayNotHasKey( $inactive_member, $available_users );
 		$this->assertArrayHasKey( $available_user, $available_users );
@@ -309,17 +309,49 @@ class Test_BU_Edit_Groups extends WP_UnitTestCase {
 	 */
 	function test_get_group_member_users_skips_missing_users() {
 
+		require_once __DIR__ . '/../../classes.upgrade.php';
+		$upgrader = new BUSE_Section_Editing_Upgrader();
+		$upgrader->populate_roles();
+
 		$existing_member = $this->factory->user->create( array( 'role' => 'section_editor' ) );
 		$group = $this->factory->group->create(
 			array(
-				'users' => array( $existing_member, 999999 ),
+				'users' => array( $existing_member, $existing_member, 999999 ),
 			)
 		);
+		$included_ids = array();
+		$query_observer = function ( $query ) use ( &$included_ids ) {
+			if ( isset( $query->query_vars['include'] ) ) {
+				$included_ids = array_map( 'intval', (array) $query->query_vars['include'] );
+			}
+		};
+		add_action( 'pre_get_users', $query_observer );
 
 		$group_members = BU_Section_Editing_Plugin::get_group_member_users( $group );
+		remove_action( 'pre_get_users', $query_observer );
 
 		$this->assertSame( array( $existing_member ), array_keys( $group_members ) );
 		$this->assertCount( 1, $group_members );
+		sort( $included_ids );
+		$this->assertSame( array( $existing_member, 999999 ), $included_ids );
+
+	}
+
+	/**
+	 * Empty groups should not issue a site-wide user query.
+	 */
+	function test_get_group_member_users_returns_early_for_empty_groups() {
+		$query_count = 0;
+		$query_observer = function () use ( &$query_count ) {
+			$query_count++;
+		};
+		add_action( 'pre_get_users', $query_observer );
+
+		$group_members = BU_Section_Editing_Plugin::get_group_member_users( new BU_Edit_Group() );
+		remove_action( 'pre_get_users', $query_observer );
+
+		$this->assertSame( array(), $group_members );
+		$this->assertSame( 0, $query_count );
 
 	}
 

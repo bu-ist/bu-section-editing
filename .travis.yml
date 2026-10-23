@@ -14,6 +14,15 @@ env:
     - WP_VERSION=5.9 WP_MULTISITE=0
     - WP_VERSION=5.9 WP_MULTISITE=1
 
+matrix:
+    include:
+        # WordPress 5.8 requires PHPUnit 7. The security-blocking override is
+        # limited to this test-only, end-of-life PHPUnit dependency.
+        - php: 7.4
+          env: WP_VERSION=5.8.17 WP_MULTISITE=0 PHPUNIT_VERSION=7.5.20
+          install:
+              - COMPOSER_NO_AUDIT=1 COMPOSER_NO_SECURITY_BLOCKING=1 composer update --no-interaction --prefer-dist --with-all-dependencies "phpunit/phpunit:${PHPUNIT_VERSION}"
+
 install:
     - composer install --no-interaction --prefer-dist
 

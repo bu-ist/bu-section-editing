@@ -108,7 +108,7 @@ class BU_Group_Permissions {
 				$previously_allowed = $wpdb->get_col(
 					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 					$wpdb->prepare(
-						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ($allowed_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						"SELECT post_id FROM {$wpdb->postmeta} WHERE post_id IN ($allowed_placeholders) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
 						$allowed_query_args
 					)
 				);
@@ -117,8 +117,6 @@ class BU_Group_Permissions {
 
                 foreach ( $additions as $post_id ) {
                     add_post_meta( $post_id, self::META_KEY, $group_id );
-                    // Purge cache for this post's post_meta
-                    wp_cache_delete( $post_id, 'post_meta' );
                 }
             }
 
@@ -138,7 +136,7 @@ class BU_Group_Permissions {
 				$rows = $wpdb->get_results(
 					// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 					$wpdb->prepare(
-						"SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ($denied_placeholders) AND meta_key = %s AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+						"SELECT meta_id, post_id FROM {$wpdb->postmeta} WHERE post_id IN ($denied_placeholders) AND meta_key = %s AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
 						$denied_query_args
 					),
 					OBJECT
@@ -154,9 +152,17 @@ class BU_Group_Permissions {
                         $post_ids[] = intval( $r->post_id );
                     }
 
-					foreach ( $meta_ids as $meta_id ) {
-						delete_metadata_by_mid( 'post', $meta_id );
-					}
+                    $meta_id_placeholders = implode( ', ', array_fill( 0, count( $meta_ids ), '%d' ) );
+
+                    // Core has no API to bulk-delete metadata for a selected set of posts.
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Caches for every affected post are cleared below.
+                    $wpdb->query(
+                        // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
+                        $wpdb->prepare(
+                            "DELETE FROM {$wpdb->postmeta} WHERE meta_id IN ($meta_id_placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated for sanitized metadata IDs.
+                            $meta_ids
+                        )
+                    );
 
                     // Purge post_meta cache for affected posts
                     foreach ( array_unique( $post_ids ) as $pid ) {
@@ -176,7 +182,7 @@ class BU_Group_Permissions {
 		$meta_query = array(
 			'key' => self::META_KEY,
 			'value' => $group_id,
-			'compare' => 'LIKE',
+			'compare' => '=',
 			);
 
 		$args = array(
@@ -199,6 +205,10 @@ class BU_Group_Permissions {
 	 * Can this group edit a particular post
 	 */
 	public static function group_can_edit( $group_id, $post_id, $ignore = '' ) {
+		$group_id = intval( $group_id );
+		if ( $group_id < 1 ) {
+			return false;
+		}
 
 		if ( 'ignore_global' !== $ignore ) {
 			$groups = BU_Edit_Groups::get_instance();
@@ -210,7 +220,7 @@ class BU_Group_Permissions {
 
 		$allowed_groups = get_post_meta( $post_id, self::META_KEY );
 
-		return ( is_array( $allowed_groups ) && in_array( $group_id, $allowed_groups ) ) ? true : false;
+		return is_array( $allowed_groups ) && in_array( (string) $group_id, $allowed_groups, true );
 
 	}
 
@@ -512,7 +522,7 @@ class BU_Flat_Permissions_Editor extends BU_Permissions_Editor {
 			),
 			'metadata' => array(
 				'post_id' => $post->ID,
-				'post_date' => gmdate( get_option( 'date_format' ), strtotime( $post->post_date ) ),
+				'post_date' => mysql2date( get_option( 'date_format' ), $post->post_date ),
 				'post_status' => $post->post_status,
 				'editable' => $editable,
 				'editable-original' => $editable,
@@ -783,7 +793,7 @@ class BU_Hierarchical_Permissions_Editor extends BU_Permissions_Editor {
 			$group_meta = $wpdb->get_results(
 				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholder count is dynamic and values are supplied via the argument array below.
 				$wpdb->prepare(
-					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
+					"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND post_id IN ($placeholders) AND meta_value = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IN placeholders are generated from sanitized integer IDs.
 					$query_args
 				),
 				OBJECT_K

@@ -4,7 +4,6 @@
  * Centralized admin ajax routing
  *
  * @todo sanitize ALL input
- * @todo AJAX nonces
  */
 class BU_Groups_Admin_Ajax {
 
@@ -26,6 +25,8 @@ class BU_Groups_Admin_Ajax {
 	 * The variable is used for autocompletion (find user tool) and while adding members
 	 */
 	static public function site_users_script() {
+		check_ajax_referer( self::NONCE_ACTION );
+
 		if ( ! current_user_can( 'promote_users' ) ) {
 			wp_die( -1, 403 );
 		}
@@ -68,18 +69,19 @@ class BU_Groups_Admin_Ajax {
 	 *
 	 * @uses BU_Hierarchical_Permissions_Editor or BU_Flat_Permissions_Editor depending on post_type
 	 *
-	 * @todo add nonce
 	 */
 	static public function render_post_list() {
+		$is_ajax = function_exists( 'wp_doing_ajax' ) ? wp_doing_ajax() : ( defined( 'DOING_AJAX' ) && DOING_AJAX );
 
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		if ( $is_ajax ) {
 
 			check_ajax_referer( self::NONCE_ACTION );
 			if ( ! current_user_can( 'promote_users' ) ) {
 				wp_die( -1, 403 );
 			}
 
-			$group_id = isset( $_REQUEST['group_id'] ) ? absint( wp_unslash( $_REQUEST['group_id'] ) ) : -1;
+			// Preserve the -1 sentinel used by permission editors for unsaved groups.
+			$group_id = isset( $_REQUEST['group_id'] ) ? intval( wp_unslash( $_REQUEST['group_id'] ) ) : -1;
 			$post_type = isset( $_REQUEST['post_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['post_type'] ) ) : '';
 			$query_vars = isset( $_REQUEST['query'] ) && is_array( $_REQUEST['query'] ) ? map_deep( wp_unslash( $_REQUEST['query'] ), 'sanitize_text_field' ) : array();
 			$post_type_obj = get_post_type_object( $post_type );
