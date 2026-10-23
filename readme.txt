@@ -2,7 +2,6 @@
 Contributors: mgburns, gcorne, awbauer, inderpreet99, antonkachurin
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 5.8
-Requires PHP: 5.3
 Tested up to: 6.9
 Stable tag: 0.10.4
 License: GPLv2 or later
