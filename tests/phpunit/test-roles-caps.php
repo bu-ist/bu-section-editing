@@ -6,13 +6,13 @@
  **/
 class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 
-	function setUp() {
+	function setUp(): void {
 		parent::setUp();
 
 		// Ensure that the section editor role exists
 		// TODO: This shouldn't be this hard
 		require_once __DIR__ . '/../../classes.upgrade.php';
-		$upgrader = new BU_Section_Editing_Upgrader();
+		$upgrader = new BUSE_Section_Editing_Upgrader();
 		$upgrader->populate_roles();
 
 		$this->groups 	= array();
@@ -92,7 +92,7 @@ class Test_BU_Section_Editing_Caps extends WP_UnitTestCase {
 		$this->addGroup( 'beta', array( $section_editor2->ID ), $perms );
 	}
 
-	function tearDown() {
+	function tearDown(): void {
 		parent::tearDown();
 		$groups = BU_Edit_Groups::get_instance();
 		foreach ( $this->groups as $group ) {

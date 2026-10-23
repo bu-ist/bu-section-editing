@@ -15,6 +15,13 @@
  * $ phpunit
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( 'cli' !== PHP_SAPI && 'phpdbg' !== PHP_SAPI ) {
+		exit;
+	}
+}
+
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required by the legacy WordPress test bootstrap.
 $GLOBALS['wp_tests_options'] = array(
 	'active_plugins' => array( 'bu-section-editing/bu-section-editing.php', /* 'bu-navigation/bu-navigation.php' */ ),
 );
