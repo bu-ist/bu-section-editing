@@ -38,7 +38,6 @@ class BU_Section_Capabilities {
 		}
 
 		if ( empty( $role ) || ! is_object( $role ) ) {
-			error_log( __METHOD__ . ' - Invalid role!' );
 			return false;
 		}
 
@@ -72,11 +71,11 @@ class BU_Section_Capabilities {
 			return $caps; // bail early
 		}
 
-		if ( $this->is_post_cap( $cap, 'edit_post' ) ) {
+		if ( isset( $args[0] ) && $this->is_post_cap( $cap, 'edit_post' ) ) {
 			$caps = $this->_override_edit_caps( $user, $args[0], $caps );
 		}
 
-		if ( $this->is_post_cap( $cap, 'delete_post' ) ) {
+		if ( isset( $args[0] ) && $this->is_post_cap( $cap, 'delete_post' ) ) {
 			$caps = $this->_override_delete_caps( $user, $args[0], $caps );
 		}
 
@@ -95,11 +94,22 @@ class BU_Section_Capabilities {
 	 * we are checking permissions against
 	 **/
 	private function is_parent_changing( $post ) {
-		return isset( $_POST['post_ID'] ) && $post->ID == $_POST['post_ID'] && isset( $_POST['parent_id'] ) &&  $post->post_parent != $_POST['parent_id'];
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Core post editing nonce checks run before this capability filter.
+		if ( ! isset( $_POST['post_ID'], $_POST['parent_id'] ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Core post editing nonce checks run before this capability filter.
+		$post_id = absint( wp_unslash( $_POST['post_ID'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Core post editing nonce checks run before this capability filter.
+		$parent_id = intval( wp_unslash( $_POST['parent_id'] ) );
+
+		return $post->ID == $post_id && $post->post_parent != $parent_id;
 	}
 
 	private function get_new_parent() {
-		return (int) $_POST['parent_id'];
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Core post editing nonce checks run before this capability filter.
+		return isset( $_POST['parent_id'] ) ? intval( wp_unslash( $_POST['parent_id'] ) ) : 0;
 	}
 
 	/**
