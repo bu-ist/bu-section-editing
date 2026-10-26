@@ -2,7 +2,7 @@
 Contributors: mgburns, gcorne, awbauer, inderpreet99, antonkachurin
 Tags: permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
 Requires at least: 5.8
-Tested up to: 6.9
+Tested up to: 7.1
 Stable tag: 0.10.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html

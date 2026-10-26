@@ -46,7 +46,6 @@ require_once( dirname( __FILE__ ) . '/classes.groups.php' );
 require_once( dirname( __FILE__ ) . '/classes.permissions.php' );
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname( __FILE__ ) ) );
-define( 'BUSE_TEXTDOMAIN', 'bu-section-editing' );
 
 define( 'BUSE_NAV_INSTALL_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
 define( 'BUSE_NAV_UPGRADE_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
@@ -66,7 +65,6 @@ class BU_Section_Editing_Plugin {
 
 		register_activation_hook( __FILE__, array( __CLASS__, 'on_activate' ) );
 
-		add_action( 'init', array( __CLASS__, 'l10n' ), 5 );
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 		add_action( 'admin_init', array( __CLASS__, 'version_check' ) );
@@ -75,12 +73,6 @@ class BU_Section_Editing_Plugin {
 		add_action( 'load-themes.php', array( __CLASS__, 'repopulate_roles' ) );
 
 		BU_Edit_Groups::register_hooks();
-
-	}
-
-	public static function l10n() {
-
-		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 
