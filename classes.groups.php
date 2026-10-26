@@ -403,7 +403,8 @@ class BU_Edit_Groups {
         if ( empty( $group_ids ) ) {
             return array();
         }
-        $group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%d' ) );
+        $group_ids = array_map( 'strval', $group_ids );
+        $group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%s' ) );
         $prepare_values = array_merge( array( BU_Group_Permissions::META_KEY ), $group_ids, $post_type_values );
 
         if ( $post_status_clause ) {

@@ -9,7 +9,7 @@ DB_NAME=$1
 DB_USER=$2
 DB_PASS=$3
 DB_HOST=${4-localhost}
-WP_VERSION=${5-latest}
+WP_VERSION=${5-6.9}
 
 WP_TESTS_DIR=${WP_TESTS_DIR-/tmp/wordpress-tests-lib}
 WP_CORE_DIR=${WP_CORE_DIR-/tmp/wordpress/}
@@ -82,6 +82,12 @@ install_test_suite() {
 		sed $ioption "s/yourusernamehere/$DB_USER/" "$WP_TESTS_DIR"/wp-tests-config.php
 		sed $ioption "s/yourpasswordhere/$DB_PASS/" "$WP_TESTS_DIR"/wp-tests-config.php
 		sed $ioption "s|localhost|${DB_HOST}|" "$WP_TESTS_DIR"/wp-tests-config.php
+	fi
+
+	if [ "${WP_MULTISITE:-0}" = '1' ]; then
+		sed $ioption "s#^// define( 'WP_TESTS_MULTISITE', true );#define( 'WP_TESTS_MULTISITE', true );#" "$WP_TESTS_DIR"/wp-tests-config.php
+	else
+		sed $ioption "s#^define( 'WP_TESTS_MULTISITE', true );#// define( 'WP_TESTS_MULTISITE', true );#" "$WP_TESTS_DIR"/wp-tests-config.php
 	fi
 
 }

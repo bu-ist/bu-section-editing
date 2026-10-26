@@ -33,11 +33,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php
 			$buse_edit_url = BU_Groups_Admin::manage_groups_url( 'edit', array( 'id' => absint( $buse_group->id ) ) );
 			$buse_description = (strlen( $buse_group->description ) > 60) ? substr( $buse_group->description, 0, 60 ) . ' [...]' : $buse_group->description;
+			$buse_member_count = count( BU_Section_Editing_Plugin::get_group_member_users( $buse_group ) );
 			?>
 			<tr class="<?php echo esc_attr( $buse_count % 2 ? '' : 'alternate' ); ?>">
 				<td><a href="<?php echo esc_url( $buse_edit_url ); ?>"><?php echo esc_html( $buse_group->name, 'bu-section-editing' ); ?></a></td>
 				<td><?php echo wp_kses_post( $buse_description, 'bu-section-editing' ); ?></td>
-				<td><?php echo count( $buse_group->users ); ?></td>
+				<td><?php echo esc_html( $buse_member_count ); ?></td>
 				<td><?php echo wp_kses_post( BU_Groups_Admin::group_permissions_string( $buse_group ), 'bu-section-editing' ); ?></td>
 				<td>
 					<a class="submitdelete" href="<?php echo esc_url( BU_Groups_Admin::manage_groups_url( 'delete', array( 'id' => absint( $buse_group->id ) ) ) ); ?>">

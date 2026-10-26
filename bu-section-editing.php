@@ -6,7 +6,7 @@ Author: Boston University (IS&T)
 Author URI: http://sites.bu.edu/web/
 Description: Enhances WordPress content editing workflow by providing section editing groups and permissions
 Version: 0.10.4
-Requires at least: 4.4
+Requires at least: 5.8
 Text Domain: bu-section-editing
 Domain Path: /languages
 License: GPLv2 or later
@@ -46,7 +46,6 @@ require_once( dirname( __FILE__ ) . '/classes.groups.php' );
 require_once( dirname( __FILE__ ) . '/classes.permissions.php' );
 
 define( 'BUSE_PLUGIN_PATH', basename( dirname( __FILE__ ) ) );
-define( 'BUSE_TEXTDOMAIN', 'bu-section-editing' );
 
 define( 'BUSE_NAV_INSTALL_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
 define( 'BUSE_NAV_UPGRADE_LINK', 'http://wordpress.org/extend/plugins/bu-navigation/' );
@@ -59,14 +58,13 @@ class BU_Section_Editing_Plugin {
 	public static $caps;
 	public static $upgrader;
 
-	const BUSE_VERSION = '0.10.3';
+	const BUSE_VERSION = '0.10.4';
 	const BUSE_VERSION_OPTION = '_buse_version';
 
 	public static function register_hooks() {
 
 		register_activation_hook( __FILE__, array( __CLASS__, 'on_activate' ) );
 
-		add_action( 'init', array( __CLASS__, 'l10n' ), 5 );
 		add_action( 'init', array( __CLASS__, 'init' ) );
 		add_action( 'init', array( __CLASS__, 'add_post_type_support' ), 20 );
 		add_action( 'admin_init', array( __CLASS__, 'version_check' ) );
@@ -75,12 +73,6 @@ class BU_Section_Editing_Plugin {
 		add_action( 'load-themes.php', array( __CLASS__, 'repopulate_roles' ) );
 
 		BU_Edit_Groups::register_hooks();
-
-	}
-
-	public static function l10n() {
-
-		load_plugin_textdomain( BUSE_TEXTDOMAIN, false, plugin_basename( dirname( __FILE__ ) ) . '/languages/' );
 
 	}
 
@@ -262,12 +254,7 @@ class BU_Section_Editing_Plugin {
 	}
 
 	/**
-	 * Return existing users currently saved on a group.
-	 *
-	 * Group membership can outlive a user's current section-editor role, so the
-	 * editor should render saved members from the group itself instead of only
-	 * relying on the addable-user query.
-	 *
+	 * Return eligible users currently saved on a group.
 	 * @param BU_Edit_Group|int $group Group object or group ID.
 	 * @return array<int,WP_User> Existing group members keyed by user ID.
 	 */
@@ -282,16 +269,13 @@ class BU_Section_Editing_Plugin {
 		}
 
 		$group_members = array();
-		$user_ids = array_unique( array_map( 'absint', (array) $group->users ) );
+		$member_ids = array_filter( array_unique( array_map( 'absint', (array) $group->users ) ) );
+		if ( empty( $member_ids ) ) {
+			return $group_members;
+		}
 
-		foreach ( $user_ids as $user_id ) {
-			if ( $user_id < 1 ) {
-				continue;
-			}
-
-			$user = get_userdata( $user_id );
-
-			if ( $user instanceof WP_User ) {
+		foreach ( self::get_allowed_users( array( 'include' => array_values( $member_ids ) ) ) as $user ) {
+			if ( in_array( $user->ID, $member_ids, true ) ) {
 				$group_members[ $user->ID ] = $user;
 			}
 		}

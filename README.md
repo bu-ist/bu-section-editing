@@ -1,9 +1,9 @@
 # BU Section Editing #
 **Contributors:** mgburns, gcorne, awbauer, inderpreet99, anton-kachurin  
 **Tags:** permissions, section, access, acl, user management, custom roles, content editing, workflow, boston university, bu
-**Requires at least:** 4.4
+**Requires at least:** 5.8
 **Tested up to:** 7.1
-**Stable tag:** 0.10.3
+**Stable tag:** 0.10.4
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
